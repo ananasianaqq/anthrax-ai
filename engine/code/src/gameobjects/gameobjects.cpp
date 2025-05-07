@@ -1,4 +1,6 @@
 #include "anthraxAI/gameobjects/gameobjects.h"
+#include "anthraxAI/gameobjects/collision.h"
+#include "anthraxAI/gameobjects/objects/camera.h"
 #include "anthraxAI/gameobjects/objects/light.h"
 #include "anthraxAI/gameobjects/objects/sprite.h"
 #include "anthraxAI/gameobjects/objects/npc.h"
@@ -8,6 +10,7 @@
 #include "anthraxAI/utils/mathdefines.h"
 #include "glm/common.hpp"
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <string>
 Keeper::Base::~Base()
@@ -160,11 +163,31 @@ Keeper::Base::Base()
 
 void Keeper::Base::Update()
 {
+    std::vector<Objects*>::iterator camera_it = std::find_if(ObjectsList[Keeper::Type::CAMERA].begin(), ObjectsList[Keeper::Type::CAMERA].end(), [](const Keeper::Objects* obj) { return obj->CameraType() == static_cast<uint32_t>(Keeper::Camera::Type::EDITOR); });
+    Keeper::Camera* camera = reinterpret_cast<Keeper::Camera*>(*camera_it);
+
+    glm::mat4 view = glm::lookAt(camera->GetPos(), camera->GetPos() + camera->GetFront(), camera->GetUp());
+	glm::mat4 projection = glm::perspective(glm::radians(45.f), float(Gfx::Device::GetInstance()->GetSwapchainSize().x) / float(Gfx::Device::GetInstance()->GetSwapchainSize().y), 0.01f, 100.0f);
+
+    for (auto& it : ObjectsList) {
+        if (it.first == Keeper::Type::GIZMO || it.first == Keeper::Type::CAMERA || it.first == Keeper::Type::SPRITE) continue;
+        
+        for (Keeper::Objects* obj : it.second) {
+            if (obj->GetModelName().empty()) continue;
+            Thread::Pool::GetInstance()->Push({
+            Thread::Task::Name::UPDATE, Thread::Task::Type::EXECUTE, [this, projection, view](int i, Keeper::Objects* obj) {
+
+            bool visible = Keeper::Collision::Cull(projection * view, obj);
+        //printf("----%s|%d\n", obj->GetModelName().c_str(), visible);
+            obj->SetVisible(visible);}, {}, 0, obj, {} });
+        }
+    }
+
     int id = SelectedID;
     std::vector<Objects*>::iterator light_it = ObjectsList[Keeper::Type::LIGHT].end();
-    std::vector<Objects*>::iterator selected_it = std::find_if(ObjectsList[Keeper::Type::NPC].begin(), ObjectsList[Keeper::Type::NPC].end(), [id](const Keeper::Objects* obj) { return obj->GetID() == id; });
+    std::vector<Objects*>::iterator selected_it = std::find_if(ObjectsList[Keeper::Type::NPC].begin(), ObjectsList[Keeper::Type::NPC].end(), [id](const Keeper::Objects* obj) { return obj->IsVisible() && (obj->GetID() == id); });
     if (selected_it == ObjectsList[Keeper::Type::NPC].end()) {
-        light_it = std::find_if(ObjectsList[Keeper::Type::LIGHT].begin(), ObjectsList[Keeper::Type::LIGHT].end(), [id](const Keeper::Objects* obj) { return obj->GetID() == id; });
+        light_it = std::find_if(ObjectsList[Keeper::Type::LIGHT].begin(), ObjectsList[Keeper::Type::LIGHT].end(), [id](const Keeper::Objects* obj) { return obj->IsVisible() && (obj->GetID() == id); });
     }
     std::vector<Objects*>::iterator gizmo_it = std::find_if(ObjectsList[Keeper::Type::GIZMO].begin(), ObjectsList[Keeper::Type::GIZMO].end(), [id](const Keeper::Objects* obj) { return obj->GetID() == id;});
     static bool gizmo = false;
@@ -191,6 +214,7 @@ void Keeper::Base::Update()
         if (it.first == Keeper::Type::GIZMO) continue;
         if ((gizmo_it != ObjectsList[Keeper::Type::GIZMO].end() || gizmo )&& it.first == Keeper::Type::CAMERA) continue;
         for (Keeper::Objects* obj : it.second) {
+            if (!obj->IsVisible()) continue;
             Keeper::Objects* gizmo_handle = nullptr;
 
             obj->SetSelected(obj->GetID() == SelectedID);
@@ -205,7 +229,8 @@ void Keeper::Base::Update()
             obj->Update();
         }
     }
-}
+    
+ }
 
 void Keeper::Base::SpawnObjects(const Keeper::Info& info)
 {

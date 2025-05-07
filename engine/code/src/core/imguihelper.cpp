@@ -214,7 +214,16 @@ void Core::ImGuiHelper::InitUIElements()
         Add(debugtab, UI::Element(UI::CHECKBOX, "3d grid", false, nullptr, [](bool visible) -> void {  Utils::Debug::GetInstance()->Grid = visible; }));
         Add(debugtab, UI::Element(UI::CHECKBOX, "show bones weight", false, nullptr, [](bool show) -> void {  Utils::Debug::GetInstance()->Bones = show; }));
     }
+    {
+        UI::Element debugtab(UI::TAB, "Thread");
+        Add(debugtab, UI::Element(UI::TEXT, "Threads and info"));
+        Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
+        Add(debugtab, UI::Element(UI::TEXT, "draw calls:", false, []() -> std::string { return Utils::Debug::GetInstance()->GetDrawCalls(); }));
+        Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
+        Add(debugtab, UI::Element(UI::TEXT, "thread:", false, []() -> std::string { return Thread::Pool::GetInstance()->Time.GetTime(Thread::Task::Name::UPDATE);}));
+        Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
 
+    }
 }
 
 Keeper::Objects* Core::ImGuiHelper::ParseObjectID(const std::string& id)

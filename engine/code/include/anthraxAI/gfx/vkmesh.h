@@ -3,6 +3,8 @@
 #include "anthraxAI/gfx/vkdefines.h"
 #include "anthraxAI/gfx/bufferhelper.h"
 
+#include "anthraxAI/gameobjects/collision.h"
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -11,16 +13,7 @@
 namespace Gfx
 {
     #define BONE_INFLUENCE 4
-    struct Vertex {
-        glm::vec4 instanceind;
-        glm::vec4 position;
-        glm::vec3 normal;
-        glm::vec3 color;
-        glm::vec2 uv;
-        float weights[4];
-        int boneID[4];
-    };
-
+    
     struct MeshPushConstants {
         int texturebind = 0;
         int storagebind = 0;
@@ -45,6 +38,8 @@ namespace Gfx
         };
 
         BufferHelper::Buffer IndexBuffer;
+
+        Keeper::Collision::AABB aabb;
 
         void Clean();
     };

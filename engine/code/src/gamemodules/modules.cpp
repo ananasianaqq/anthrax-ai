@@ -155,14 +155,14 @@ void Modules::Base::UpdateMaterials()
 
 void Modules::Base::ThreadedRQ(int i, Keeper::Objects* info)
 {
-    SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected = info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
-    SceneModules["mask"].GetRenderQueue()[i].IsSelected = SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected;//info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
+    SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected = info->IsVisible() && (info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0);
+    SceneModules["mask"].GetRenderQueue()[i].IsSelected = info->IsVisible() && SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected;//info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
     if (SceneModules["mask"].GetRenderQueue()[i].IsSelected) {
         HasOutline = true;
     }
     SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible = info->IsVisible();
     SceneModules[CurrentScene].GetRenderQueue()[i].Position = info->GetPosition();
-    if (HasAnimation(SceneModules[CurrentScene].GetRenderQueue()[i].ID)) {
+    if (SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible && HasAnimation(SceneModules[CurrentScene].GetRenderQueue()[i].ID)) {
         Animator->Update(SceneModules[CurrentScene].GetRenderQueue()[i]);
     }
 }
@@ -184,15 +184,26 @@ void Modules::Base::UpdateRQ()
             }
             i++;
         }
+        if (Thread::Pool::GetInstance()->IsInit()) {
+            Thread::Pool::GetInstance()->WaitWork();
+        }
+        Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue();
+        std::string material= "gbuffer";
+        Gfx::Material* mat = Gfx::Pipeline::GetInstance()->GetMaterial(material);
+        for (Gfx::RenderObject& obj : rq) {
+            obj.Material = mat;        
+        }
+        SetRenderQueue("gbuffer", rq);
 
         auto light = GameObjects->Get(Keeper::Type::LIGHT);
         for (Keeper::Objects* info : light) {
-            SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected = info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
-            SceneModules["mask"].GetRenderQueue()[i].IsSelected = SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected;//info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
+            SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected = info->IsVisible() && (info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0);
+            SceneModules["mask"].GetRenderQueue()[i].IsSelected = info->IsVisible() && SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected;//info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
             if (SceneModules["mask"].GetRenderQueue()[i].IsSelected) {
                 HasOutline = true;
             }
             SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible = info->IsVisible();
+            SceneModules["gbuffer"].GetRenderQueue()[i].IsVisible = info->IsVisible();
             SceneModules[CurrentScene].GetRenderQueue()[i].Position = info->GetPosition();
             i++;
         }
@@ -203,7 +214,6 @@ void Modules::Base::UpdateRQ()
             SceneModules["gizmo"].GetRenderQueue()[i].Position = info->GetPosition();
             i++;
         }
-
     }
 }
 

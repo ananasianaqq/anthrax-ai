@@ -31,22 +31,23 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
     VkFormat formats3[3] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM };
     VkFormat depthformat = VK_FORMAT_D32_SFLOAT;
 
+    uint32_t frameind = Gfx::Renderer::GetInstance()->GetFrameInd();
+
     u_int32_t obj_size = module.GetRenderQueue().size();
     uint32_t inst_ind = 0;//Gfx::Renderer::GetInstance()->GetInstanceInd();
-    std::vector<uint32_t> num_obj_per_thread(Thread::MAX_THREAD_NUM, (uint32_t)module.GetRenderQueue().size() / Thread::MAX_THREAD_NUM );
+    std::vector<uint32_t> num_obj_per_thread(Thread::MAX_RENDER_THREAD_NUM, (uint32_t)module.GetRenderQueue().size() / Thread::MAX_RENDER_THREAD_NUM );
 
-    uint32_t frameind = Gfx::Renderer::GetInstance()->GetFrameInd();
-    bool iseven = (module.GetRenderQueue().size() % Thread::MAX_THREAD_NUM) == 0;
+    bool iseven = (module.GetRenderQueue().size() % Thread::MAX_RENDER_THREAD_NUM) == 0;
     if (!iseven) {
-        num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue().size() % Thread::MAX_THREAD_NUM);
+        num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue().size() % Thread::MAX_RENDER_THREAD_NUM);
     }
     u_int32_t first_obj_size = 0;
     u_int32_t sec_obj_size = 0;// module.GetRenderQueue().size() / 2;
 
     uint32_t fin_inst_ind = 0;
     uint32_t fin_inst_ind2 = 0;
-    std::vector<uint32_t> instance_inds(Thread::MAX_THREAD_NUM + 1, 0);//= { 0, 0};
-    for (uint32_t thread_id = 0; thread_id < Thread::MAX_THREAD_NUM; thread_id++) {
+    std::vector<uint32_t> instance_inds(Thread::MAX_RENDER_THREAD_NUM + 1, 0);//= { 0, 0};
+    for (uint32_t thread_id = 0; thread_id < Thread::MAX_RENDER_THREAD_NUM; thread_id++) {
         sec_obj_size += num_obj_per_thread[thread_id];
         for (uint32_t obj_num = first_obj_size; obj_num < sec_obj_size; obj_num++) {
 
@@ -58,7 +59,7 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
     first_obj_size = 0;
     sec_obj_size = 0;
     uint32_t inst = 0;
-    for (uint32_t thread_id = 0; thread_id < Thread::MAX_THREAD_NUM; thread_id++) {
+    for (uint32_t thread_id = 0; thread_id < Thread::MAX_RENDER_THREAD_NUM; thread_id++) {
         sec_obj_size += num_obj_per_thread[thread_id];
 
         inst += instance_inds[thread_id];
@@ -84,10 +85,14 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
 
         uint32_t inst_ind = inst;
         for (uint32_t obj_num = first_obj_size; obj_num < sec_obj_size; obj_num++) {
-
+            
             Gfx::RenderObject& obj = module.GetRenderQueue()[obj_num];
-            if (!obj.IsVisible) continue;
 
+            if (!obj.IsVisible) {
+                inst_ind += obj.Model[frameind]->Meshes.size();
+                continue;
+            }
+  
             Gfx::MeshPushConstants constants;
             constants.texturebind = obj.TextureBind[frameind];
             constants.bufferbind = obj.BufferBind[frameind];
@@ -116,10 +121,10 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
         first_obj_size = sec_obj_size;
     }
 
-    if (module.GetTag() == "gbuffer") {
-        Thread::Pool::GetInstance()->Wait();
+   if (module.GetTag() == "gbuffer") {
+        Thread::Pool::GetInstance()->WaitRender();
         Gfx::Renderer::GetInstance()->SetInstanceInd(fin_inst_ind2);
-        for (int cb = 0; cb < Thread::MAX_THREAD_NUM; cb++) {
+        for (int cb = 0; cb < Thread::MAX_RENDER_THREAD_NUM; cb++) {
             sec_cmds.emplace_back(Gfx::Renderer::GetInstance()->GetFrame().SecondaryCmd[cb].Cmd);
         }
         Gfx::Renderer::GetInstance()->SetCmd(Gfx::Renderer::GetInstance()->GetFrame().MainCommandBuffer);
@@ -133,13 +138,16 @@ void Core::Scene::Render(Modules::Module& module)
 {
     Gfx::Renderer::GetInstance()->DebugRenderName(module.GetTag());
 
-    if (module.GetTag() == "gbuffer" && module.GetRenderQueue().size() > Thread::MAX_THREAD_NUM) {
+    if (( module.GetTag() == "gbuffer" && module.GetRenderQueue().size() > Thread::MAX_RENDER_THREAD_NUM) ){
         RenderThreaded(module);
     }
     else {
         uint32_t frameind = Gfx::Renderer::GetInstance()->GetFrameInd();
         for (Gfx::RenderObject& obj : module.GetRenderQueue()) {
-            if (!obj.IsVisible) continue;
+            if (!obj.IsVisible) {
+                Gfx::Renderer::GetInstance()->IncInstanceInd(obj.Model[frameind]->Meshes.size());
+                continue;
+            }
             if (module.GetTag() == "mask" && !obj.IsSelected) {
                 Gfx::Renderer::GetInstance()->IncInstanceInd(obj.Model[frameind]->Meshes.size());
                 continue;
@@ -162,7 +170,7 @@ void Core::Scene::RenderScene(bool playmode)
     ZoneScopedN("Scene::RenderScene");
 #endif
     if (Gfx::Renderer::GetInstance()->BeginFrame()) {
-        Thread::BeginTime(Thread::Task::Name::RENDER, (double)Gfx::Renderer::GetInstance()->Time);
+        Thread::Pool::GetInstance()->Time.BeginTime(Thread::Task::Name::RENDER, (double)Gfx::Renderer::GetInstance()->Time);
         if (GameModules->Get(CurrentScene).GetStorageBuffer()) {
               Gfx::Renderer::GetInstance()->PrepareStorageBuffer();
         }
@@ -224,7 +232,7 @@ void Core::Scene::RenderScene(bool playmode)
             Gfx::Renderer::GetInstance()->EndRender();
         }
 
-        Thread::EndTime(Thread::Task::Name::RENDER, (double)Engine::GetInstance()->GetTime());
+        Thread::Pool::GetInstance()->Time.EndTime(Thread::Task::Name::RENDER, (double)Engine::GetInstance()->GetTime());
        // Thread::PrintTime(Thread::Task::Name::RENDER);
         Gfx::Renderer::GetInstance()->EndFrame();
     }
@@ -261,13 +269,13 @@ void Core::Scene::Loop()
             Core::ImGuiHelper::GetInstance()->Render();
         }
         Thread::Pool::GetInstance()->Pause(false);
-        Thread::BeginTime(Thread::Task::Name::UPDATE, (double)Engine::GetInstance()->GetTime());
+        Thread::Pool::GetInstance()->Time.BeginTime(Thread::Task::Name::UPDATE, (double)Engine::GetInstance()->GetTime());
 
         GameObjects->Update();
         GameModules->Update(Modules::Update::RQ);
 
-        Thread::EndTime(Thread::Task::Name::UPDATE, (double)Engine::GetInstance()->GetTime());
-      //  Thread::PrintTime(Thread::Task::Name::UPDATE);
+        Thread::Pool::GetInstance()->Time.EndTime(Thread::Task::Name::UPDATE, (double)Engine::GetInstance()->GetTime());
+        //Thread::Time.PrintTime(Thread::Task::Name::UPDATE);
 
         RenderScene(true);
     }

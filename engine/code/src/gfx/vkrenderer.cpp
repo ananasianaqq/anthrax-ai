@@ -49,6 +49,7 @@ void Gfx::Renderer::DrawSimple(Gfx::RenderObject& object)
     }
 	vkCmdPushConstants(Cmd.GetCmd(), object.Material->PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
 	vkCmdDraw(Cmd.GetCmd(), 6, 1, 0, 0);
+    Utils::Debug::GetInstance()->DebugDrawCall();
 }
 
 void Gfx::Renderer::DrawMeshes(Gfx::RenderObject& object)
@@ -98,6 +99,7 @@ void Gfx::Renderer::DrawMesh(Gfx::RenderObject& object, Gfx::MeshInfo* mesh, boo
 	else {
 		vkCmdDrawIndexed(Cmd.GetCmd(), static_cast<uint32_t>(mesh->Indices.size()), 1, 0, 0, 0);
 	}
+    Utils::Debug::GetInstance()->DebugDrawCall();
 }
 
 void Gfx::Renderer::DrawThreaded(VkCommandBuffer cmd, Gfx::RenderObject& object, Material* mat, Gfx::MeshInfo* mesh, Gfx::MeshPushConstants& constants, bool ismodel, uint32_t inst_ind)
@@ -124,6 +126,7 @@ void Gfx::Renderer::DrawThreaded(VkCommandBuffer cmd, Gfx::RenderObject& object,
 	else {
 		vkCmdDrawIndexed(cmd, static_cast<uint32_t>(mesh->Indices.size()), 1, 0, 0, 0);
 	}
+    Utils::Debug::GetInstance()->DebugDrawCall();
 }
 
 void Gfx::Renderer::Draw(Gfx::RenderObject& object)
@@ -197,6 +200,7 @@ void Gfx::Renderer::NullTmpBindings()
 
 bool Gfx::Renderer::BeginFrame()
 {
+    Utils::Debug::GetInstance()->NullDrawCall();
     Gfx::Renderer::GetInstance()->NullTmpBindings();
 	ImGui::Render();
 
@@ -469,12 +473,12 @@ void Gfx::Renderer::PrepareInstanceBuffer()
     u_int32_t obj_size = module.GetRenderQueue().size();
     uint32_t inst_ind = 0;//Gfx::Renderer::GetInstance()->GetInstanceInd();
     //
-    std::vector<uint32_t> num_obj_per_thread(Thread::MAX_THREAD_NUM, (uint32_t)module.GetRenderQueue().size() / Thread::MAX_THREAD_NUM );
+    std::vector<uint32_t> num_obj_per_thread(Thread::MAX_RENDER_THREAD_NUM, (uint32_t)module.GetRenderQueue().size() / Thread::MAX_RENDER_THREAD_NUM );
     //num_obj_per_thread = { (uint32_t)module.GetRenderQueue().size() / Thread::MAX_THREAD_NUM };
 
-    bool iseven = (module.GetRenderQueue().size() % Thread::MAX_THREAD_NUM) == 0;
+    bool iseven = (module.GetRenderQueue().size() % Thread::MAX_RENDER_THREAD_NUM) == 0;
     if (!iseven) {
-        num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue().size() % Thread::MAX_THREAD_NUM);
+        num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue().size() % Thread::MAX_RENDER_THREAD_NUM);
     }
     /*for (uint32_t o : num_obj_per_thread) {*/
     /**/
@@ -532,7 +536,13 @@ void Gfx::Renderer::PrepareInstanceBuffer()
 
     bool hasanim = false;
     for (Gfx::RenderObject& obj : module.GetRenderQueue()) {
-        if (!obj.Model[GetFrameInd()] || !obj.IsVisible) continue;
+        /*printf(*/
+        /*    "VISIBLE: %d|%s\n", obj.IsVisible, obj.TextureName.c_str()*/
+        /*);*/
+        if (!obj.Model[GetFrameInd()]) {
+            i++;
+            continue;
+        }
         hasanim = Core::Scene::GetInstance()->HasAnimation(obj.ID);
         for (int j = 0; j < obj.Model[GetFrameInd()]->Meshes.size(); j++ ) {
 
@@ -754,7 +764,7 @@ uint32_t Gfx::Renderer::SyncFrame()
   
 	VK_ASSERT(vkResetFences(Gfx::Device::GetInstance()->GetDevice(), 1, &Frames[FrameIndex].RenderFence), "vkResetFences failed !");
 	VK_ASSERT(vkResetCommandBuffer(Frames[FrameIndex].MainCommandBuffer, 0), "vkResetCommandBuffer failed!");
-    for (int i = 0; i < Thread::MAX_THREAD_NUM; i++) {
+    for (int i = 0; i < Thread::MAX_RENDER_THREAD_NUM; i++) {
         VK_ASSERT(vkResetCommandPool(Gfx::Device::GetInstance()->GetDevice(), Frames[FrameIndex].SecondaryCmd[i].Pool, 0), "Failed to reset command pool!");
     }
   	return swapchainimageindex;
@@ -950,8 +960,8 @@ void Gfx::Renderer::CreateCommands()
 		VK_ASSERT(vkAllocateCommandBuffers(Gfx::Device::GetInstance()->GetDevice(), &cmdinfo, &Frames[i].MainCommandBuffer), "failed to allocate command buffers!");
 
         // secondary cmd size of thread pool
-        Frames[i].SecondaryCmd.resize(Thread::MAX_THREAD_NUM);
-        for (int j = 0; j < Thread::MAX_THREAD_NUM; j++) {
+        Frames[i].SecondaryCmd.resize(Thread::MAX_RENDER_THREAD_NUM);
+        for (int j = 0; j < Thread::MAX_RENDER_THREAD_NUM; j++) {
             ASSERT(vkCreateCommandPool(Gfx::Device::GetInstance()->GetDevice(), &poolinfo, nullptr, &Frames[i].SecondaryCmd[j].Pool), "failed to create command pool!");
 
 		    VkCommandBufferAllocateInfo seccmdinfo = CommandBufferCreateInfo(Frames[i].SecondaryCmd[j].Pool, 1, VK_COMMAND_BUFFER_LEVEL_SECONDARY);

@@ -73,7 +73,8 @@ namespace Core
             Animations[id].SceneInd = index;
             printf("INDEX %d\n", index);
     	}
-
+        
+    const glm::mat4& GetGlobalTransform() const { return GlobalInverse; }
 
     private:
     	Assimp::Importer Importer;

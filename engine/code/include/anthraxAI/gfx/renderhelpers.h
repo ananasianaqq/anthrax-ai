@@ -50,7 +50,7 @@ namespace Gfx
 
     #define DEPTH_ARRAY_SCALE 512
     #define MAX_BONES 200
-    #define MAX_INSTANCES 2000
+    #define MAX_INSTANCES 10000
     #define INSTANCES_ARRAY_SIZE (sizeof(glm::mat4) * MAX_INSTANCES)
     #define BONE_ARRAY_SIZE (sizeof(glm::mat4) * MAX_BONES)
 
@@ -82,7 +82,8 @@ namespace Gfx
         float p1;
         float p2;
     };
-
+    
+    
     struct SecondaryCmdInfo {
         VkCommandBuffer Cmd;
         VkCommandPool Pool;

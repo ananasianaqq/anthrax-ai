@@ -14,5 +14,5 @@ name: sprites
 frag: sprite.frag
 vert: sprite.vert
 Texture:
-name: kote-v-bote.jpg
+name: zeroone.png
 

@@ -160,7 +160,8 @@ void Core::WindowManager::RunLinux()
 	while (running) {
         start = timer.now();
         delta = std::chrono::duration_cast<ms>(start - end).count();
-        
+        end = timer.now();
+
         while (delta <= 1000.0f / MAX_FPS) {
             start = timer.now();
             delta = std::chrono::duration_cast<ms>(start - end).count();
@@ -177,7 +178,6 @@ void Core::WindowManager::RunLinux()
 			xcb_key_symbols_free(KeySymbols);
 		}
         
-        end = timer.now();
 	//	printf("%f DELTA\n", Utils::Debug::GetInstance()->DeltaMs);
 	}
 }

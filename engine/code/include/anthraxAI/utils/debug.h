@@ -1,6 +1,8 @@
 #pragma once
 #include "anthraxAI/utils/defines.h"
+#include "anthraxAI/utils/thread.h"
 #include <fstream>
+#include <string>
 
 namespace Utils
 {
@@ -13,6 +15,10 @@ namespace Utils
         bool Bones;
         int BoneID = 0;
         bool Tracy = false;
+        int DrawCalls = 0;
+        std::string GetDrawCalls() { return std::to_string(DrawCalls); }
+        void DebugDrawCall() { DrawCalls++; }
+        void NullDrawCall() { DrawCalls = 0; }
     };
 
     static  bool IsBitSet(int state, int bit) { return (state & bit) != 0; }

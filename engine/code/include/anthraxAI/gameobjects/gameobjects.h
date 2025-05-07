@@ -61,6 +61,7 @@ namespace Keeper {
 
             virtual Type GetType() const { return SIZE; }
             virtual int GetAxis() const { return -1; }
+            virtual uint32_t CameraType() const { return -1; }
 
             virtual std::string GetModelName() const { return ""; }
             virtual std::string GetTextureName() const { return ""; }
@@ -79,7 +80,7 @@ namespace Keeper {
             virtual void SetPosition(const Vector3<float> pos) { }
             virtual void SetHandle(Keeper::Objects* id) { }
             virtual void SetVisible(bool vis) { }
-            virtual bool IsVisible() const { return false; }
+            virtual bool IsVisible() const { return true; }
             virtual bool HasAnimations() const { return false; }
 
             virtual void Update() {}

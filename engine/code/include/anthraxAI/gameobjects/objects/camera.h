@@ -3,12 +3,13 @@
 #include "anthraxAI/gameobjects/gameobjects.h"
 #include "anthraxAI/utils/mathdefines.h"
 #include "anthraxAI/gameobjects/objects/gizmo.h"
+#include <cstdint>
 
 namespace Keeper {
 class Camera : public Keeper::Objects
 {
     public:
-        enum Type {
+        enum class Type {
             EDITOR = 0,
         };
 
@@ -37,6 +38,7 @@ class Camera : public Keeper::Objects
         void SetGizmo(Keeper::Objects* gizmo) override { GizmoHandle = reinterpret_cast<Keeper::Gizmo*>(gizmo); }
 
         Keeper::Type GetType() const override { return ObjectType; }
+        uint32_t CameraType() const override { return static_cast<uint32_t>(Type); }
 
     private:
         Keeper::Type ObjectType = Keeper::Type::CAMERA;

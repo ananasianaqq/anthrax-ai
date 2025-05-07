@@ -45,6 +45,7 @@ namespace Core
             void SetSelectedID(uint32_t id) { GameObjects->SetSelectedID(id); }
             uint32_t GetSelectedID() { return GameObjects->GetSelectedID(); }
 
+            const glm::mat4& GetGlobalTransform() const { return GameModules->GetGlobalTransform(); }
         private:
             void PopulateModules();
 

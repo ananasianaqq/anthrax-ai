@@ -93,6 +93,7 @@ namespace Modules
             void SetRenderQueue(const std::string& key, RenderQueueVec& rq) { SceneModules[key].SetRenderQueue(rq); }
 
             void RestartAnimator();
+            const glm::mat4& GetGlobalTransform() const { return Animator->GetGlobalTransform(); }
 
             ScenesMap& GetSceneModules() { return SceneModules; }
             void SetCurrentScene(const std::string& str) { CurrentScene = str; }

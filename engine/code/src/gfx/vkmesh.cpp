@@ -2,6 +2,7 @@
 #include "anthraxAI/core/windowmanager.h"
 #include "anthraxAI/gfx/vkdevice.h"
 #include "anthraxAI/gfx/vkrenderer.h"
+#include <cstdio>
 
 Gfx::MeshInfo* Gfx::Mesh::GetMesh(const std::string& name)
 {
@@ -95,7 +96,8 @@ void Gfx::Mesh::CreateMesh(aiMesh* aimesh, Gfx::MeshInfo* meshinfo)
 			meshinfo->AIindices.push_back(face.mIndices[j]);
 		}
 	}
-
+    
+     meshinfo->aabb = Keeper::Collision::Create(meshinfo->Vertices);
 }
 
 void Gfx::Mesh::UpdateMesh(Gfx::MeshInfo* meshinfo)
