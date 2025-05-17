@@ -9,7 +9,7 @@ namespace Keeper
   {
         public:
             Light() {}
-            Light(const Info& info);
+            Light(const Info& info, const std::string& tag);
 
             ~Light() {}
 

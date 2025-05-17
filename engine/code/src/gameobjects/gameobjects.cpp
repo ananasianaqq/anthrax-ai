@@ -255,9 +255,15 @@ void Keeper::Base::SpawnObjects(const Keeper::Info& info)
 
 void Keeper::Base::Create(const std::vector<Keeper::Info>& info)
 {
+    int lighti = 0;
     for (const Keeper::Info& obj : info) {
         if (obj.IsLight) {
-            Create<Keeper::Light>(new Keeper::Light(obj));
+            std::string tag = obj.ParsedID;
+            if (tag.empty()) {
+                tag = "Light_" + std::to_string(lighti);
+                lighti++;
+            }
+            Create<Keeper::Light>(new Keeper::Light(obj, tag));
         }
         else if (obj.IsModel) {
             if (obj.Spawn) {

@@ -177,7 +177,7 @@ void Core::WindowManager::RunLinux()
 		if (Utils::IsBitSet(Engine::GetInstance()->GetState(), ENGINE_STATE_EXIT)) {
 			xcb_key_symbols_free(KeySymbols);
 		}
-        
+       
 	//	printf("%f DELTA\n", Utils::Debug::GetInstance()->DeltaMs);
 	}
 }

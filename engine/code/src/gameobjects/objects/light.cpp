@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <unordered_map>
 
-Keeper::Light::Light(const Info& info)
+Keeper::Light::Light(const Info& info, const std::string& tag)
     : Objects(info)
 {
     Position = info.Position;
@@ -17,7 +17,7 @@ Keeper::Light::Light(const Info& info)
     MaterialName = info.Material;
     Vertex = info.Vertex;
     Fragment = info.Fragment;
-    ParsedID = info.ParsedID;
+    ParsedID = tag;
 
     PrintInfo();
 }

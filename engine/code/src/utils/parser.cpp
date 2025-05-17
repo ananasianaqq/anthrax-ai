@@ -31,13 +31,26 @@ void Utils::Parser::Write(const std::string& filename)
     write.open(LEVEL_PATH + filename);
 
     ASSERT(!write.is_open(), ("Failed to open a file " + filename).c_str());
-
+    
+    std::string separator;
     for (auto& it : Tokens) {
         if (it.second.empty()) {
-            write << it.first + ":" << std::endl;
+            if (it.first == Utils::GetValue(Utils::LEVEL_ELEMENT_OBJECT)) {
+                separator = "";
+            }
+            else {
+                separator = "\t";
+            }
+            write << separator << it.first + ":" << std::endl;
         }
         else {
-            write << it.first + ": " + it.second << std::endl;
+            if (it.first == Utils::GetValue(Utils::LEVEL_ELEMENT_SCENE)) {
+                separator = "";
+            }
+            else {
+                separator = "\t\t";
+            }
+            write << separator << it.first + ": " + it.second << std::endl;
         }
     }
     write << std::endl;
@@ -82,8 +95,8 @@ void Utils::Parser::Tokenize(std::vector<std::string>::const_iterator it)
     for (; it != File.end(); ++it) {
         if (*it == "\n" || (*it).empty()) continue;
         for (std::string::const_iterator ch = it->begin(); ch != it->end(); ++ch) {
-            while (*ch == '\0' || *ch == ' ' || *ch == '\t' || *ch == '\n') {
-                ++ch;
+            if (*ch == '\0' || *ch == ' ' || *ch == '\t' || *ch == '\n') {
+                continue;
             }
             if (*ch == ':') {
                 delimfound = true;
