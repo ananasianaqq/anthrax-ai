@@ -15,7 +15,9 @@ namespace Keeper {
 
     struct Info {
         Vector3<float> Position;
+        Vector3<float> Color;
         Vector3<float> Offset;
+        float Radius = 0.0f;
         std::string Material;
         std::string Vertex;
         std::string Fragment;
@@ -69,6 +71,8 @@ namespace Keeper {
             virtual std::string GetVertexName() const { return ""; }
             virtual std::string GetMaterialName() const { return ""; }
             virtual Vector3<float> GetPosition() const { return {0.0f, 0.0f, 0.0f}; }
+            virtual Vector3<float> GetColor() const { return {0.0f, 0.0f, 0.0f}; }
+            virtual float GetRadius() const { return 0.0f; }
             virtual const std::vector<std::string>& GetAnimations() const { return EmptyAnimations; }
 
             virtual Keeper::Objects* GetHandle() const { return nullptr; }

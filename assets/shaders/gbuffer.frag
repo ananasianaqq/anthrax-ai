@@ -40,6 +40,6 @@ void main()
 
     outfragcolor = vec4(color);
     outnormal = vec4(innormal, 1);
-    outposition = vec4(inpos);
+    outposition = vec4(inpos.xyz, 1.0f);
 
 }

@@ -56,20 +56,29 @@ int GetTextureInd() {
 int GetUniformInd() {
   return pushconstants.bindbuffer;
 }
+
+#define MAX_POINT_LIGHT 512 
 RegisterUniform(Camera, {
     vec4 viewpos;
     vec4 mousepos;
     vec4 viewport;
+    vec4 global_light_dir;
+    vec4 diffuse;
+    vec4 specular;
+    vec4 ambient;
+    vec4 point_light_pos[MAX_POINT_LIGHT];
+    vec4 point_light_color[MAX_POINT_LIGHT];
 
     mat4 model;
     mat4 view;
     mat4 proj;
     mat4 viewproj;
 
-    float time;
-    float p0;
+    float time;          
+    int point_light_size;
     float p1;
-    float p2;
+    float p2;   
+    float point_light_radius[MAX_POINT_LIGHT];
 });
 
 #define DEPTH_ARRAY_SCALE 512

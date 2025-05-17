@@ -1,5 +1,43 @@
 Scene: models
 Object:
+ID: light
+Light:
+name: sphere.obj
+Position:
+x: 0.669998
+y: 4.647874
+z: 15.758353
+Color:
+x: 1
+y: 0
+z: 0
+Radius: 5.0
+Material:
+name: models
+frag: model.frag
+vert: model.vert
+Texture:
+name: dummy.png
+Object:
+ID: light2
+Light:
+name: sphere.obj
+Position:
+x: 5.669998
+y: 4.647874
+z: 15.758353
+Color:
+x: 0
+y: 0
+z: 1
+Radius: 5.0
+Material:
+name: models
+frag: model.frag
+vert: model.vert
+Texture:
+name: dummy.png
+Object:
 ID: monkey
 Position:
 x: -0.054349
@@ -50,15 +88,15 @@ name: Catwalk.dae
 Object:
 ID: anim-dancing
 Position:
-x: 0.000000
-y: 2.000000
-z: 10.0
+x: -0.040289
+y: 0.340528
+z: 0.412378
 Material:
 name: models
 frag: model.frag
 vert: model.vert
 Texture:
-name: MocapSuit02_diffuse.png
+name: dummy.png
 Model:
 name: DancingTwerk.dae
 Animation:

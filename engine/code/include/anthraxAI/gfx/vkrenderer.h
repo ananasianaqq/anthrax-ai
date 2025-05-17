@@ -105,6 +105,16 @@ namespace Gfx
 
             TracyVkCtx GetTracyContext() { return Tracy.Context[GetFrameInd()]; }
             VkCommandBuffer GetTracyCmd() { return Tracy.Cmd; }
+
+            void SetGlobalLightDir(glm::vec3 dir) { LightData.GlobalDirection = dir; }
+            glm::vec3 GetGlobalLightDir() { return LightData.GlobalDirection; }
+            void SetAmbient(glm::vec3 a) { LightData.Ambient = a; }
+            glm::vec3 GetAmbient() { return LightData.Ambient; }
+            void SetSpecular(glm::vec3 a) { LightData.Specular = a; }
+            glm::vec3 GetSpecular() { return LightData.Specular; }
+            void SetDiffuse(glm::vec3 a) { LightData.Diffuse = a; }
+            glm::vec3 GetDiffuse() { return LightData.Diffuse; }
+
         private:
             RenderTarget* RTs[RT_SIZE];
             TexturesMap Textures;
@@ -112,6 +122,7 @@ namespace Gfx
             StorageData StorageBuffer;
             InstanceData InstanceBuffer;
             CameraData 	CamData;
+            LightsData LightData;
             UploadContext Upload;
 
             TracyInfo Tracy;

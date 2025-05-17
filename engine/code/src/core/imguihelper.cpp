@@ -193,6 +193,11 @@ void Core::ImGuiHelper::InitUIElements()
         Add(rendertab, UI::Element(UI::COMBO, "Render Targets", false, Gfx::Renderer::GetInstance()->GetRTList(), [](std::string tag) -> void { ImGuiHelper::GetInstance()->SetDebugRT(tag); }, true));
         Add(rendertab, UI::Element(UI::DEBUG_IMAGE, "image", false));
         Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
+        Add(rendertab, UI::Element(UI::TEXT, "Lighting"));
+        Add(rendertab, UI::Element(UI::SLIDER_3, "Global Light Dir", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetGlobalLightDir(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetGlobalLightDir(); } ));
+        Add(rendertab, UI::Element(UI::SLIDER_3, "Ambient", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetAmbient(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetAmbient(); } ));
+        Add(rendertab, UI::Element(UI::SLIDER_3, "Specular", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetSpecular(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetSpecular(); } ));
+        Add(rendertab, UI::Element(UI::SLIDER_3, "Diffuse", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetDiffuse(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetDiffuse(); } ));
     }
 
     {
@@ -202,7 +207,7 @@ void Core::ImGuiHelper::InitUIElements()
         Add(audiotab, UI::Element(UI::TEXT, "Current Sound:", false, []() -> std::string { return Core::Audio::GetInstance()->GetCurrentSound(); } ));
         Add(audiotab, UI::Element(UI::SEPARATOR, "sep"));
         Add(audiotab, UI::Element(UI::CHECKBOX, "play", false, nullptr, [](bool visible) -> void {  Core::Audio::GetInstance()->SetState(visible); }));
-        Add(audiotab, UI::Element(UI::SLIDER, "volume", false, [](float volume) -> float { Core::Audio::GetInstance()->SetVolume(volume); return 0.0f; }));
+        Add(audiotab, UI::Element(UI::SLIDER, "volume", false, [](float volume) -> float { Core::Audio::GetInstance()->SetVolume(volume); return 0.0f; }, []() -> float { return Core::Audio::GetInstance()->GetVolume(); } ));
     }
 
     {
@@ -234,6 +239,9 @@ Keeper::Objects* Core::ImGuiHelper::ParseObjectID(const std::string& id)
     }
     else if (id.find("NPC:") != std::string::npos) {
         type = Keeper::Type::NPC;
+    }
+    else if (id.find("Light:") != std::string::npos) {
+        type = Keeper::Type::LIGHT;
     }
     else {
         type = Keeper::Type::SPRITE;
@@ -472,10 +480,19 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
             ImGui::Separator();
             break;
         case UI::SLIDER: {
-            static float vol = 0.0;
-            ImGui::SliderFloat(element.GetLabel().c_str(), &vol, 0.0f, 1.0f);
+            float arg = element.DefinitionFloat();
+            ImGui::SliderFloat(element.GetLabel().c_str(), &arg, 0.0f, 1.0f);
             if (element.DefinitionFloatArg) {
-            element.DefinitionFloatArg(vol);
+                element.DefinitionFloatArg(arg);
+            }
+            break;
+        }
+        case UI::SLIDER_3: {
+            glm::vec3 arg = element.GetDefinitionFloat3Arg();
+            float v[3] = { arg.x, arg.y, arg.z };
+            ImGui::SliderFloat3(element.GetLabel().c_str(), v, -1.0f, 1.0f);
+            if (element.DefinitionFloat3Arg) {
+                element.DefinitionFloat3Arg(glm::vec3(v[0], v[1], v[2]));
             }
             break;
         }

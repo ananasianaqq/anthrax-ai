@@ -14,7 +14,8 @@ namespace Core
 
             void Init();
             void Load(const std::string& name);
-            void SetVolume(float volume) { alSourcef(Source, AL_GAIN, volume); }
+            void SetVolume(float volume) { Volume = volume; alSourcef(Source, AL_GAIN, volume); }
+            float GetVolume() { return Volume; }
 
             void Play();
 
@@ -29,6 +30,7 @@ namespace Core
             ALuint Buffer;
             ALint State;
             ALuint Source;
+            float Volume = 0.0f;
             std::string CurrentSound;
 
             std::vector<std::string> AudioNames;

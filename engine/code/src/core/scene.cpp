@@ -10,6 +10,7 @@
 #include "anthraxAI/gfx/vkrenderer.h"
 #include "anthraxAI/gfx/model.h"
 #include "anthraxAI/utils/debug.h"
+#include "anthraxAI/utils/parser.h"
 #include "anthraxAI/utils/thread.h"
 #include "anthraxAI/utils/tracy.h"
 #include <cstdint>
@@ -289,7 +290,6 @@ void Core::Scene::Init()
     GameObjects = new Keeper::Base;
     GameObjects->Create<Keeper::Camera>(new Keeper::Camera(Keeper::Camera::Type::EDITOR, {1.0f, 1.0f, 3.0f}));
     EditorCamera = reinterpret_cast<Keeper::Camera*>(*(GameObjects->Get(Keeper::Type::CAMERA).begin()));
-
 }
 
 void Core::Scene::InitModules()
@@ -495,6 +495,15 @@ void Core::Scene::LoadScene(const std::string& filename)
             info.Position = { xpos, ypos, zpos };
         }
 
+        Utils::NodeIt color = Parse.GetChild(node, Utils::LEVEL_ELEMENT_COLOR);
+        if (Parse.IsNodeValid(color)) {
+            xpos = Parse.GetElement<float>(color, Utils::LEVEL_ELEMENT_X, 0.0);
+            ypos = Parse.GetElement<float>(color, Utils::LEVEL_ELEMENT_Y, 0.0);
+            zpos = Parse.GetElement<float>(color, Utils::LEVEL_ELEMENT_Z, 0.0);
+            info.Color = { xpos, ypos, zpos };
+        }
+
+
         Utils::NodeIt spawn = Parse.GetChild(node, Utils::LEVEL_ELEMENT_SPAWN);
         if (Parse.IsNodeValid(spawn)) {
             xpos = Parse.GetElement<float>(spawn, Utils::LEVEL_ELEMENT_X, 0.0);
@@ -525,6 +534,7 @@ void Core::Scene::LoadScene(const std::string& filename)
         if (Parse.IsNodeValid(light)) {
             info.Model = Parse.GetElement<std::string>(light, Utils::LEVEL_ELEMENT_NAME, "");
             info.IsLight = true;
+            info.Radius = Parse.GetElement<float>(light, Utils::LEVEL_ELEMENT_RADIUS, 0.0f);
         }
 
 

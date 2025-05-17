@@ -259,7 +259,7 @@ void Keeper::Base::Create(const std::vector<Keeper::Info>& info)
         if (obj.IsLight) {
             Create<Keeper::Light>(new Keeper::Light(obj));
         }
-        if (obj.IsModel) {
+        else if (obj.IsModel) {
             if (obj.Spawn) {
                 SpawnObjects(obj);
             }

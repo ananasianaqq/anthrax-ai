@@ -10,6 +10,8 @@ Keeper::Light::Light(const Info& info)
     : Objects(info)
 {
     Position = info.Position;
+    Color = info.Color;
+    Radius = info.Radius;
     ModelName = info.Model;
     TextureName = info.Texture;
     MaterialName = info.Material;

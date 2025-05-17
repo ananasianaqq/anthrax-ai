@@ -24,6 +24,9 @@ namespace Keeper
 
             Keeper::Objects* GetGizmo() const override { return  reinterpret_cast<Keeper::Objects*>(GizmoHandle);}
             Vector3<float> GetPosition() const override { return Position; }
+            Vector3<float> GetColor() const override { return Color; }
+            float GetRadius() const override { return Radius; }
+
             std::string GetModelName() const override { return ModelName; }
             std::string GetTextureName() const override { return TextureName; }
             std::string GetMaterialName() const override { return MaterialName; }
@@ -35,7 +38,8 @@ namespace Keeper
             Keeper::Type ObjectType = Type::LIGHT;
 
             Vector3<float> Position;
-
+            Vector3<float> Color;
+            float Radius;
             bool ResetMouse = false;
 
             std::string ParsedID = "";

@@ -1,5 +1,6 @@
 #include "anthraxAI/gfx/vkrenderer.h"
 #include "anthraxAI/core/scene.h"
+#include "anthraxAI/gameobjects/gameobjects.h"
 #include "anthraxAI/gfx/bufferhelper.h"
 #include "anthraxAI/gfx/renderhelpers.h"
 #include "anthraxAI/gfx/vkdevice.h"
@@ -697,10 +698,27 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
 	CamData.view = view;
 	CamData.viewproj = projection * view;
 	CamData.viewpos = glm::vec4(camera.GetPos(), 1.0);
+    //printf("%f|%f|%f\n", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
 	CamData.mousepos = { Core::WindowManager::GetInstance()->GetMousePos().x, Core::WindowManager::GetInstance()->GetMousePos().y, 0, 0};
 	CamData.viewport = /*{ Gfx::Device::GetInstance()->GetSwapchainSize().x, Gfx::Device::GetInstance()->GetSwapchainSize().y , 0, 0 };*/{ Core::WindowManager::GetInstance()->GetScreenResolution().x ,Core::WindowManager::GetInstance()->GetScreenResolution().y, 0, 0};
     CamData.time = static_cast<float>(Engine::GetInstance()->GetTimeSinceStart()) / 1000.0;
-
+        
+    CamData.global_light_dir = glm::vec4(LightData.GlobalDirection, 1.0);
+    CamData.specular = glm::vec4(LightData.Specular, 1.0);
+    CamData.diffuse = glm::vec4(LightData.Diffuse, 1.0);
+    CamData.ambient = glm::vec4(LightData.Ambient, 1.0);
+   
+    Keeper::GameObjectsMap map = Core::Scene::GetInstance()->GetGameObjects()->GetObjects();
+    int i = 0;
+    for (Keeper::Objects* obj :  map[Keeper::Type::LIGHT]) {
+        if (i < MAX_POINT_LIGHT) {
+            CamData.point_light_pos[i] = glm::vec4(obj->GetPosition().x, obj->GetPosition().y, obj->GetPosition().z, 0.0f);
+            CamData.point_light_color[i] = glm::vec4(obj->GetColor().x, obj->GetColor().y, obj->GetColor().z, 0.0f);
+            CamData.point_light_radius[i] = obj->GetRadius();
+            i++;
+        }
+    }
+    CamData.point_light_size = i;
     const size_t buffersize = (sizeof(CameraData));
     BufferHelper::MapMemory(Gfx::DescriptorsBase::GetInstance()->GetCameraUBO(GetFrameInd()), buffersize, 0, &CamData);
 }

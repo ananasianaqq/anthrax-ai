@@ -14,6 +14,8 @@ namespace Utils
     X(LEVEL_ELEMENT_SCENE, "Scene") \
     X(LEVEL_ELEMENT_OBJECT, "Object") \
     X(LEVEL_ELEMENT_POSITION, "Position") \
+    X(LEVEL_ELEMENT_COLOR, "Color") \
+    X(LEVEL_ELEMENT_RADIUS, "Radius") \
     X(LEVEL_ELEMENT_SPAWN, "Spawn") \
     X(LEVEL_ELEMENT_AMOUNT, "Amount") \
     X(LEVEL_ELEMENT_ID, "ID") \

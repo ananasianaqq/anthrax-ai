@@ -3,6 +3,7 @@
 #include "anthraxAI/gfx/vkdevicehelper.h"
 #include "anthraxAI/utils/tracy.h"
 #include <cstdio>
+#include <vector>
 
 void Gfx::Device::Init()
 {
@@ -36,13 +37,35 @@ void Gfx::Device::CreatePhysicalDevice()
 	ASSERT((devicecount == 0), "failed to find GPUs with Vulkan support!");
 	std::vector<VkPhysicalDevice> devices(devicecount);
 	vkEnumeratePhysicalDevices(Gfx::Vulkan::GetInstance()->GetVkInstance(), &devicecount, devices.data());
-
+    
+    const int dev_checks = 2;
+    std::map<VkPhysicalDevice, std::vector<bool>> supported;
 	for (const auto &dev : devices) {
-		if (IsDeviceSuitable(dev)) {
-			PhysicalDevice = dev;
-			break;
-		}
+        VkPhysicalDeviceProperties props;
+	    vkGetPhysicalDeviceProperties(dev, &props);
+        
+        supported[dev] = { props.deviceType == VkPhysicalDeviceType::VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU, IsDeviceSuitable(dev) };
+
 	}
+    
+    std::map<int, VkPhysicalDevice> priority;
+    for (auto& it : supported) {
+        
+        if (it.second[0] && it.second[1]) {
+            priority[0] = it.first;
+        }
+        else if (!it.second[0] && it.second[1]) {
+            priority[1] = it.first;
+        }
+    }
+    auto it_0 = priority.find(0);
+    auto it_1 = priority.find(1);
+    if (it_0 != priority.end()) {
+        PhysicalDevice = it_0->second;
+    }
+    else {
+        PhysicalDevice = it_1->second;
+    }
 	VkPhysicalDeviceProperties props;
 	vkGetPhysicalDeviceProperties(PhysicalDevice, &props);
 	std::cout << "\nDevice: " << props.deviceName << '\n';

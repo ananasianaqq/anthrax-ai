@@ -28,6 +28,7 @@ namespace UI
         TREE,
         IMAGE,
         SLIDER,
+        SLIDER_3,
         DEBUG_IMAGE,
     };
 
@@ -51,8 +52,11 @@ namespace UI
             Element(ElementType type, const std::string& label, bool isdyn, T t, Args... args, std::function<void (bool)> func)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionBool(func) { EvaluateArgs(t, args...); }
 
-            Element(ElementType type, const std::string& label, bool isdyn, std::function<float (float)> func)
-            : Type(type), Label(label), IsDynamic(isdyn), DefinitionFloatArg(func) {  }
+            Element(ElementType type, const std::string& label, bool isdyn, std::function<float (float)> func, std::function<float ()>  arg)
+            : Type(type), Label(label), IsDynamic(isdyn), DefinitionFloatArg(func), DefinitionFloat(arg) {  }
+            
+            Element(ElementType type, const std::string& label, bool isdyn, std::function<void (glm::vec3)> func, std::function<glm::vec3 ()>  arg)
+            : Type(type), Label(label), IsDynamic(isdyn), DefinitionFloat3Arg(func), GetDefinitionFloat3Arg(arg) {  }
 
             Element(ElementType type, const std::string& label, bool isdyn,std::function<float ()> func)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionFloat(func) { }
@@ -72,7 +76,9 @@ namespace UI
             std::function<bool ()> DefinitionBoolRet;
             std::function<void (bool)> DefinitionBool;
             std::function<float (float)> DefinitionFloatArg;
+            std::function<void (glm::vec3)> DefinitionFloat3Arg;
             std::function<float ()> DefinitionFloat;
+            std::function<glm::vec3 ()> GetDefinitionFloat3Arg;
             std::function<std::string ()> DefinitionString;
 
             inline bool operator<(const UI::Element& elem) const { return GetID() < elem.GetID(); }
@@ -100,7 +106,7 @@ namespace UI
             std::string Label;
             bool IsDynamic = false;
             bool Checkbox = true;
-};
+    };
 
     class Window
     {

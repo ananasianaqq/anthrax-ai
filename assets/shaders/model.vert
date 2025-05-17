@@ -2,7 +2,7 @@
 
 #include "defines/vertdef.h"
 #include "defines/defines.h"
-#extension GL_EXT_debug_printf : enable
+//#extension GL_EXT_debug_printf : enable
 
 void main()
 {
@@ -21,10 +21,12 @@ void main()
     vec4 position = bonetransforms * vec4(vposition.xyz, 1.0f);
     gl_Position = rendermatrix * position;
 
-    debugPrintfEXT("instanceIndex=%d | %d\n", gl_BaseInstance, GetUniformInd());
-    outnormal = vnormal;
+   // debugPrintfEXT("instanceIndex=%d | %d\n", gl_BaseInstance, GetUniformInd());
     outcoord = vuv;
     outweight = vweight;
     outboneid = vboneid;
-    outpos = vec4(vposition.xyz, 1.0f);//GetResource(Camera, pushconstants.bindbuffer).model * vec4(vposition, 1.0);
+    mat4 m = GetResource(Instance, GetInstanceInd()).instances[gl_BaseInstance].rendermatrix;
+    vec4 p = m * vec4(vposition.xyz, 1.0);
+    outpos = p;
+    outnormal = vec4(GetResource(Instance, GetInstanceInd()).instances[gl_BaseInstance].rendermatrix * vec4(vnormal, 0.0f)).xyz;//mat3(transpose(inverse( GetResource(Instance, GetInstanceInd()).instances[gl_BaseInstance].rendermatrix))) * vnormal;
 }
