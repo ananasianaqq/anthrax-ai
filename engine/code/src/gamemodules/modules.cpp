@@ -43,7 +43,7 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
     module.SetTag(key);
 
     Gfx::RenderObject rqobj;
-    rqobj.Position = {0.0f};
+    rqobj.Position = Vector3<float>(0.0f);
     rqobj.MaterialName = info.Material;
     rqobj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(info.Material);
     if (info.Texture == "mask") {

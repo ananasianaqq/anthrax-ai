@@ -18,6 +18,7 @@ namespace UI
     enum ElementType
     {
         TEXT,
+        TEXT_ENTER,
         BUTTON,
         SEPARATOR,
         TAB,
@@ -30,6 +31,8 @@ namespace UI
         SLIDER,
         SLIDER_3,
         DEBUG_IMAGE,
+        ADD_OBJECT,
+        SAVE_OBJECT,
     };
 
     class Element
@@ -46,8 +49,7 @@ namespace UI
             template<typename T, typename... Args>
             Element(ElementType type, const std::string& label, bool isdyn, T t, Args... args, std::function<void (std::string, const UI::Element& elem)> func, bool addempty = false)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionWithElem(func), AddEmpty(addempty) { EvaluateArgs(t, args...); }
-
-
+            
             template<typename T, typename... Args>
             Element(ElementType type, const std::string& label, bool isdyn, T t, Args... args, std::function<void (bool)> func)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionBool(func) { EvaluateArgs(t, args...); }
@@ -63,16 +65,21 @@ namespace UI
 
             Element(ElementType type, const std::string& label, bool isdyn, std::function<std::string ()> func)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionString(func) { }
+            
+            Element(ElementType type, const std::string& label, bool isdyn, std::function<void (std::string)> func, std::function<std::string ()> get_func)
+            : Type(type), Label(label), IsDynamic(isdyn), Definition(func), DefinitionString(get_func) { }
+
 
             int GetID() const { return ID; }
             ElementType GetType() const { return Type; }
-            std::string GetLabel() const { return Label; }
+            const std::string& GetLabel() const { return Label; }
             bool IsUIDynamic() const { return IsDynamic; }
 
             std::vector<std::string> GetComboList() { return ComboList;}
 
             std::function<void (std::string, const UI::Element& elem)> DefinitionWithElem;
             std::function<void (std::string)> Definition;
+            std::function<void ()> DefinitionVoid;
             std::function<bool ()> DefinitionBoolRet;
             std::function<void (bool)> DefinitionBool;
             std::function<float (float)> DefinitionFloatArg;
@@ -87,7 +94,7 @@ namespace UI
 
             int ComboInd = 0;
             bool AddEmpty = false;
-
+            
             void ClearComboList() { ComboList.clear(); }
 
         private:
@@ -108,27 +115,38 @@ namespace UI
             bool Checkbox = true;
     };
 
+    //typedef std::map<std::string, std::vector<Element>>
+    typedef std::vector<Element> UIElementsMap;
+    typedef std::map<Element, std::vector<Element>> UITabsElementsMap;
     class Window
     {
         public:
-            Window(const std::string& name, Vector2<float> size, Vector2<float>pos, ImGuiWindowFlags flags)
-            : Name(name), Size(size), Position(pos), Flags(flags) {}
+            Window(const std::string& name, Vector2<float> size, Vector2<float>pos, ImGuiWindowFlags flags, bool active = true)
+            : Name(name), Size(size), Position(pos), Flags(flags), Active(active) { UIElements.reserve(100); }
+            Window() {}
 
             ImGuiWindowFlags GetFlags() const { return Flags; }
-            std::string GetName() const { return Name; }
+            const std::string& GetName() const { return Name; }
+            bool IsActive() const { return Active; }
+            void SetActive(bool active) { Active = active; }
             float GetSizeX() const { return Size.x; }
             float GetSizeY() const { return Size.y; }
             float GetPosX() const { return Position.x; }
             float GetPosY() const { return Position.y; }
+            void Add(const UI::Element& element) { UIElements.emplace_back(element); }
+            void Add(UI::Element tab, const UI::Element& element) { UITabs[tab].emplace_back(element); }
+            UI::UITabsElementsMap& GetUITabs() { return UITabs; }
+            UI::UIElementsMap& GetUIElements() { return UIElements; }
         private:
             Vector2<float> Size;
             Vector2<float> Position;
             ImGuiWindowFlags Flags;
             std::string Name;
+            UI::UITabsElementsMap UITabs;
+            UI::UIElementsMap UIElements;
+            bool Active;
     };
 
-    typedef std::map<Element, std::vector<Element>> UITabsElementsMap;
-    typedef std::map<std::string, std::vector<Element>> UIElementsMap;
     typedef std::map<std::string, std::vector<Window>> UIWindowsMap;
 }
 
@@ -149,9 +167,7 @@ namespace Core
             void UpdateFrame();
             void SetDebugRT(const std::string& rt) { DebugRT = rt; }
 
-            void Add(UI::Element tab, const UI::Element& element) { UITabs[tab].emplace_back(element); }
             void Add(const std::string& scene, const UI::Window& window) { UIWindows[scene].emplace_back(window); }
-            void Add(const std::string& scene, const UI::Element& element) { UIElements[scene].emplace_back(element); }
 #ifdef AAI_LINUX
             void CatchEvent(xcb_generic_event_t *event) { ImGui_ImplX11_Event(event); }
 #endif
@@ -173,13 +189,14 @@ namespace Core
             void Tree(UI::Element& element);
             void ListBox(UI::Element& element);
             void ProcessUI(UI::Element& element);
+            void AddObject();
 
             ImGuiStyle 	EditorStyle;
-            std::string EditorWindow;
+            std::string EditorName;
+            std::string NewObjectName;
             std::string SelectedElement;
-            UI::UITabsElementsMap UITabs;
-            UI::UIElementsMap UIElements;
             UI::UIWindowsMap UIWindows;
+            UI::Window* Editor;
 
             TextureForUpdate TextureUpdateInfo;
             bool TextureUpdate = false;

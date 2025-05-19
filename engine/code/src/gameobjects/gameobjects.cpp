@@ -116,7 +116,7 @@ Keeper::Base::Base()
     info.IsModel = true;
     info.Model = "axisy.obj";
     info.Material = "gizmo";
-    info.Position = {0.0};
+    info.Position = Vector3<float>(0.0f);
     info.Texture = "dummy.png";
 
     GizmoInfo[Keeper::Gizmo::Type::Y] = info;
@@ -128,7 +128,7 @@ Keeper::Base::Base()
 
     Keeper::Info modules;
     modules.IsModel = false;
-    modules.Position = {0.0f, 0.0f, 0.0f};
+    modules.Position = Vector3<float>(0.0f, 0.0f, 0.0f);
     modules.Material = "intro";
     modules.Mesh = "dummy";
     DefaultObjects[Infos::INFO_INTRO] = modules;
@@ -242,7 +242,7 @@ void Keeper::Base::SpawnObjects(const Keeper::Info& info)
     for (float x = info.Position.x; x < offsets.x; x += 1.0f ) {
         for (float y = info.Position.y; y < offsets.y; y += 1.0f ) {
             for (float z = info.Position.z; z < offsets.z; z += 1.0f ) {
-                spawn.Position = { x, y, z };
+                spawn.Position = Vector3<float>( x, y, z );
                 if (!spawn.ParsedID.empty()) {
                     spawn.ParsedID = info.ParsedID + "_" + std::to_string(i);
                     i++;

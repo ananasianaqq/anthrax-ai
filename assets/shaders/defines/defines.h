@@ -68,7 +68,8 @@ RegisterUniform(Camera, {
     vec4 ambient;
     vec4 point_light_pos[MAX_POINT_LIGHT];
     vec4 point_light_color[MAX_POINT_LIGHT];
-
+    vec4 point_light_radius[MAX_POINT_LIGHT];
+    
     mat4 model;
     mat4 view;
     mat4 proj;
@@ -78,7 +79,6 @@ RegisterUniform(Camera, {
     int point_light_size;
     float p1;
     float p2;   
-    float point_light_radius[MAX_POINT_LIGHT];
 });
 
 #define DEPTH_ARRAY_SCALE 512

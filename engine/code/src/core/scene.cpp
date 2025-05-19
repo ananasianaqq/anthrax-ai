@@ -492,7 +492,7 @@ void Core::Scene::LoadScene(const std::string& filename)
             xpos = Parse.GetElement<float>(position, Utils::LEVEL_ELEMENT_X, 0.0);
             ypos = Parse.GetElement<float>(position, Utils::LEVEL_ELEMENT_Y, 0.0);
             zpos = Parse.GetElement<float>(position, Utils::LEVEL_ELEMENT_Z, 0.0);
-            info.Position = { xpos, ypos, zpos };
+            info.Position = Vector3<float>( xpos, ypos, zpos );
         }
 
         Utils::NodeIt color = Parse.GetChild(node, Utils::LEVEL_ELEMENT_COLOR);
@@ -500,7 +500,7 @@ void Core::Scene::LoadScene(const std::string& filename)
             xpos = Parse.GetElement<float>(color, Utils::LEVEL_ELEMENT_X, 0.0);
             ypos = Parse.GetElement<float>(color, Utils::LEVEL_ELEMENT_Y, 0.0);
             zpos = Parse.GetElement<float>(color, Utils::LEVEL_ELEMENT_Z, 0.0);
-            info.Color = { xpos, ypos, zpos };
+            info.Color = Vector3<float>( xpos, ypos, zpos );
         }
 
 
@@ -510,7 +510,7 @@ void Core::Scene::LoadScene(const std::string& filename)
             ypos = Parse.GetElement<float>(spawn, Utils::LEVEL_ELEMENT_Y, 0.0);
             zpos = Parse.GetElement<float>(spawn, Utils::LEVEL_ELEMENT_Z, 0.0);
             int size = Parse.GetElement<float>(spawn, Utils::LEVEL_ELEMENT_AMOUNT, 0);
-            info.Offset = { xpos, ypos, zpos };
+            info.Offset = Vector3<float>(xpos, ypos, zpos);
             info.Spawn = true;
         }
 
@@ -534,9 +534,8 @@ void Core::Scene::LoadScene(const std::string& filename)
         if (Parse.IsNodeValid(light)) {
             info.Model = Parse.GetElement<std::string>(light, Utils::LEVEL_ELEMENT_NAME, "");
             info.IsLight = true;
-            info.Radius = Parse.GetElement<float>(light, Utils::LEVEL_ELEMENT_RADIUS, 0.0f);
+            info.LightType = Parse.GetElement<std::string>(light, Utils::LEVEL_ELEMENT_TYPE, "");
         }
-
 
         Utils::NodeIt anim = Parse.GetChild(model, Utils::LEVEL_ELEMENT_ANIMATION);
         info.Animations.reserve(10);

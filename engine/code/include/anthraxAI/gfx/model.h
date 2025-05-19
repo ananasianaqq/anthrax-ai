@@ -66,6 +66,7 @@ namespace Gfx
             void LoadModels();
             void LoadModel(const std::string& path);
             ModelInfo* GetModel(const std::string& path);
+            const std::vector<std::string>& GetModelNames() const { return ModelNames; }         
 
             void CleanAll();
 
@@ -74,7 +75,8 @@ namespace Gfx
             void ProcessNode(const std::string& path, aiNode *node, const aiScene *scene);
 
             void SetVertexBoneData(Gfx::Vertex& vert, int id, float weight);
-
+            
+            std::vector<std::string> ModelNames;
             ModelsMap Models;
             int TotalVertex = 0;
             int BoneCounter = 0;

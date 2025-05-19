@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <unordered_map>
 #include <shaderc/shaderc.hpp>
+#include <vector>
 
 namespace Gfx
 {
@@ -33,6 +34,7 @@ namespace Gfx
     {
         public:
             Material* GetMaterial(const std::string& name);
+            const std::vector<std::string>& GetMaterialNames() { return MaterialNames; } 
             void Build();
 
             void CompileShader(const std::string& name, shaderc_shader_kind kind, std::string& data);
@@ -60,7 +62,8 @@ namespace Gfx
             void Setup(Gfx::RenderTargetsList id);
             void GetVertexDescription();
             VkPipelineVertexInputStateCreateInfo VertexInputStageCreateInfo();
-
+            
+            std::vector<std::string> MaterialNames;
             std::unordered_map<std::string,Material> Materials;
     };
 

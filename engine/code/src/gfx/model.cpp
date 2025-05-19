@@ -84,6 +84,9 @@ void Gfx::Model::CleanAll()
 
 void Gfx::Model::LoadModels()
 {
+    if (ModelNames.empty()) {
+        ModelNames.reserve(100);
+    }
     std::string path = "./models/";
     Core::Scene* scene = Core::Scene::GetInstance();
     for (auto& it : scene->GetGameObjects()->GetObjects()) {
@@ -93,6 +96,7 @@ void Gfx::Model::LoadModels()
                 continue; ;
             }
             LoadModel(path + info->GetModelName());
+            ModelNames.push_back(info->GetModelName());
         }
     }
 }

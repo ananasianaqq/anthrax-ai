@@ -3,6 +3,7 @@
 #include "anthraxAI/gamemodules/modules.h"
 #include "anthraxAI/gameobjects/gameobjects.h"
 #include "anthraxAI/gfx/renderhelpers.h"
+#include "anthraxAI/utils/mathdefines.h"
 #include "anthraxAI/utils/parser.h"
 #include "anthraxAI/utils/thread.h"
 
@@ -36,6 +37,17 @@ namespace Core
 
             Keeper::Camera& GetCamera() { return *EditorCamera; }
             const Keeper::Base* GetGameObjects() const { return GameObjects; }
+            void SetNewObjectParsedID(const std::string& str) { GameObjects->NewObjectInfo.ParsedID = str; }
+            const std::string& GetNewObjectParsedID() { return GameObjects->NewObjectInfo.ParsedID; }
+            void SetNewObjectPosition(glm::vec3 position) { GameObjects->NewObjectInfo.Position = position; }
+            glm::vec3 GetNewObjectPosition() { return GameObjects->NewObjectInfo.Position.convert(); }
+            void SetNewObjectTexture(const std::string& str) { GameObjects->NewObjectInfo.Texture = str; }
+            const std::string& GetNewObjectTexture() { return GameObjects->NewObjectInfo.Texture; }
+            void SetNewObjectMaterial(const std::string& str) { GameObjects->NewObjectInfo.Material = str; }
+            const std::string& GetNewObjectMaterial() { return GameObjects->NewObjectInfo.Material; }
+            void SetNewObjectModel(const std::string& str) { GameObjects->NewObjectInfo.Model = str; }
+            void SaveObject() { GameObjects->Create<Keeper::Npc>(new Keeper::Npc(GameObjects->NewObjectInfo)); }        
+
             void ReloadResources();
             void ParseSceneNames();
             const std::vector<std::string>& GetSceneNames() const { return SceneNames; }

@@ -27,6 +27,7 @@ namespace Utils
     X(LEVEL_ELEMENT_NAME, "name") \
     X(LEVEL_ELEMENT_FRAG, "frag") \
     X(LEVEL_ELEMENT_VERT, "vert") \
+    X(LEVEL_ELEMENT_TYPE, "type") \
     X(LEVEL_ELEMENT_X, "x") \
     X(LEVEL_ELEMENT_Y, "y") \
     X(LEVEL_ELEMENT_Z, "z") \

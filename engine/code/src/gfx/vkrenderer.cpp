@@ -710,14 +710,26 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
    
     Keeper::GameObjectsMap map = Core::Scene::GetInstance()->GetGameObjects()->GetObjects();
     int i = 0;
+    int j = 0;
     for (Keeper::Objects* obj :  map[Keeper::Type::LIGHT]) {
         if (i < MAX_POINT_LIGHT) {
             CamData.point_light_pos[i] = glm::vec4(obj->GetPosition().x, obj->GetPosition().y, obj->GetPosition().z, 0.0f);
             CamData.point_light_color[i] = glm::vec4(obj->GetColor().x, obj->GetColor().y, obj->GetColor().z, 0.0f);
-            CamData.point_light_radius[i] = obj->GetRadius();
+            float constant = 1.0; 
+            float linear = 0.7;
+            float quadratic = 1.8;
+            float light_max = std::fmaxf(std::fmaxf(obj->GetColor().x, obj->GetColor().y), obj->GetColor().z);
+            float radius = (-linear + std::sqrtf(linear * linear - 4 * quadratic * (constant - (256.0 / 5.0) * light_max))) / (2 * quadratic);
+            if (j >= 4) {
+                j = 0;
+            }
+            CamData.point_light_radius[i][j] = radius;
+            j++;
+           // printf("%d|RADIUS %f, %f, %f, %f\n",i, radius, obj->GetColor().x, obj->GetColor().y, obj->GetColor().z);
             i++;
         }
     }
+
     CamData.point_light_size = i;
     const size_t buffersize = (sizeof(CameraData));
     BufferHelper::MapMemory(Gfx::DescriptorsBase::GetInstance()->GetCameraUBO(GetFrameInd()), buffersize, 0, &CamData);

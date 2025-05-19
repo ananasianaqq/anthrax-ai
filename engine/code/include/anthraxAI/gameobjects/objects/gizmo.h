@@ -30,11 +30,11 @@ namespace Keeper
 
             Keeper::Objects* GetHandle() const override { return Handle; }
             Vector3<float> GetPosition() const override { return Position; }
-            std::string GetModelName() const override { return ModelName; }
-            std::string GetTextureName() const override { return TextureName; }
-            std::string GetMaterialName() const override { return MaterialName; }
-            std::string GetFragmentName() const override { return Fragment; }
-            std::string GetVertexName() const override { return Vertex; }
+            const std::string& GetModelName() const override { return ModelName; }
+            const std::string& GetTextureName() const override { return TextureName; }
+            const std::string& GetMaterialName() const override { return MaterialName; }
+            const std::string& GetFragmentName() const override { return Fragment; }
+            const std::string& GetVertexName() const override { return Vertex; }
 
             void SetPosition(const Vector3<float> pos) override;
             void SetHandle(Keeper::Objects* handle) override { Handle = (handle); }

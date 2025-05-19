@@ -1,5 +1,6 @@
 #include "anthraxAI/core/imguihelper.h"
 #include "anthraxAI/core/audio.h"
+#include "anthraxAI/core/scene.h"
 #include "anthraxAI/core/windowmanager.h"
 #include "anthraxAI/gameobjects/gameobjects.h"
 #include "anthraxAI/gfx/renderhelpers.h"
@@ -7,6 +8,7 @@
 #include "anthraxAI/gfx/vkdevice.h"
 #include "anthraxAI/gfx/vkbase.h"
 #include "anthraxAI/utils/debug.h"
+#include "anthraxAI/utils/mathdefines.h"
 #include "imgui.h"
 #include <algorithm>
 #include <cctype>
@@ -109,7 +111,7 @@ void Core::ImGuiHelper::Init()
 
 	style.Colors[ImGuiCol_Text] = ImVec4(0.00f, 1.00f, 1.00f, 1.00f);
 	style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.00f, 0.40f, 0.41f, 1.00f);
-	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.00f, 1.00f);
+	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.8f);
 	style.Colors[ImGuiCol_Border] = ImVec4(0.00f, 1.00f, 1.00f, 0.65f);
 	style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
 	style.Colors[ImGuiCol_FrameBg] = ImVec4(0.44f, 0.80f, 0.80f, 0.18f);
@@ -170,65 +172,79 @@ void Core::ImGuiHelper::InitUIElements()
 {
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     const ImVec2 pos = viewport->Pos;
-    {
-        EditorWindow = "Engine ;p";
-        Add(EditorWindow, UI::Window(EditorWindow, { 400.0f, Core::WindowManager::GetInstance()->GetScreenResolution().y - 40.0f }, { pos.x, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ));
+        EditorName = "Engine ;p";
+        NewObjectName = "New Object";
+        Add(EditorName, UI::Window(EditorName, { 400.0f, Core::WindowManager::GetInstance()->GetScreenResolution().y - 40.0f }, { pos.x, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ));
+        Add(EditorName, UI::Window(NewObjectName, { 400.0f, 600.0f }, { 400.0f, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings, false));
 
+        std::string s = EditorName;
+        auto it = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s](const UI::Window& win) { return win.GetName() == s; });
+        Editor = &*it;
+
+    {
         std::string tablabel = "Editor";
         UI::Element tab(UI::TAB, tablabel);
-        Add(tab, UI::Element(UI::COMBO, "Scenes", false, Core::Scene::GetInstance()->GetSceneNames(), [](std::string tag) -> void { Core::Scene::GetInstance()->SetCurrentScene(tag); }, true));
-        Add(tab, UI::Element(UI::SEPARATOR, "tabseparator"));
-        Add(EditorWindow, UI::Element(UI::BUTTON, "Update Shaders", false, []() -> float { Gfx::Vulkan::GetInstance()->ReloadShaders(); return 0.0f; }));
-        Add(EditorWindow, UI::Element(UI::CHECKBOX, "Keep Editor", false, nullptr,[](bool show) -> void {  Core::Scene::GetInstance()->KeepEditor(show); }));
+        it->Add(tab, UI::Element(UI::COMBO, "Scenes", false, Core::Scene::GetInstance()->GetSceneNames(), [](std::string tag) -> void { Core::Scene::GetInstance()->SetCurrentScene(tag); }, true));
+        it->Add(tab, UI::Element(UI::SEPARATOR, "tabseparator"));
+        it->Add(UI::Element(UI::BUTTON, "Update Shaders", false, []() -> float { Gfx::Vulkan::GetInstance()->ReloadShaders(); return 0.0f; }));
+        it->Add(UI::Element(UI::CHECKBOX, "Keep Editor", false, nullptr,[](bool show) -> void {  Core::Scene::GetInstance()->KeepEditor(show); }));
     }
-
     {
         UI::Element scenetab(UI::TAB, "Scene");
-        Add(scenetab, UI::Element(UI::TEXT, "Name:", false, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentScene(); } ));
-        Add(scenetab, UI::Element(UI::SEPARATOR, "sep"));
+        Editor->Add(scenetab, UI::Element(UI::TEXT, "Name:", false, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentScene(); } ));
+        Editor->Add(scenetab, UI::Element(UI::SEPARATOR, "sep"));
     }
 
     {
         UI::Element rendertab(UI::TAB, "Rendering");
-        Add(rendertab, UI::Element(UI::COMBO, "Render Targets", false, Gfx::Renderer::GetInstance()->GetRTList(), [](std::string tag) -> void { ImGuiHelper::GetInstance()->SetDebugRT(tag); }, true));
-        Add(rendertab, UI::Element(UI::DEBUG_IMAGE, "image", false));
-        Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
-        Add(rendertab, UI::Element(UI::TEXT, "Lighting"));
-        Add(rendertab, UI::Element(UI::SLIDER_3, "Global Light Dir", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetGlobalLightDir(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetGlobalLightDir(); } ));
-        Add(rendertab, UI::Element(UI::SLIDER_3, "Ambient", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetAmbient(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetAmbient(); } ));
-        Add(rendertab, UI::Element(UI::SLIDER_3, "Specular", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetSpecular(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetSpecular(); } ));
-        Add(rendertab, UI::Element(UI::SLIDER_3, "Diffuse", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetDiffuse(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetDiffuse(); } ));
-    }
+        it->Add(rendertab, UI::Element(UI::COMBO, "Render Targets", false, Gfx::Renderer::GetInstance()->GetRTList(), [](std::string tag) -> void { ImGuiHelper::GetInstance()->SetDebugRT(tag); }, true));
+        it->Add(rendertab, UI::Element(UI::DEBUG_IMAGE, "image", false));
+        it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(rendertab, UI::Element(UI::TEXT, "Lighting"));
+        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Global Light Dir", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetGlobalLightDir(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetGlobalLightDir(); } ));
+        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Ambient", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetAmbient(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetAmbient(); } ));
+        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Specular", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetSpecular(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetSpecular(); } ));
+        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Diffuse", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetDiffuse(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetDiffuse(); } ));
+    }   
 
     {
         UI::Element audiotab(UI::TAB, "Audio");
-        Add(audiotab, UI::Element(UI::COMBO, "Sounds", false, Core::Audio::GetInstance()->GetAudioNames(), [](std::string tag) -> void { Core::Audio::GetInstance()->Load(tag); }, true));
-        Add(audiotab, UI::Element(UI::SEPARATOR, "sep"));
-        Add(audiotab, UI::Element(UI::TEXT, "Current Sound:", false, []() -> std::string { return Core::Audio::GetInstance()->GetCurrentSound(); } ));
-        Add(audiotab, UI::Element(UI::SEPARATOR, "sep"));
-        Add(audiotab, UI::Element(UI::CHECKBOX, "play", false, nullptr, [](bool visible) -> void {  Core::Audio::GetInstance()->SetState(visible); }));
-        Add(audiotab, UI::Element(UI::SLIDER, "volume", false, [](float volume) -> float { Core::Audio::GetInstance()->SetVolume(volume); return 0.0f; }, []() -> float { return Core::Audio::GetInstance()->GetVolume(); } ));
+        it->Add(audiotab, UI::Element(UI::COMBO, "Sounds", false, Core::Audio::GetInstance()->GetAudioNames(), [](std::string tag) -> void { Core::Audio::GetInstance()->Load(tag); }, true));
+        it->Add(audiotab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(audiotab, UI::Element(UI::TEXT, "Current Sound:", false, []() -> std::string { return Core::Audio::GetInstance()->GetCurrentSound(); } ));
+        it->Add(audiotab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(audiotab, UI::Element(UI::CHECKBOX, "play", false, nullptr, [](bool visible) -> void {  Core::Audio::GetInstance()->SetState(visible); }));
+        it->Add(audiotab, UI::Element(UI::SLIDER, "volume", false, [](float volume) -> float { Core::Audio::GetInstance()->SetVolume(volume); return 0.0f; }, []() -> float { return Core::Audio::GetInstance()->GetVolume(); } ));
     }
 
     {
         UI::Element debugtab(UI::TAB, "Debug");
-        Add(debugtab, UI::Element(UI::TEXT, "This is debug tab"));
-        Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
-        Add(debugtab, UI::Element(UI::FLOAT, "fps", false, []() -> float { return Utils::Debug::GetInstance()->FPS; }));
-        Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
-        Add(debugtab, UI::Element(UI::CHECKBOX, "3d grid", false, nullptr, [](bool visible) -> void {  Utils::Debug::GetInstance()->Grid = visible; }));
-        Add(debugtab, UI::Element(UI::CHECKBOX, "show bones weight", false, nullptr, [](bool show) -> void {  Utils::Debug::GetInstance()->Bones = show; }));
+        it->Add(debugtab, UI::Element(UI::TEXT, "This is debug tab"));
+        it->Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(debugtab, UI::Element(UI::FLOAT, "fps", false, []() -> float { return Utils::Debug::GetInstance()->FPS; }));
+        it->Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(debugtab, UI::Element(UI::CHECKBOX, "3d grid", false, nullptr, [](bool visible) -> void {  Utils::Debug::GetInstance()->Grid = visible; }));
+        it->Add(debugtab, UI::Element(UI::CHECKBOX, "show bones weight", false, nullptr, [](bool show) -> void {  Utils::Debug::GetInstance()->Bones = show; }));
+        it->Add(debugtab, UI::Element(UI::TEXT, "Threads and info"));
+        it->Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(debugtab, UI::Element(UI::TEXT, "draw calls:", false, []() -> std::string { return Utils::Debug::GetInstance()->GetDrawCalls(); }));
+        it->Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(debugtab, UI::Element(UI::TEXT, "thread:", false, []() -> std::string { return Thread::Pool::GetInstance()->Time.GetTime(Thread::Task::Name::UPDATE);}));
+        it->Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
     }
     {
-        UI::Element debugtab(UI::TAB, "Thread");
-        Add(debugtab, UI::Element(UI::TEXT, "Threads and info"));
-        Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
-        Add(debugtab, UI::Element(UI::TEXT, "draw calls:", false, []() -> std::string { return Utils::Debug::GetInstance()->GetDrawCalls(); }));
-        Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
-        Add(debugtab, UI::Element(UI::TEXT, "thread:", false, []() -> std::string { return Thread::Pool::GetInstance()->Time.GetTime(Thread::Task::Name::UPDATE);}));
-        Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
+        std::string s1 = NewObjectName;
+        auto it_obj = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s1](const UI::Window& win) { return win.GetName() == s1; });
 
+        Add(NewObjectName, UI::Window(EditorName, { 400.0f, Core::WindowManager::GetInstance()->GetScreenResolution().y - 40.0f }, { pos.x, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ));
+        it_obj->Add(UI::Element(UI::TEXT_ENTER, "Tag", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectParsedID(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectParsedID(); } ));
+        it_obj->Add(UI::Element(UI::SLIDER_3, "Position", false, [](glm::vec3 v) -> void { Scene::GetInstance()->SetNewObjectPosition(v); }, []() -> glm::vec3 { return Scene::GetInstance()->GetNewObjectPosition(); }));
+        /*it_obj->Add(UI::Element(UI::IMAGE, "Textures", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectTexture(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectTexture(); } ));*/
+        /*it_obj->Add(UI::Element(UI::COMBO, "Material", false, Gfx::Pipeline::GetInstance()->GetMaterialNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectMaterial(tag); }));*/
+        /*it_obj->Add(UI::Element(UI::COMBO, "Models", false, Gfx::Model::GetInstance()->GetModelNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectModel(tag); }));*/
+        /*it_obj->Add(UI::Element(UI::SAVE_OBJECT, "Save", false));*/
     }
+
 }
 
 Keeper::Objects* Core::ImGuiHelper::ParseObjectID(const std::string& id)
@@ -268,30 +284,31 @@ Keeper::Objects* Core::ImGuiHelper::ParseObjectID(const std::string& id)
 
 void Core::ImGuiHelper::DisplayObjectInfo(const std::string& obj, const UI::Element& elem)
 {
-    if (!IsDisplayInReset) return;
-
-    auto ui_it = std::remove_if(UITabs[elem].begin(), UITabs[elem].end(), [](const UI::Element& el) { return el.IsUIDynamic(); });
+    if (Editor->GetName().empty() || !IsDisplayInReset) return;
+    
+    auto ui_it = std::remove_if(Editor->GetUITabs()[elem].begin(), Editor->GetUITabs()[elem].end(), [](const UI::Element& el) { return el.IsUIDynamic(); });
     const Keeper::Objects* game_obj = ParseObjectID(obj);
 
-    UITabs[elem].erase(ui_it, UITabs[elem].end());
-    Add(elem, UI::Element(UI::TEXT, "Type: ", true));
-    Add(elem, UI::Element(UI::TEXT, "Position: ", true, [game_obj]() -> std::string { return game_obj->GetPosition().ToString(); } ));
-    Add(elem, UI::Element(UI::TEXT, "Texture: " + game_obj->GetTextureName(), true));
-    Add(elem, UI::Element(UI::TEXT, "Model: " + game_obj->GetModelName(), true));
+    Editor->GetUITabs()[elem].erase(ui_it, Editor->GetUITabs()[elem].end());
+    Editor->Add(elem, UI::Element(UI::TEXT, "Type: ", true));
+    Editor->Add(elem, UI::Element(UI::TEXT, "Position: ", true, [game_obj]() -> std::string { return game_obj->GetPosition().ToString(); } ));
+    Editor->Add(elem, UI::Element(UI::TEXT, "Texture: " + game_obj->GetTextureName(), true));
+    Editor->Add(elem, UI::Element(UI::TEXT, "Model: " + game_obj->GetModelName(), true));
     std::vector<std::string> s = { "Fragment: " + game_obj->GetFragmentName(), "Vertex: " + game_obj->GetVertexName() };
-    Add(elem, UI::Element(UI::TREE, "Material: " + game_obj->GetMaterialName(), true, s ,[](std::string tag) -> void { return; }, false));
+    Editor->Add(elem, UI::Element(UI::TREE, "Material: " + game_obj->GetMaterialName(), true, s ,[](std::string tag) -> void { return; }, false));
 
-    Add(elem, UI::Element(UI::SEPARATOR, "sep", true));
+    Editor->Add(elem, UI::Element(UI::SEPARATOR, "sep", true));
     if (game_obj->HasAnimations()) {
-        Add(elem, UI::Element(UI::TEXT, "Animations: ", true));
-        Add(elem, UI::Element(UI::COMBO, "list", true, game_obj->GetAnimations(), [game_obj](std::string tag) -> void { Core::Scene::GetInstance()->ReloadAnimation(game_obj->GetID(), tag); }, false));
-        Add(elem, UI::Element(UI::SEPARATOR, "sep", true));
+        Editor->Add(elem, UI::Element(UI::TEXT, "Animations: ", true));
+        Editor->Add(elem, UI::Element(UI::COMBO, "list", true, game_obj->GetAnimations(), [game_obj](std::string tag) -> void { Core::Scene::GetInstance()->ReloadAnimation(game_obj->GetID(), tag); }, false));
+        Editor->Add(elem, UI::Element(UI::SEPARATOR, "sep", true));
     }
 
-    Add(elem, UI::Element(UI::IMAGE, "Textures", true));
-       Add(elem, UI::Element(UI::SEPARATOR, "sep", true));
-    Add(elem, UI::Element(UI::BUTTON, "Update Object", true, [game_obj]() -> float { Core::Scene::GetInstance()->ExportObjectInfo(game_obj); return 0.0f; }));
-    Add(elem, UI::Element(UI::SEPARATOR, "sep", true));
+    Editor->Add(elem, UI::Element(UI::IMAGE, "Textures", true));
+    Editor->Add(elem, UI::Element(UI::SEPARATOR, "sep", true));
+    Editor->Add(elem, UI::Element(UI::BUTTON, "Update Object", true, [game_obj]() -> float { Core::Scene::GetInstance()->ExportObjectInfo(game_obj); return 0.0f; }));
+    Editor->Add(elem, UI::Element(UI::SEPARATOR, "sep", true));
+
     IsDisplayInReset = false;
 }
 
@@ -300,17 +317,19 @@ void Core::ImGuiHelper::UpdateObjectInfo()
     SelectedElement.clear();
 
     IsDisplayInReset = true;
-    for (auto& it : UITabs) {
+    for (auto& it : Editor->GetUITabs()) {
         if (it.first.GetLabel() == "Scene") {
             for (auto& elem : it.second) {
                 elem.ClearComboList();
             }
             it.second.clear();
 
-            Add(it.first, UI::Element(UI::TEXT, "Name:", false, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentScene(); } ));
-            Add(it.first, UI::Element(UI::SEPARATOR, "sep"));
-            Add(it.first, UI::Element(UI::LISTBOX, "Objects", false, Core::Scene::GetInstance()->GetGameObjects()->GetObjectNames(), [this](std::string tag, const UI::Element& elem) -> void { DisplayObjectInfo(tag, elem); }, false));
-            Add(it.first, UI::Element(UI::SEPARATOR, "sep"));
+            Editor->Add(it.first, UI::Element(UI::TEXT, "Name:", false, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentScene(); } ));
+            Editor->Add(it.first, UI::Element(UI::SEPARATOR, "sep"));
+            Editor->Add(it.first, UI::Element(UI::LISTBOX, "Objects", false, Core::Scene::GetInstance()->GetGameObjects()->GetObjectNames(), [this](std::string tag, const UI::Element& elem) -> void { DisplayObjectInfo(tag, elem); }, false));
+            Editor->Add(it.first, UI::Element(UI::SEPARATOR, "sep"));
+            Editor->Add(it.first, UI::Element(UI::ADD_OBJECT, "Add Object", false));
+            Editor->Add(it.first, UI::Element(UI::SEPARATOR, "sep"));
             break;
         }
     }
@@ -426,6 +445,27 @@ void Core::ImGuiHelper::Image(UI::Element& element)
     }
 }
 
+void Core::ImGuiHelper::AddObject()
+{
+    std::string s = NewObjectName;
+    auto it = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s](const UI::Window& win) { return win.GetName() == s; });
+    
+    static bool test = false;
+    if (it != UIWindows[EditorName].end()) {
+        it->SetActive(true);
+
+        if (!test) {
+            test = true;
+        it->Add(UI::Element(UI::IMAGE, "Textures", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectTexture(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectTexture(); } ));
+        it->Add(UI::Element(UI::COMBO, "Material", false, Gfx::Pipeline::GetInstance()->GetMaterialNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectMaterial(tag); }));
+        //it->Add(UI::Element(UI::COMBO, "Models", false, Gfx::Model::GetInstance()->GetModelNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectModel(tag); }));
+        Scene::GetInstance()->SetNewObjectMaterial("models");
+        Scene::GetInstance()->SetNewObjectModel("monkey");
+        it->Add(UI::Element(UI::SAVE_OBJECT, "Save", false));
+        }
+    }
+}
+
 void Core::ImGuiHelper::ProcessUI(UI::Element& element)
 {
     switch (element.GetType()) {
@@ -461,6 +501,18 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
             }
             break;
         }
+        case UI::ADD_OBJECT: {
+            if (ImGui::Button(element.GetLabel().c_str())) {
+                AddObject();
+            }
+            break;
+        }
+        case UI::SAVE_OBJECT: {
+            if (ImGui::Button(element.GetLabel().c_str())) {
+                Core::Scene::GetInstance()->SaveObject(); 
+            }
+            break;
+        }
         case UI::CHECKBOX: {
             bool check = element.GetCheckbox();
             ImGui::Checkbox(element.GetLabel().c_str(), &check);
@@ -468,7 +520,7 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
             element.SetCheckbox(check);
             break;
         }
-        case UI::TEXT:
+        case UI::TEXT: {
             if (element.DefinitionString) {
                 ImGui::Text((element.GetLabel() + ": %s").c_str(), element.DefinitionString().c_str());
             }
@@ -476,6 +528,14 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
                 ImGui::TextUnformatted(element.GetLabel().c_str());
             }
             break;
+        }
+        case UI::TEXT_ENTER: {
+            if (element.DefinitionString) {
+                std::string s = element.DefinitionString();
+                ImGui::InputText(element.GetLabel().c_str(), s.data(), 50);
+                element.Definition(s);
+            }
+        }
         case UI::SEPARATOR:
             ImGui::Separator();
             break;
@@ -488,7 +548,10 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
             break;
         }
         case UI::SLIDER_3: {
-            glm::vec3 arg = element.GetDefinitionFloat3Arg();
+            glm::vec3 arg(0.0); 
+            if (element.GetDefinitionFloat3Arg) {
+                arg = element.GetDefinitionFloat3Arg();
+            }
             float v[3] = { arg.x, arg.y, arg.z };
             ImGui::SliderFloat3(element.GetLabel().c_str(), v, -1.0f, 1.0f);
             if (element.DefinitionFloat3Arg) {
@@ -507,15 +570,20 @@ void Core::ImGuiHelper::Render()
 
     bool active = true;
 
-    std::vector<UI::Window>& windows = UIWindows[EditorWindow];
-    std::vector<UI::Element>& windowelements = UIElements[EditorWindow];
+    std::vector<UI::Window>& windows = UIWindows[EditorName];
 
     for (UI::Window& window : windows) {
+        if (!window.IsActive()) continue;
+
         ImGui::SetNextWindowPos(ImVec2(window.GetPosX(), window.GetPosY()), 0);
         ImGui::SetNextWindowSize(ImVec2(window.GetSizeX(), window.GetSizeY()), ImGuiCond_FirstUseEver);
-
+        
+        if (window.GetName() != EditorName) {
+            active = window.IsActive();
+        }
         ImGui::Begin(window.GetName().c_str(), &active, window.GetFlags());
-        for (auto& it : UITabs) {
+        UI::UITabsElementsMap& uitabs = window.GetUITabs();
+        for (auto& it : uitabs) {
             std::vector<UI::Element>& tabsui = it.second;
             UI::Element tab = it.first;
 
@@ -530,7 +598,11 @@ void Core::ImGuiHelper::Render()
                 ImGui::EndTabBar();
             }
         }
+        if (window.GetName() != EditorName) {
+            window.SetActive(active);
+        }
 
+        std::vector<UI::Element>& windowelements = window.GetUIElements();
         for (UI::Element& element : windowelements) {
             ProcessUI(element);
         }
@@ -538,7 +610,7 @@ void Core::ImGuiHelper::Render()
         ImGui::End();
     }
     if (!SelectedElement.empty()) {
-        auto it = std::find_if(UITabs.begin(), UITabs.end(), [](std::pair<UI::Element, std::vector<UI::Element>> pair) { return pair.first.GetLabel() == "Scene"; } );
+        auto it = std::find_if(Editor->GetUITabs().begin(), Editor->GetUITabs().end(), [](std::pair<UI::Element, std::vector<UI::Element>> pair) { return pair.first.GetLabel() == "Scene"; } );
         DisplayObjectInfo(SelectedElement, it->first);
     }
 }

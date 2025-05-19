@@ -4,9 +4,9 @@ Object:
 	Light:
 		name: sphere.obj
 	Position:
-		x: 0.669998
+		x: -1.118848
 		y: 4.647874
-		z: 15.758353
+		z: 7.633752
 	Color:
 		x: 1
 		y: 0
@@ -23,9 +23,9 @@ Object:
 	Light:
 		name: sphere.obj
 	Position:
-		x: 5.669998
-		y: 4.647874
-		z: 15.758353
+		x: 0.661268
+		y: 5.022795
+		z: 0.921135
 	Color:
 		x: 0
 		y: 0
@@ -42,13 +42,13 @@ Object:
 	Light:
 		name: sphere.obj
 	Position:
-		x: 5.669998
+		x: 3.606871
 		y: 4.647874
-		z: 0.148608
+		z: 0.655662
 	Color:
 		x: 0
 		y: 1
-		z: 1
+		z: 0
 		Radius: 5.0
 	Material:
 		name: models
@@ -73,15 +73,15 @@ Object:
 Object:
 		ID: cube
 	Position:
-		x: -4.301231
-		y: 1.754810
+		x: -3.193373
+		y: 3.319396
 		z: -9.685314
 	Material:
 		name: models
 		frag: model.frag
 		vert: model.vert
 	Texture:
-		name: dummy.png
+		name: placeholder.jpg
 	Model:
 		name: cube.obj
 Object:
@@ -115,7 +115,7 @@ Object:
 		frag: model.frag
 		vert: model.vert
 	Texture:
-		name: dummy.png
+		name: MocapSuit02_diffuse.png
 	Model:
 		name: DancingTwerk.dae
 	Animation:

@@ -28,5 +28,5 @@ void main()
     mat4 m = GetResource(Instance, GetInstanceInd()).instances[gl_BaseInstance].rendermatrix;
     vec4 p = m * vec4(vposition.xyz, 1.0);
     outpos = p;
-    outnormal = vec4(GetResource(Instance, GetInstanceInd()).instances[gl_BaseInstance].rendermatrix * vec4(vnormal, 0.0f)).xyz;//mat3(transpose(inverse( GetResource(Instance, GetInstanceInd()).instances[gl_BaseInstance].rendermatrix))) * vnormal;
+    outnormal = transpose(inverse(mat3(m))) * vnormal;
 }

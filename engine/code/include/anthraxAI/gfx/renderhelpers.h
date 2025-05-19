@@ -70,28 +70,26 @@ namespace Gfx
     
     #define MAX_POINT_LIGHT 512 
     struct CameraData {
-        alignas(16) glm::vec4 viewpos;
-        alignas(16) glm::vec4 mousepos;
-        alignas(16) glm::vec4 viewport;
-        alignas(16) glm::vec4 global_light_dir;
-        alignas(16) glm::vec4 diffuse;
-        alignas(16) glm::vec4 specular;
-        alignas(16) glm::vec4 ambient;
-        alignas(16) glm::vec4 point_light_pos[MAX_POINT_LIGHT];
-        alignas(16) glm::vec4 point_light_color[MAX_POINT_LIGHT];
+        glm::vec4 viewpos;
+        glm::vec4 mousepos;
+        glm::vec4 viewport;
+        glm::vec4 global_light_dir;
+        glm::vec4 diffuse;
+        glm::vec4 specular;
+        glm::vec4 ambient;
+        glm::vec4 point_light_pos[MAX_POINT_LIGHT];
+        glm::vec4 point_light_color[MAX_POINT_LIGHT]; 
+        glm::vec4 point_light_radius[MAX_POINT_LIGHT];
 
-        alignas(16) glm::mat4 model;
-        alignas(16) glm::mat4 view;
-        alignas(16) glm::mat4 proj;
-        alignas(16) glm::mat4 viewproj;
+        glm::mat4 model;
+        glm::mat4 view;
+        glm::mat4 proj;
+        glm::mat4 viewproj;
 
-        alignas(4) float time;
-        alignas(4) int point_light_size;
-        alignas(4) float p1;
-        alignas(4) float p2;
-        alignas(4) float point_light_radius[MAX_POINT_LIGHT];
-
-
+        float time;
+        int point_light_size;
+        float p1;
+        float p2;
     };
    
     struct LightsData {

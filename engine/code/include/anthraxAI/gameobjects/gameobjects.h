@@ -17,7 +17,7 @@ namespace Keeper {
         Vector3<float> Position;
         Vector3<float> Color;
         Vector3<float> Offset;
-        float Radius = 0.0f;
+        std::string LightType;
         std::string Material;
         std::string Vertex;
         std::string Fragment;
@@ -64,12 +64,13 @@ namespace Keeper {
             virtual Type GetType() const { return SIZE; }
             virtual int GetAxis() const { return -1; }
             virtual uint32_t CameraType() const { return -1; }
+            virtual uint32_t LightType() const { return -1; }
 
-            virtual std::string GetModelName() const { return ""; }
-            virtual std::string GetTextureName() const { return ""; }
-            virtual std::string GetFragmentName() const { return ""; }
-            virtual std::string GetVertexName() const { return ""; }
-            virtual std::string GetMaterialName() const { return ""; }
+            virtual const std::string& GetModelName() const { return EMPTY_STRING; }
+            virtual const std::string& GetTextureName() const { return EMPTY_STRING; }
+            virtual const std::string& GetFragmentName() const { return EMPTY_STRING; }
+            virtual const std::string& GetVertexName() const { return EMPTY_STRING; }
+            virtual const std::string& GetMaterialName() const { return EMPTY_STRING; }
             virtual Vector3<float> GetPosition() const { return {0.0f, 0.0f, 0.0f}; }
             virtual Vector3<float> GetColor() const { return {0.0f, 0.0f, 0.0f}; }
             virtual float GetRadius() const { return 0.0f; }
@@ -97,6 +98,7 @@ namespace Keeper {
 
         private:
             std::string ParsedID = "";
+            std::string EMPTY_STRING = "";
             std::vector<std::string> EmptyAnimations;
             int UniqueID = 1;
             inline static std::atomic_int IDCounter = 1;
@@ -138,7 +140,7 @@ namespace Keeper {
             Info GetInfo(Infos info) const { return DefaultObjects[info]; }
 
             bool Find(Keeper::Type type) const;
-
+            Keeper::Info NewObjectInfo;
         private:
             void SpawnObjects(const Info& info);
 
@@ -146,7 +148,7 @@ namespace Keeper {
             Info GizmoInfo[3];
             Info DefaultObjects[INFO_SIZE];
             uint32_t SelectedID = 0;
-
+            
             std::vector<std::string> ObjectNames;
     };
 }

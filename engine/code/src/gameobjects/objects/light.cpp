@@ -11,14 +11,16 @@ Keeper::Light::Light(const Info& info, const std::string& tag)
 {
     Position = info.Position;
     Color = info.Color;
-    Radius = info.Radius;
     ModelName = info.Model;
     TextureName = info.Texture;
     MaterialName = info.Material;
     Vertex = info.Vertex;
     Fragment = info.Fragment;
     ParsedID = tag;
-
+    Type = GetKey(info.LightType);
+    if (Type == Keeper::LightTypes::LIGHT_SIZE) {
+        Type = Keeper::LightTypes::POINT;
+    }
     PrintInfo();
 }
 
