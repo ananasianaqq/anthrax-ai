@@ -56,6 +56,7 @@ namespace Gfx
 
             int GetFrameInd() { return FrameIndex; }
             FrameData& GetFrame() { return Frames[FrameIndex]; }
+            FrameData& GetFrame(uint32_t ind) { return Frames[ind]; }
             void Sync();
             uint32_t SyncFrame();
             void SetFrameInd() { FrameIndex = (FrameIndex + 1) % MAX_FRAMES; }
@@ -63,7 +64,7 @@ namespace Gfx
             bool BeginFrame();
             void EndFrame();
             void EndRender();
-            void StartRender(Gfx::InputAttachments inputs, AttachmentRules rules);
+            void StartRender(Gfx::InputAttachments inputs, AttachmentRules rules, bool multithreaded = false);
 
             void Draw(Gfx::RenderObject& object);
             void DrawThreaded(VkCommandBuffer cmd, Gfx::RenderObject& object, Material* mat,  Gfx::MeshInfo* mesh, Gfx::MeshPushConstants& constatns, bool ismodel, uint32_t inst_ind);
@@ -134,6 +135,7 @@ namespace Gfx
             bool OnResize = false;
 	        int FrameIndex = 0;
             uint32_t SwapchainIndex = 0;
+            uint32_t PrevSwapchainIndex = 0;
 
             VkRenderingAttachmentInfoKHR AttachmentInfos[Gfx::RT_SIZE];
             PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{VK_NULL_HANDLE};

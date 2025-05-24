@@ -162,6 +162,9 @@ void Modules::Base::ThreadedRQ(int i, Keeper::Objects* info)
     }
     SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible = info->IsVisible();
     SceneModules[CurrentScene].GetRenderQueue()[i].Position = info->GetPosition();
+    SceneModules["gbuffer"].GetRenderQueue()[i].IsSelected =SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected ; 
+    SceneModules["gbuffer"].GetRenderQueue()[i].IsVisible = info->IsVisible();
+    SceneModules["gbuffer"].GetRenderQueue()[i].Position = info->GetPosition();
     if (SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible && HasAnimation(SceneModules[CurrentScene].GetRenderQueue()[i].ID)) {
         Animator->Update(SceneModules[CurrentScene].GetRenderQueue()[i]);
     }
@@ -187,14 +190,7 @@ void Modules::Base::UpdateRQ()
         if (Thread::Pool::GetInstance()->IsInit()) {
             Thread::Pool::GetInstance()->WaitWork();
         }
-        Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue();
-        std::string material= "gbuffer";
-        Gfx::Material* mat = Gfx::Pipeline::GetInstance()->GetMaterial(material);
-        for (Gfx::RenderObject& obj : rq) {
-            obj.Material = mat;        
-        }
-        SetRenderQueue("gbuffer", rq);
-
+        
         auto light = GameObjects->Get(Keeper::Type::LIGHT);
         for (Keeper::Objects* info : light) {
             SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected = info->IsVisible() && (info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0);
@@ -283,6 +279,15 @@ void Modules::Base::UpdateSamplers()
             for (Gfx::RenderObject& obj : SceneModules["lighting"].GetRenderQueue()) {
                 UpdateResource(SceneModules["lighting"], obj);
             }
+        }
+        if (SceneModules.find("gbuffer") != SceneModules.end()) {
+            Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue();
+            std::string material= "gbuffer";
+            Gfx::Material* mat = Gfx::Pipeline::GetInstance()->GetMaterial(material);
+            for (Gfx::RenderObject& obj : rq) {
+                obj.Material = mat;        
+            }
+            SetRenderQueue("gbuffer", rq);
         }
         Gfx::Renderer::GetInstance()->SetUpdateSamplers(false);
     }

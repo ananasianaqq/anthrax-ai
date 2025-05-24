@@ -172,7 +172,7 @@ VkRenderingAttachmentInfoKHR Gfx::CommandBuffer::GetAttachmentInfo(VkImageView i
 	return info;
 }
 
-const VkRenderingInfoKHR Gfx::CommandBuffer::GetRenderingInfo(std::vector<RenderingAttachmentInfo>& attachmentinfo, std::vector<VkRenderingAttachmentInfoKHR>& colors, VkRenderingAttachmentInfoKHR& depthinfo, Vector2<int> extents)
+const VkRenderingInfoKHR Gfx::CommandBuffer::GetRenderingInfo(std::vector<RenderingAttachmentInfo>& attachmentinfo, std::vector<VkRenderingAttachmentInfoKHR>& colors, VkRenderingAttachmentInfoKHR& depthinfo, Vector2<int> extents, bool multithreaded )
 {
 	range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 	range.baseMipLevel   = 0;
@@ -190,7 +190,7 @@ const VkRenderingInfoKHR Gfx::CommandBuffer::GetRenderingInfo(std::vector<Render
 		.layerCount = 1,
 	};
 
-    if (attachmentinfo.size() >= 3) {
+    if (multithreaded) {
         renderinfo.flags = VK_RENDERING_CONTENTS_SECONDARY_COMMAND_BUFFERS_BIT;
     }
 

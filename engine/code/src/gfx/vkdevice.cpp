@@ -3,6 +3,7 @@
 #include "anthraxAI/gfx/vkdevicehelper.h"
 #include "anthraxAI/utils/tracy.h"
 #include <cstdio>
+#include <vulkan/vulkan_core.h>
 
 void Gfx::Device::Init()
 {
@@ -252,7 +253,7 @@ void Gfx::Device::RecreateSwapchain()
         return;
     }
     Gfx::Renderer::GetInstance()->SetOnResize(false);
-
+    
     vkDeviceWaitIdle(LogicalDevice);
 
     CleanUpSwapchain();

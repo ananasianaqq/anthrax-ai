@@ -15,7 +15,7 @@ void main()
     }
 
 vec2 uv = incoord.xy;
-uv.y *= -1;
+//uv.y *= -1;
     vec4 color = texture(textures[GetTextureInd()], uv.xy).xyzw;
     if (pushconstants.selected == 1) {
         color.rgb += vec3(0.1);

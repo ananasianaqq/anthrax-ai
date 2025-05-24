@@ -155,7 +155,7 @@ namespace Gfx
         ATTACHMENT_RULE_CLEAR = 1 << 2,
     };
 
-    typedef std::array<FrameData, MAX_FRAMES> FrameArray;
+    typedef std::array<FrameData, MAX_FRAMES + 1> FrameArray;
     typedef std::unordered_map<std::string, RenderTarget> TexturesMap;
 
 

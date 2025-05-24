@@ -34,7 +34,7 @@ namespace Gfx
             VkResult Present(VkQueue queue, VkPresentInfoKHR prinfo);
 
             VkRenderingAttachmentInfoKHR GetAttachmentInfo(VkImageView imageview, bool iscolor, Gfx::AttachmentRules loadop);
-            const VkRenderingInfoKHR GetRenderingInfo(std::vector<RenderingAttachmentInfo>& attachmentinfo, std::vector<VkRenderingAttachmentInfoKHR>& colors, VkRenderingAttachmentInfoKHR& depthinfo, Vector2<int> extents);
+            const VkRenderingInfoKHR GetRenderingInfo(std::vector<RenderingAttachmentInfo>& attachmentinfo, std::vector<VkRenderingAttachmentInfoKHR>& colors, VkRenderingAttachmentInfoKHR& depthinfo, Vector2<int> extents, bool multithreaded = false);
 
             void MemoryBarrier(VkImage image, VkImageLayout oldlayout, VkImageLayout newlayout, VkImageSubresourceRange range);
             void CopyImage(VkImage src, Vector2<int> srcsize, VkImageLayout srcoldlayout, VkImageLayout srcnewlayout, VkImage dst, Vector2<int> dstsize, VkImageLayout dstoldlayout, VkImageLayout dstnewlayout);

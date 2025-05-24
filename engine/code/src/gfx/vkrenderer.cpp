@@ -220,7 +220,7 @@ void Gfx::Renderer::EndRender()
     EndRendering(Cmd.GetCmd());
 }
 
-void Gfx::Renderer::StartRender(Gfx::InputAttachments inputs, AttachmentRules rules)
+void Gfx::Renderer::StartRender(Gfx::InputAttachments inputs, AttachmentRules rules, bool multithreaded )
 {
     Gfx::RenderingAttachmentInfo info;
    	std::vector<RenderingAttachmentInfo> attachmentinfo;
@@ -263,7 +263,7 @@ void Gfx::Renderer::StartRender(Gfx::InputAttachments inputs, AttachmentRules ru
 
     VkRenderingAttachmentInfoKHR depthinfo = {};
     std::vector<VkRenderingAttachmentInfoKHR> infos;
-	const VkRenderingInfo& renderinfo = Cmd.GetRenderingInfo(attachmentinfo, infos, depthinfo,  {(int)Gfx::Device::GetInstance()->GetSwapchainExtent().width, (int)Gfx::Device::GetInstance()->GetSwapchainExtent().height});
+	const VkRenderingInfo& renderinfo = Cmd.GetRenderingInfo(attachmentinfo, infos, depthinfo,  {(int)Gfx::Device::GetInstance()->GetSwapchainExtent().width, (int)Gfx::Device::GetInstance()->GetSwapchainExtent().height}, multithreaded);
     BeginRendering(Cmd.GetCmd(), &renderinfo);
 }
 
@@ -324,19 +324,19 @@ void Gfx::Renderer::EndFrame()
 	VkPipelineStageFlags waitstage2 = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	submit.pWaitDstStageMask = &waitstage2;
 	submit.waitSemaphoreCount = 1;
-	submit.pWaitSemaphores = &GetFrame().PresentSemaphore;
+	submit.pWaitSemaphores = &GetFrame(PrevSwapchainIndex).PresentSemaphore;
 	submit.signalSemaphoreCount = 1;
-	submit.pSignalSemaphores = &GetFrame().RenderSemaphore;
+	submit.pSignalSemaphores = &GetFrame(SwapchainIndex).RenderSemaphore;
 	submit.commandBufferCount = 1;
 	VkCommandBuffer cmd = Cmd.GetCmd();
 	submit.pCommandBuffers = &cmd;
-	VK_ASSERT(vkQueueSubmit(Gfx::Device::GetInstance()->GetQueue(Gfx::GRAPHICS_QUEUE), 1, &submit, GetFrame().RenderFence), "failed to submit queue!");
+	VK_ASSERT(vkQueueSubmit(Gfx::Device::GetInstance()->GetQueue(Gfx::GRAPHICS_QUEUE), 1, &submit, GetFrame(SwapchainIndex).RenderFence), "failed to submit queue!");
 
 	VkResult presentresult = Cmd.Present(
 		Gfx::Device::GetInstance()->GetQueue(Gfx::GRAPHICS_QUEUE),
 		Cmd.PresentInfo(
 			&Gfx::Device::GetInstance()->GetSwapchain(),
-			&GetFrame().RenderSemaphore,
+			&GetFrame(SwapchainIndex).RenderSemaphore,
 			&SwapchainIndex
 		)
 	);
@@ -784,15 +784,16 @@ VkSubmitInfo SubmitInfo(VkCommandBuffer* cmd)
 uint32_t Gfx::Renderer::SyncFrame()
 {
   Time = Engine::GetInstance()->GetTime();
-	VK_ASSERT(vkWaitForFences(Gfx::Device::GetInstance()->GetDevice(), 1, &Frames[FrameIndex].RenderFence, true, 1000000000), "vkWaitForFences failed !");
+	VK_ASSERT(vkWaitForFences(Gfx::Device::GetInstance()->GetDevice(), 1, &Frames[SwapchainIndex].RenderFence, true, 1000000000), "vkWaitForFences failed !");
 	uint32_t swapchainimageindex;
-	VkResult e = vkAcquireNextImageKHR(Gfx::Device::GetInstance()->GetDevice(), Gfx::Device::GetInstance()->GetSwapchain(), 1000000000, Frames[FrameIndex].PresentSemaphore, VK_NULL_HANDLE, &swapchainimageindex);
+    PrevSwapchainIndex = SwapchainIndex;
+	VkResult e = vkAcquireNextImageKHR(Gfx::Device::GetInstance()->GetDevice(), Gfx::Device::GetInstance()->GetSwapchain(), 1000000000, Frames[SwapchainIndex].PresentSemaphore, VK_NULL_HANDLE, &swapchainimageindex);
 	if (e == VK_ERROR_OUT_OF_DATE_KHR) {
     	OnResize = true;
 		return -1;
 	}
   
-	VK_ASSERT(vkResetFences(Gfx::Device::GetInstance()->GetDevice(), 1, &Frames[FrameIndex].RenderFence), "vkResetFences failed !");
+	VK_ASSERT(vkResetFences(Gfx::Device::GetInstance()->GetDevice(), 1, &Frames[swapchainimageindex].RenderFence), "vkResetFences failed !");
 	VK_ASSERT(vkResetCommandBuffer(Frames[FrameIndex].MainCommandBuffer, 0), "vkResetCommandBuffer failed!");
     for (int i = 0; i < Thread::MAX_RENDER_THREAD_NUM; i++) {
         VK_ASSERT(vkResetCommandPool(Gfx::Device::GetInstance()->GetDevice(), Frames[FrameIndex].SecondaryCmd[i].Pool, 0), "Failed to reset command pool!");
@@ -810,7 +811,7 @@ void Gfx::Renderer::Sync()
 	Core::Deletor::GetInstance()->Push(Core::Deletor::Type::SYNC, [=, this]() {
 		vkDestroyFence(Gfx::Device::GetInstance()->GetDevice(), Upload.UploadFence, nullptr);
 	});
-	for (int i = 0; i < MAX_FRAMES; i++) {
+	for (int i = 0; i < MAX_FRAMES + 1; i++) {
 		VK_ASSERT(vkCreateFence(Gfx::Device::GetInstance()->GetDevice(), &fencecreateinfo, nullptr, &Frames[i].RenderFence), "failed to create fence !");
 
 		VK_ASSERT(vkCreateSemaphore(Gfx::Device::GetInstance()->GetDevice(), &semcreateinfo, nullptr, &Frames[i].PresentSemaphore), "failed to create present semaphore!");
@@ -901,7 +902,7 @@ void Gfx::Renderer::CreateRenderTargets()
         DestroyRenderTarget(RTs[Gfx::RT_NORMAL]);
     }
     RTs[Gfx::RT_NORMAL] = new RenderTarget(*RTs[Gfx::RT_MAIN_COLOR], Gfx::RT_NORMAL);
-    RTs[Gfx::RT_NORMAL]->SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
+    RTs[Gfx::RT_NORMAL]->SetFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
     RTs[Gfx::RT_NORMAL]->CreateRenderTarget();
     CreateSampler(RTs[Gfx::RT_NORMAL]);
 
@@ -909,7 +910,7 @@ void Gfx::Renderer::CreateRenderTargets()
         DestroyRenderTarget(RTs[Gfx::RT_POSITION]);
     }
     RTs[Gfx::RT_POSITION] = new RenderTarget(*RTs[Gfx::RT_MAIN_COLOR], Gfx::RT_POSITION);
-    RTs[Gfx::RT_POSITION]->SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
+    RTs[Gfx::RT_POSITION]->SetFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
     RTs[Gfx::RT_POSITION]->CreateRenderTarget();
     CreateSampler(RTs[Gfx::RT_POSITION]);
 
@@ -917,7 +918,7 @@ void Gfx::Renderer::CreateRenderTargets()
         DestroyRenderTarget(RTs[Gfx::RT_ALBEDO]);
     }
     RTs[Gfx::RT_ALBEDO] = new RenderTarget(*RTs[Gfx::RT_MAIN_COLOR], Gfx::RT_ALBEDO);
-    RTs[Gfx::RT_ALBEDO]->SetFormat(VK_FORMAT_B8G8R8A8_UNORM);
+    RTs[Gfx::RT_ALBEDO]->SetFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
     RTs[Gfx::RT_ALBEDO]->CreateRenderTarget();
     CreateSampler(RTs[Gfx::RT_ALBEDO]);
 

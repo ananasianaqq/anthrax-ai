@@ -25,8 +25,8 @@ void main()
     outcoord = vuv;
     outweight = vweight;
     outboneid = vboneid;
-    mat4 m = GetResource(Instance, GetInstanceInd()).instances[gl_BaseInstance].rendermatrix;
+    mat4 m = bonetransforms * GetResource(Instance, GetInstanceInd()).instances[gl_BaseInstance].rendermatrix;
     vec4 p = m * vec4(vposition.xyz, 1.0);
     outpos = p;
-    outnormal = transpose(inverse(mat3(m))) * vnormal;
+    outnormal = vec4(GetResource(Instance, GetInstanceInd()).instances[gl_BaseInstance].rendermatrix * vec4(vnormal, 0.0)).xyz ;// transpose(inverse(mat3(m))) * vnormal;
 }

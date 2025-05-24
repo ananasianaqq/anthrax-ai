@@ -7,7 +7,6 @@
 
 namespace Gfx {
  struct Vertex {
-        glm::vec4 instanceind;
         glm::vec4 position;
         glm::vec3 normal;
         glm::vec3 color;

@@ -11,7 +11,42 @@ Object:
 		x: 1
 		y: 0
 		z: 0
-		Radius: 5.0
+	Material:
+		name: models
+		frag: model.frag
+		vert: model.vert
+	Texture:
+		name: dummy.png
+Object:
+		ID: 12light
+	Light:
+		name: sphere.obj
+	Position:
+		x: -3.918924
+		y: 4.647874
+		z: -4.076640
+	Color:
+		x: 1
+		y: 0
+		z: 0
+	Material:
+		name: models
+		frag: model.frag
+		vert: model.vert
+	Texture:
+		name: dummy.png
+Object:
+		ID: light11
+	Light:
+		name: sphere.obj
+	Position:
+		x: -9.912454
+		y: 4.308726
+		z: -1.552171
+	Color:
+		x: 1
+		y: 1
+		z: 1
 	Material:
 		name: models
 		frag: model.frag
@@ -24,13 +59,12 @@ Object:
 		name: sphere.obj
 	Position:
 		x: 0.661268
-		y: 5.022795
-		z: 0.921135
+		y: 3.244534
+		z: 3.823456
 	Color:
 		x: 0
 		y: 0
 		z: 1
-		Radius: 5.0
 	Material:
 		name: models
 		frag: model.frag
@@ -44,18 +78,31 @@ Object:
 	Position:
 		x: 3.606871
 		y: 4.647874
-		z: 0.655662
+		z: -2.795582
 	Color:
 		x: 0
 		y: 1
 		z: 0
-		Radius: 5.0
 	Material:
 		name: models
 		frag: model.frag
 		vert: model.vert
 	Texture:
 		name: dummy.png
+Object:
+		ID: plane
+	Position:
+		x: 0.000000
+		y: 0.069649
+		z: 0.000000
+	Material:
+		name: models
+		frag: model.frag
+		vert: model.vert
+	Texture:
+		name: dummy.png
+	Model:
+		name: plane.obj
 Object:
 		ID: monkey
 	Position:
@@ -81,7 +128,7 @@ Object:
 		frag: model.frag
 		vert: model.vert
 	Texture:
-		name: placeholder.jpg
+		name: dummy.png
 	Model:
 		name: cube.obj
 Object:

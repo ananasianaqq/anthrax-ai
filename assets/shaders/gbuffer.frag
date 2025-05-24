@@ -7,8 +7,8 @@ layout (location = 1) out vec4 outnormal;
 layout (location = 2) out vec4 outposition;
 void main()
 {
-    vec2 uv = incoord.xy;
-    uv.y *= -1;
+    vec2 uv = incoord.xy;uv.y = 1.0 - uv.y;
+    //uv.y *= -1;
     vec4 color = texture(textures[GetTextureInd()], uv.xy).xyzw;
 
     vec4 mousepos = GetResource(Camera, GetUniformInd()).mousepos;

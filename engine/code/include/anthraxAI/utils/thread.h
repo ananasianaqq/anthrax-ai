@@ -69,6 +69,7 @@ namespace Thread
             ~Pool() { Stop(); }
             void Init(int num);
             bool IsInit() const { return !Threads.empty(); }
+            bool IsPaused() const { return OnPause; }
             void Stop();
             void Reload();
             bool Push(const Task& func);

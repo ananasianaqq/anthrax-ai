@@ -190,7 +190,7 @@ void Core::Scene::RenderScene(bool playmode)
             }
             else {
                 // objects from map
-                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
+                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, GameModules->Get("gbuffer").GetRenderQueue().size() > Thread::MAX_RENDER_THREAD_NUM ? true : false);
                 Render(GameModules->Get("gbuffer"));
                 Gfx::Renderer::GetInstance()->EndRender();
             
@@ -276,7 +276,6 @@ void Core::Scene::Loop()
         GameModules->Update(Modules::Update::RQ);
 
         Thread::Pool::GetInstance()->Time.EndTime(Thread::Task::Name::UPDATE, (double)Engine::GetInstance()->GetTime());
-        //Thread::Time.PrintTime(Thread::Task::Name::UPDATE);
 
         RenderScene(true);
     }

@@ -330,7 +330,7 @@ void Gfx::Pipeline::Setup(Gfx::RenderTargetsList id) {
 	VkFormat format;
     format = Gfx::Renderer::GetInstance()->GetRT(id)->GetFormat();
 
-    VkFormat formats3[3] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM };
+    VkFormat formats3[3] = { VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_SFLOAT };
     VkFormat depthformat = VK_FORMAT_D32_SFLOAT;
     VkFormat formats[1] = { format };
 
@@ -416,50 +416,44 @@ void Gfx::Pipeline::GetVertexDescription()
 	mainBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	VertexDescription.Bindings.push_back(mainBinding);
-    VkVertexInputAttributeDescription instind = {};
-    instind.binding = 0;
-    instind.location = 0;
-    instind.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-    instind.offset = offsetof(Vertex, instanceind);
-
+    
 	VkVertexInputAttributeDescription positionAttribute = {};
 	positionAttribute.binding = 0;
-	positionAttribute.location = 1;
+	positionAttribute.location = 0;
 	positionAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	positionAttribute.offset = offsetof(Vertex, position);
 
 	VkVertexInputAttributeDescription normalAttribute = {};
 	normalAttribute.binding = 0;
-	normalAttribute.location = 2;
+	normalAttribute.location = 1;
 	normalAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
 	normalAttribute.offset = offsetof(Vertex, normal);
 
 	VkVertexInputAttributeDescription colorAttribute = {};
 	colorAttribute.binding = 0;
-	colorAttribute.location = 3;
+	colorAttribute.location = 2;
 	colorAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
 	colorAttribute.offset = offsetof(Vertex, color);
 
 	VkVertexInputAttributeDescription uvattr = {};
 	uvattr.binding = 0;
-    uvattr.location = 4;
+    uvattr.location = 3;
     uvattr.format = VK_FORMAT_R32G32_SFLOAT;
     uvattr.offset = offsetof(Vertex, uv);
 
 
 	 VkVertexInputAttributeDescription weightattr = {};
 	 weightattr.binding = 0;
-	 weightattr.location = 5;
+	 weightattr.location = 4;
 	 weightattr.format = VK_FORMAT_R32G32B32A32_SFLOAT;
 	 weightattr.offset = offsetof(Vertex, weights);
 
 	 VkVertexInputAttributeDescription boneattr = {};
 	 boneattr.binding = 0;
-	 boneattr.location = 6;
+	 boneattr.location = 5;
 	 boneattr.format =  VK_FORMAT_R32G32B32A32_SINT;
 	 boneattr.offset = offsetof(Vertex, boneID);
 
-	VertexDescription.Attributes.push_back(instind);
 	VertexDescription.Attributes.push_back(positionAttribute);
 	VertexDescription.Attributes.push_back(normalAttribute);
 	VertexDescription.Attributes.push_back(colorAttribute);
