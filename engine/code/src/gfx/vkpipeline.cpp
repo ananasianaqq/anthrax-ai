@@ -159,6 +159,7 @@ Gfx::Material* Gfx::Pipeline::CreateMaterial(VkPipeline pipeline, VkPipelineLayo
     
     if (MaterialNames.empty()) {
         MaterialNames.reserve(100);
+        MaterialNames.push_back("models");
     }
     MaterialNames.push_back(name);
     Core::Deletor::GetInstance()->Push(Core::Deletor::Type::PIPELINE, [=, this]() {

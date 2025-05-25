@@ -189,6 +189,16 @@ void Keeper::Base::Update()
     if (selected_it == ObjectsList[Keeper::Type::NPC].end()) {
         light_it = std::find_if(ObjectsList[Keeper::Type::LIGHT].begin(), ObjectsList[Keeper::Type::LIGHT].end(), [id](const Keeper::Objects* obj) { return obj->IsVisible() && (obj->GetID() == id); });
     }
+    
+    // if (selected_it != ObjectsList[Keeper::Type::NPC].end()) {
+    //
+    //     printf("id %d| selected ID %d!!!\n", (*selected_it)->GetID(), SelectedID);
+    // }
+    //
+    // if (light_it != ObjectsList[Keeper::Type::LIGHT].end())
+    // {
+    //     printf("Light: id %d| selected ID %d!!!\n", (*light_it)->GetID(), SelectedID);
+    // }
     std::vector<Objects*>::iterator gizmo_it = std::find_if(ObjectsList[Keeper::Type::GIZMO].begin(), ObjectsList[Keeper::Type::GIZMO].end(), [id](const Keeper::Objects* obj) { return obj->GetID() == id;});
     static bool gizmo = false;
 

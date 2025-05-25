@@ -15,6 +15,7 @@ static ImGui_ImplVulkanH_Window MainWindowData;
 #include <atomic>
 namespace UI
 {
+#define MAX_INPUT_TEXT_SIZE 50
     enum ElementType
     {
         TEXT,
@@ -91,7 +92,8 @@ namespace UI
             inline bool operator<(const UI::Element& elem) const { return GetID() < elem.GetID(); }
             bool GetCheckbox() const { return Checkbox; }
             void SetCheckbox(bool b) { Checkbox = b;}
-
+            
+            char InputText[MAX_INPUT_TEXT_SIZE] = {};
             int ComboInd = 0;
             bool AddEmpty = false;
             
@@ -133,7 +135,7 @@ namespace UI
             float GetSizeY() const { return Size.y; }
             float GetPosX() const { return Position.x; }
             float GetPosY() const { return Position.y; }
-            void Add(const UI::Element& element) { UIElements.emplace_back(element); }
+            void Add(const UI::Element& element) { UIElements.push_back(element); }
             void Add(UI::Element tab, const UI::Element& element) { UITabs[tab].emplace_back(element); }
             UI::UITabsElementsMap& GetUITabs() { return UITabs; }
             UI::UIElementsMap& GetUIElements() { return UIElements; }

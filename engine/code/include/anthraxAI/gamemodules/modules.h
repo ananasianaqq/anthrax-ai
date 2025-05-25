@@ -81,7 +81,8 @@ namespace Modules
             void Clear();
 
             void Update(uint32_t update_type, bool force_update = false);
-
+            
+            void Insert(const Keeper::Objects* obj);
             void Populate(const std::string& key, Info scene, std::function<bool(Keeper::Type)> skip_type);
             void Populate(const std::string& key, Info scene, Keeper::Info info);
 

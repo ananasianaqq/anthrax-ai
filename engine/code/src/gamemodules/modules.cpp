@@ -1,5 +1,6 @@
 #include "anthraxAI/gamemodules/modules.h"
 #include "anthraxAI/core/scene.h"
+#include "anthraxAI/gameobjects/gameobjects.h"
 #include "anthraxAI/gfx/renderhelpers.h"
 #include "anthraxAI/gfx/vkdefines.h"
 #include "anthraxAI/gfx/vkdescriptors.h"
@@ -79,6 +80,21 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
         }
         SetRenderQueue(key, rq);
     }
+}
+
+void Modules::Base::Insert(const Keeper::Objects* obj)
+{
+    SceneModules[CurrentScene].AddRQ(LoadResources(obj));
+    UpdateResource(SceneModules[CurrentScene], SceneModules[CurrentScene].GetRenderQueue().at(SceneModules[CurrentScene].GetRenderQueue().size() - 1));
+    Gfx::RenderObject robj = SceneModules[CurrentScene].GetRenderQueue().at(SceneModules[CurrentScene].GetRenderQueue().size() - 1);
+    robj.MaterialName = "gbuffer";
+    robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
+    SceneModules["gbuffer"].AddRQ(robj);
+
+    robj.MaterialName = "mask";
+    robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
+;
+    SceneModules["mask"].AddRQ(robj);
 }
 
 void Modules::Base::RestartAnimator()

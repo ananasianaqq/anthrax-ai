@@ -236,13 +236,13 @@ void Core::ImGuiHelper::InitUIElements()
         std::string s1 = NewObjectName;
         auto it_obj = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s1](const UI::Window& win) { return win.GetName() == s1; });
 
-        Add(NewObjectName, UI::Window(EditorName, { 400.0f, Core::WindowManager::GetInstance()->GetScreenResolution().y - 40.0f }, { pos.x, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ));
         it_obj->Add(UI::Element(UI::TEXT_ENTER, "Tag", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectParsedID(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectParsedID(); } ));
         it_obj->Add(UI::Element(UI::SLIDER_3, "Position", false, [](glm::vec3 v) -> void { Scene::GetInstance()->SetNewObjectPosition(v); }, []() -> glm::vec3 { return Scene::GetInstance()->GetNewObjectPosition(); }));
-        /*it_obj->Add(UI::Element(UI::IMAGE, "Textures", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectTexture(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectTexture(); } ));*/
-        /*it_obj->Add(UI::Element(UI::COMBO, "Material", false, Gfx::Pipeline::GetInstance()->GetMaterialNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectMaterial(tag); }));*/
-        /*it_obj->Add(UI::Element(UI::COMBO, "Models", false, Gfx::Model::GetInstance()->GetModelNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectModel(tag); }));*/
-        /*it_obj->Add(UI::Element(UI::SAVE_OBJECT, "Save", false));*/
+        it_obj->Add(UI::Element(UI::IMAGE, "Textures", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectTexture(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectTexture(); } ));
+        it_obj->Add(UI::Element(UI::SEPARATOR, "sep", false)); 
+        it_obj->Add(UI::Element(UI::COMBO, "Models", false, Gfx::Model::GetInstance()->GetModelNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectModel(tag); }, true));
+        it_obj->Add(UI::Element(UI::COMBO, "Material", false, Gfx::Pipeline::GetInstance()->GetMaterialNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectMaterial(tag); }));
+        it_obj->Add(UI::Element(UI::SAVE_OBJECT, "Save", false));
     }
 
 }
@@ -337,6 +337,7 @@ void Core::ImGuiHelper::UpdateObjectInfo()
 
 void Core::ImGuiHelper::Combo(UI::Element& element)
 {
+   // printf("---%s|%d|%d\n\n\n", element.GetLabel().c_str(), element.ComboInd, element.GetComboList().size());
     if (ImGui::BeginCombo(element.GetLabel().c_str(), element.GetComboList()[element.ComboInd].c_str(), 0)) {
         size_t size = element.GetComboList().size();
         for (int n = 0; n < size; n++) {
@@ -429,17 +430,26 @@ void Core::ImGuiHelper::DebugImage(UI::Element& element)
 void Core::ImGuiHelper::Image(UI::Element& element)
 {
     ImGui::Text(element.GetLabel().c_str());
+                
+    if (element.DefinitionString) {
+        ImGui::Text("Current texture: %s", element.DefinitionString().c_str());
+    }
     for (auto& it : Gfx::Renderer::GetInstance()->GetTextureMap()) {
         Gfx::RenderTarget* rt = Gfx::Renderer::GetInstance()->GetTexture(it.first);
         if (ImGui::ImageButton((ImTextureID)rt->GetImGuiDescriptor(), ImVec2(50, 50))) {
-            Keeper::Objects* obj = ParseObjectID(SelectedElement);
-            TextureUpdateInfo.OldTextureName = obj->GetTextureName();
-            obj->SetTextureName(it.first);
-            TextureUpdateInfo.NewTextureName = it.first;
-            TextureUpdateInfo.ID = obj->GetID();
-            IsDisplayInReset = true;
-            printf("OBJECT [%d] INFO TEXTURE: new ->%s !!! old->%s\n",obj->GetID(), TextureUpdateInfo.NewTextureName.c_str(), TextureUpdateInfo.OldTextureName.c_str());
-            TextureUpdate = true;
+            if (element.DefinitionString && element.Definition) {
+                element.Definition(it.first);
+            }
+            else {
+                Keeper::Objects* obj = ParseObjectID(SelectedElement);
+                TextureUpdateInfo.OldTextureName = obj->GetTextureName();
+                obj->SetTextureName(it.first);
+                TextureUpdateInfo.NewTextureName = it.first;
+                TextureUpdateInfo.ID = obj->GetID();
+                IsDisplayInReset = true;
+                printf("OBJECT [%d] INFO TEXTURE: new ->%s !!! old->%s\n",obj->GetID(), TextureUpdateInfo.NewTextureName.c_str(), TextureUpdateInfo.OldTextureName.c_str());
+                TextureUpdate = true;
+            }
         }
         ImGui::SameLine();
     }
@@ -450,19 +460,19 @@ void Core::ImGuiHelper::AddObject()
     std::string s = NewObjectName;
     auto it = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s](const UI::Window& win) { return win.GetName() == s; });
     
-    static bool test = false;
+//    static bool test = false;
     if (it != UIWindows[EditorName].end()) {
         it->SetActive(true);
 
-        if (!test) {
-            test = true;
-        it->Add(UI::Element(UI::IMAGE, "Textures", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectTexture(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectTexture(); } ));
-        it->Add(UI::Element(UI::COMBO, "Material", false, Gfx::Pipeline::GetInstance()->GetMaterialNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectMaterial(tag); }));
-        //it->Add(UI::Element(UI::COMBO, "Models", false, Gfx::Model::GetInstance()->GetModelNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectModel(tag); }));
-        Scene::GetInstance()->SetNewObjectMaterial("models");
-        Scene::GetInstance()->SetNewObjectModel("monkey");
-        it->Add(UI::Element(UI::SAVE_OBJECT, "Save", false));
-        }
+        // if (!test) {
+        //     test = true;
+        // it->Add(UI::Element(UI::IMAGE, "Textures", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectTexture(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectTexture(); } ));
+        // it->Add(UI::Element(UI::COMBO, "Material", false, Gfx::Pipeline::GetInstance()->GetMaterialNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectMaterial(tag); }));
+        // //it->Add(UI::Element(UI::COMBO, "Models", false, Gfx::Model::GetInstance()->GetModelNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectModel(tag); }));
+        // Scene::GetInstance()->SetNewObjectMaterial("models");
+        // Scene::GetInstance()->SetNewObjectModel("monkey");
+        // it->Add(UI::Element(UI::SAVE_OBJECT, "Save", false));
+        // }
     }
 }
 
@@ -531,10 +541,12 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
         }
         case UI::TEXT_ENTER: {
             if (element.DefinitionString) {
-                std::string s = element.DefinitionString();
-                ImGui::InputText(element.GetLabel().c_str(), s.data(), 50);
-                element.Definition(s);
+                ImGui::InputText(element.GetLabel().c_str(), element.InputText, MAX_INPUT_TEXT_SIZE);
+                if (strlen(element.InputText) != 0) {
+                    element.Definition(element.InputText);
+                }
             }
+            break;
         }
         case UI::SEPARATOR:
             ImGui::Separator();

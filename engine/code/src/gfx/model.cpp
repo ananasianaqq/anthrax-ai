@@ -1,6 +1,7 @@
 #include "anthraxAI/gfx/model.h"
 #include "anthraxAI/core/scene.h"
 #include "anthraxAI/gfx/vkbase.h"
+#include <cstring>
 
 void Gfx::Model::SetVertexBoneData(Gfx::Vertex& vert, int id, float weight)
 {
@@ -84,9 +85,6 @@ void Gfx::Model::CleanAll()
 
 void Gfx::Model::LoadModels()
 {
-    if (ModelNames.empty()) {
-        ModelNames.reserve(100);
-    }
     std::string path = "./models/";
     Core::Scene* scene = Core::Scene::GetInstance();
     for (auto& it : scene->GetGameObjects()->GetObjects()) {
@@ -96,7 +94,20 @@ void Gfx::Model::LoadModels()
                 continue; ;
             }
             LoadModel(path + info->GetModelName());
-            ModelNames.push_back(info->GetModelName());
+        }
+    }
+
+    if (ModelNames.empty()) {
+        ModelNames.reserve(100);
+        std::vector<std::string> names;
+        names.reserve(20);
+        for (const auto& name : std::filesystem::directory_iterator(path)) {
+            std::string str = name.path().string();
+            std::string basename = str.substr(str.find_last_of("/\\") + 1);
+            bool exists = basename.find(".obj") != std::string::npos || basename.find(".fbx") != std::string::npos || basename.find(".dae") != std::string::npos;
+            if (exists) {
+                ModelNames.push_back(basename);
+            }
         }
     }
 }

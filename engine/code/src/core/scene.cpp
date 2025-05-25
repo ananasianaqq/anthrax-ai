@@ -29,7 +29,7 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
     else {
         sec_cmds.reserve(8);
     }
-    VkFormat formats3[3] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_UNORM };
+    VkFormat formats3[3] = { VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R16G16B16A16_SFLOAT };
     VkFormat depthformat = VK_FORMAT_D32_SFLOAT;
 
     uint32_t frameind = Gfx::Renderer::GetInstance()->GetFrameInd();
@@ -433,6 +433,14 @@ void Core::Scene::PopulateModules()
     GameModules->RestartAnimator();
 }
 
+void Core::Scene::SaveObject() 
+{ 
+    GameObjects->Create<Keeper::Npc>(new Keeper::Npc(GameObjects->NewObjectInfo)); 
+    
+    GameModules->Insert(GameObjects->GetLast(Keeper::Type::NPC));
+    GameObjects->UpdateObjectNames();
+    Core::ImGuiHelper::GetInstance()->UpdateObjectInfo();
+}        
 void Core::Scene::SetCurrentScene(const std::string& str)
 {
     CurrentScene = str;

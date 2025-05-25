@@ -135,6 +135,7 @@ namespace Keeper {
             Keeper::Objects* GetNotConstObject(Keeper::Type type, int id);
             Keeper::Objects* GetNotConstObject(Keeper::Type type, const std::string& str);
             const Keeper::Objects* GetObject(Keeper::Type type, int id) const;
+            Keeper::Objects* GetLast(Keeper::Type type) { return ObjectsList[type].at(ObjectsList[type].size() - 1); }
             const std::vector<std::string>& GetObjectNames() const { return ObjectNames; }
 
             Info GetInfo(Infos info) const { return DefaultObjects[info]; }
