@@ -1,5 +1,6 @@
 #include "anthraxAI/gfx/vkrenderer.h"
 #include "anthraxAI/core/scene.h"
+#include "anthraxAI/gamemodules/modules.h"
 #include "anthraxAI/gameobjects/gameobjects.h"
 #include "anthraxAI/gfx/bufferhelper.h"
 #include "anthraxAI/gfx/renderhelpers.h"
@@ -471,15 +472,15 @@ void Gfx::Renderer::PrepareInstanceBuffer()
     Modules::ScenesMap map =  Core::Scene::GetInstance()->GetScenes();
     Modules::Module& modulegizmo = map["gizmo"];
     Modules::Module& module = map[Core::Scene::GetInstance()->GetCurrentScene()];
-    u_int32_t obj_size = module.GetRenderQueue().size();
+    u_int32_t obj_size = module.GetRenderQueue(Modules::RQ_GENERAL).size();
     uint32_t inst_ind = 0;//Gfx::Renderer::GetInstance()->GetInstanceInd();
     //
-    std::vector<uint32_t> num_obj_per_thread(Thread::MAX_RENDER_THREAD_NUM, (uint32_t)module.GetRenderQueue().size() / Thread::MAX_RENDER_THREAD_NUM );
+    std::vector<uint32_t> num_obj_per_thread(Thread::MAX_RENDER_THREAD_NUM, (uint32_t)module.GetRenderQueue(Modules::RQ_GENERAL).size() / Thread::MAX_RENDER_THREAD_NUM );
     //num_obj_per_thread = { (uint32_t)module.GetRenderQueue().size() / Thread::MAX_THREAD_NUM };
 
-    bool iseven = (module.GetRenderQueue().size() % Thread::MAX_RENDER_THREAD_NUM) == 0;
+    bool iseven = (module.GetRenderQueue(Modules::RQ_GENERAL).size() % Thread::MAX_RENDER_THREAD_NUM) == 0;
     if (!iseven) {
-        num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue().size() % Thread::MAX_RENDER_THREAD_NUM);
+        num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue(Modules::RQ_GENERAL).size() % Thread::MAX_RENDER_THREAD_NUM);
     }
     /*for (uint32_t o : num_obj_per_thread) {*/
     /**/
@@ -536,7 +537,8 @@ void Gfx::Renderer::PrepareInstanceBuffer()
     //for (auto& it : Core::Scene::GetInstance()->GetScenes()) {
 
     bool hasanim = false;
-    for (Gfx::RenderObject& obj : module.GetRenderQueue()) {
+    for (auto& it : module.GetRenderQueueMap()) {
+    for (Gfx::RenderObject& obj : it.second) {
         /*printf(*/
         /*    "VISIBLE: %d|%s\n", obj.IsVisible, obj.TextureName.c_str()*/
         /*);*/
@@ -562,7 +564,8 @@ void Gfx::Renderer::PrepareInstanceBuffer()
             i++;
         }
     }
-    for (Gfx::RenderObject& obj : modulegizmo.GetRenderQueue()) {
+    }
+    for (Gfx::RenderObject& obj : modulegizmo.GetRenderQueue(Modules::RQ_GENERAL)) {
          if (!obj.Model[GetFrameInd()] || !obj.IsVisible) continue;
         for (int j = 0; j < obj.Model[GetFrameInd()]->Meshes.size(); j++ ) {
             float dist = glm::distance(glm::vec3(CamData.viewpos.x, CamData.viewpos.y, CamData.viewpos.z), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z) )* 0.05;

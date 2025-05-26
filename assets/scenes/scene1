@@ -121,8 +121,8 @@ Object:
 		ID: cube
 	Position:
 		x: -3.193373
-		y: 3.319396
-		z: -9.685314
+		y: 2.954917
+		z: -12.525036
 	Material:
 		name: models
 		frag: model.frag

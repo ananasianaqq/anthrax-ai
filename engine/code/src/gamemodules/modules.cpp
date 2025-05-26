@@ -31,7 +31,11 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, std::f
             if (info->GetType() == Keeper::NPC) {
                 module.SetGizmo(true);
             }
-            module.AddRQ(LoadResources(info));
+            QueueType type = RQ_GENERAL;
+            if (info->GetType() == Keeper::LIGHT) {
+                type = RQ_LIGHT;
+            }
+            module.AddRQ(type, LoadResources(info));
         }
     }
     SceneModules[key] = module;
@@ -68,33 +72,49 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
     rqobj.VertexBase = info.VertexBase;
     rqobj.IsVisible = true;
 
-    module.AddRQ(rqobj);
+    module.AddRQ(RQ_GENERAL, rqobj);
 
     SceneModules[key] = module;
 
     if (key == "mask" || key == "gbuffer") {
-        Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue();
+        Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue(RQ_GENERAL);
         for (Gfx::RenderObject& obj : rq) {
             obj.MaterialName = key;
             obj.Material =  Gfx::Pipeline::GetInstance()->GetMaterial(obj.MaterialName);
         }
-        SetRenderQueue(key, rq);
+        SetRenderQueue(RQ_GENERAL, key, rq);
+
+        rq = SceneModules[CurrentScene].GetRenderQueue(RQ_LIGHT);
+        if (rq.empty()) {
+            return;
+        }
+        for (Gfx::RenderObject& obj : rq) {
+            obj.MaterialName = key;
+            obj.Material =  Gfx::Pipeline::GetInstance()->GetMaterial(obj.MaterialName);
+        }
+        SetRenderQueue(RQ_LIGHT, key, rq);
+
     }
 }
 
 void Modules::Base::Insert(const Keeper::Objects* obj)
 {
-    SceneModules[CurrentScene].AddRQ(LoadResources(obj));
-    UpdateResource(SceneModules[CurrentScene], SceneModules[CurrentScene].GetRenderQueue().at(SceneModules[CurrentScene].GetRenderQueue().size() - 1));
-    Gfx::RenderObject robj = SceneModules[CurrentScene].GetRenderQueue().at(SceneModules[CurrentScene].GetRenderQueue().size() - 1);
+    QueueType type = RQ_GENERAL;
+    if (obj->GetType() == Keeper::LIGHT) {
+        type = RQ_LIGHT;
+    }
+
+    SceneModules[CurrentScene].AddRQ(type, LoadResources(obj));
+    UpdateResource(SceneModules[CurrentScene], SceneModules[CurrentScene].GetRenderQueue(type).at(SceneModules[CurrentScene].GetRenderQueue(type).size() - 1));
+    Gfx::RenderObject robj = SceneModules[CurrentScene].GetRenderQueue(type).at(SceneModules[CurrentScene].GetRenderQueue(type).size() - 1);
     robj.MaterialName = "gbuffer";
     robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
-    SceneModules["gbuffer"].AddRQ(robj);
+    SceneModules["gbuffer"].AddRQ(type, robj);
 
     robj.MaterialName = "mask";
     robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
 ;
-    SceneModules["mask"].AddRQ(robj);
+    SceneModules["mask"].AddRQ(type, robj);
 }
 
 void Modules::Base::RestartAnimator()
@@ -154,8 +174,10 @@ void Modules::Base::UpdateResource(Modules::Module& module, Gfx::RenderObject& o
 void Modules::Base::UpdateResources()
 {
     for (auto& it : SceneModules) {
-        for (Gfx::RenderObject& obj : it.second.GetRenderQueue()) {
+        for (auto& it_v : it.second.GetRenderQueueMap()) {
+        for (Gfx::RenderObject& obj : it_v.second) {
             UpdateResource(it.second, obj);
+        }
         }
     }
 }
@@ -163,26 +185,35 @@ void Modules::Base::UpdateResources()
 void Modules::Base::UpdateMaterials()
 {
     for (auto& it : SceneModules) {
-        for (Gfx::RenderObject& obj : it.second.GetRenderQueue()) {
+        for (auto& it_v : it.second.GetRenderQueueMap()) {
+        
+        for (Gfx::RenderObject& obj : it_v.second) {
+
             obj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(obj.MaterialName);
+        }
         }
     }
 }
 
 void Modules::Base::ThreadedRQ(int i, Keeper::Objects* info)
-{
-    SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected = info->IsVisible() && (info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0);
-    SceneModules["mask"].GetRenderQueue()[i].IsSelected = info->IsVisible() && SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected;//info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
-    if (SceneModules["mask"].GetRenderQueue()[i].IsSelected) {
+{ 
+    QueueType type = RQ_GENERAL;
+    if (info->GetType() == Keeper::LIGHT) {
+        type = RQ_LIGHT;
+    }
+
+    SceneModules[CurrentScene].GetRenderQueue(type)[i].IsSelected = info->IsVisible() && (info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue(type)[i].ID == GameObjects->GetSelectedID() ? 1 : 0);
+    SceneModules["mask"].GetRenderQueue(type)[i].IsSelected = info->IsVisible() && SceneModules[CurrentScene].GetRenderQueue(type)[i].IsSelected;//info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
+    if (SceneModules["mask"].GetRenderQueue(type)[i].IsSelected) {
         HasOutline = true;
     }
-    SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible = info->IsVisible();
-    SceneModules[CurrentScene].GetRenderQueue()[i].Position = info->GetPosition();
-    SceneModules["gbuffer"].GetRenderQueue()[i].IsSelected =SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected ; 
-    SceneModules["gbuffer"].GetRenderQueue()[i].IsVisible = info->IsVisible();
-    SceneModules["gbuffer"].GetRenderQueue()[i].Position = info->GetPosition();
-    if (SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible && HasAnimation(SceneModules[CurrentScene].GetRenderQueue()[i].ID)) {
-        Animator->Update(SceneModules[CurrentScene].GetRenderQueue()[i]);
+    SceneModules[CurrentScene].GetRenderQueue(type)[i].IsVisible = info->IsVisible();
+    SceneModules[CurrentScene].GetRenderQueue(type)[i].Position = info->GetPosition();
+    SceneModules["gbuffer"].GetRenderQueue(type)[i].IsSelected =SceneModules[CurrentScene].GetRenderQueue(type)[i].IsSelected ; 
+    SceneModules["gbuffer"].GetRenderQueue(type)[i].IsVisible = info->IsVisible();
+    SceneModules["gbuffer"].GetRenderQueue(type)[i].Position = info->GetPosition();
+    if (SceneModules[CurrentScene].GetRenderQueue(type)[i].IsVisible && HasAnimation(SceneModules[CurrentScene].GetRenderQueue(type)[i].ID)) {
+        Animator->Update(SceneModules[CurrentScene].GetRenderQueue(type)[i]);
     }
 }
 
@@ -206,24 +237,25 @@ void Modules::Base::UpdateRQ()
         if (Thread::Pool::GetInstance()->IsInit()) {
             Thread::Pool::GetInstance()->WaitWork();
         }
-        
+        i = 0;
         auto light = GameObjects->Get(Keeper::Type::LIGHT);
         for (Keeper::Objects* info : light) {
-            SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected = info->IsVisible() && (info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0);
-            SceneModules["mask"].GetRenderQueue()[i].IsSelected = info->IsVisible() && SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected;//info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
-            if (SceneModules["mask"].GetRenderQueue()[i].IsSelected) {
-                HasOutline = true;
-            }
-            SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible = info->IsVisible();
-            SceneModules["gbuffer"].GetRenderQueue()[i].IsVisible = info->IsVisible();
-            SceneModules[CurrentScene].GetRenderQueue()[i].Position = info->GetPosition();
+            ThreadedRQ(i, info);
+            // SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected = info->IsVisible() && (info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0);
+            // SceneModules["mask"].GetRenderQueue()[i].IsSelected = info->IsVisible() && SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected;//info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
+            // if (SceneModules["mask"].GetRenderQueue()[i].IsSelected) {
+            //     HasOutline = true;
+            // }
+            // SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible = info->IsVisible();
+            // SceneModules["gbuffer"].GetRenderQueue()[i].IsVisible = info->IsVisible();
+            // SceneModules[CurrentScene].GetRenderQueue()[i].Position = info->GetPosition();
             i++;
         }
         i = 0;
         auto gizmo = GameObjects->Get(Keeper::Type::GIZMO);
         for (Keeper::Objects* info : gizmo) {
-            SceneModules["gizmo"].GetRenderQueue()[i].IsVisible = info->IsVisible();
-            SceneModules["gizmo"].GetRenderQueue()[i].Position = info->GetPosition();
+            SceneModules["gizmo"].GetRenderQueue(RQ_GENERAL)[i].IsVisible = info->IsVisible();
+            SceneModules["gizmo"].GetRenderQueue(RQ_GENERAL)[i].Position = info->GetPosition();
             i++;
         }
     }
@@ -232,8 +264,8 @@ void Modules::Base::UpdateRQ()
 void Modules::Base::UpdateTexture(const std::string& str, Core::ImGuiHelper::TextureForUpdate upd)
 {
     int id = upd.ID;
-    auto it = std::find_if(SceneModules[str].GetRenderQueue().begin(), SceneModules[str].GetRenderQueue().end(), [id](Gfx::RenderObject& obj) { return obj.ID == id; });
-    if (it != SceneModules[str].GetRenderQueue().end()) {
+    auto it = std::find_if(SceneModules[str].GetRenderQueue(RQ_GENERAL).begin(), SceneModules[str].GetRenderQueue(RQ_GENERAL).end(), [id](Gfx::RenderObject& obj) { return obj.ID == id; });
+    if (it != SceneModules[str].GetRenderQueue(RQ_GENERAL).end()) {
         for (int i = 0; i < MAX_FRAMES; i++) {
             if (!it->Textures.empty()) {
                 std::vector<Gfx::RenderTarget*>::iterator texture_it = it->Textures.begin();
@@ -279,7 +311,10 @@ void Modules::Base::UpdateSamplers()
                 GameObjects->GetInfo(Keeper::Infos::INFO_OUTLINE)
             );
 
-            for (Gfx::RenderObject& obj : SceneModules["outline"].GetRenderQueue()) {
+            for (Gfx::RenderObject& obj : SceneModules["outline"].GetRenderQueue(RQ_GENERAL)) {
+                UpdateResource(SceneModules["outline"], obj);
+            }
+            for (Gfx::RenderObject& obj : SceneModules["outline"].GetRenderQueue(RQ_LIGHT)) {
                 UpdateResource(SceneModules["outline"], obj);
             }
         }
@@ -292,18 +327,33 @@ void Modules::Base::UpdateSamplers()
                 GameObjects->GetInfo(Keeper::Infos::INFO_LIGHTING)
             );
 
-            for (Gfx::RenderObject& obj : SceneModules["lighting"].GetRenderQueue()) {
+            for (Gfx::RenderObject& obj : SceneModules["lighting"].GetRenderQueue(RQ_GENERAL)) {
                 UpdateResource(SceneModules["lighting"], obj);
             }
+            for (Gfx::RenderObject& obj : SceneModules["lighting"].GetRenderQueue(RQ_LIGHT)) {
+                UpdateResource(SceneModules["lighting"], obj);
+            }
+
         }
         if (SceneModules.find("gbuffer") != SceneModules.end()) {
-            Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue();
+            {
+            Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue(RQ_GENERAL);
             std::string material= "gbuffer";
             Gfx::Material* mat = Gfx::Pipeline::GetInstance()->GetMaterial(material);
             for (Gfx::RenderObject& obj : rq) {
                 obj.Material = mat;        
             }
-            SetRenderQueue("gbuffer", rq);
+            SetRenderQueue(RQ_GENERAL, "gbuffer", rq);
+            }
+            {
+            Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue(RQ_LIGHT);
+            std::string material= "gbuffer";
+            Gfx::Material* mat = Gfx::Pipeline::GetInstance()->GetMaterial(material);
+            for (Gfx::RenderObject& obj : rq) {
+                obj.Material = mat;        
+            }
+            SetRenderQueue(RQ_LIGHT, "gbuffer", rq);
+            }
         }
         Gfx::Renderer::GetInstance()->SetUpdateSamplers(false);
     }

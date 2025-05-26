@@ -13,7 +13,6 @@
 #include "anthraxAI/utils/parser.h"
 #include "anthraxAI/utils/thread.h"
 #include "anthraxAI/utils/tracy.h"
-#include <cstdint>
 #include <cstdio>
 #include <ctime>
 #include <string>
@@ -34,13 +33,13 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
 
     uint32_t frameind = Gfx::Renderer::GetInstance()->GetFrameInd();
 
-    u_int32_t obj_size = module.GetRenderQueue().size();
+    u_int32_t obj_size = module.GetRenderQueue(Modules::RQ_GENERAL).size();
     uint32_t inst_ind = 0;//Gfx::Renderer::GetInstance()->GetInstanceInd();
-    std::vector<uint32_t> num_obj_per_thread(Thread::MAX_RENDER_THREAD_NUM, (uint32_t)module.GetRenderQueue().size() / Thread::MAX_RENDER_THREAD_NUM );
+    std::vector<uint32_t> num_obj_per_thread(Thread::MAX_RENDER_THREAD_NUM, (uint32_t)module.GetRenderQueue(Modules::RQ_GENERAL).size() / Thread::MAX_RENDER_THREAD_NUM );
 
-    bool iseven = (module.GetRenderQueue().size() % Thread::MAX_RENDER_THREAD_NUM) == 0;
+    bool iseven = (module.GetRenderQueue(Modules::RQ_GENERAL).size() % Thread::MAX_RENDER_THREAD_NUM) == 0;
     if (!iseven) {
-        num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue().size() % Thread::MAX_RENDER_THREAD_NUM);
+        num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue(Modules::RQ_GENERAL).size() % Thread::MAX_RENDER_THREAD_NUM);
     }
     u_int32_t first_obj_size = 0;
     u_int32_t sec_obj_size = 0;// module.GetRenderQueue().size() / 2;
@@ -52,7 +51,7 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
         sec_obj_size += num_obj_per_thread[thread_id];
         for (uint32_t obj_num = first_obj_size; obj_num < sec_obj_size; obj_num++) {
 
-            Gfx::RenderObject& obj = module.GetRenderQueue()[obj_num];
+            Gfx::RenderObject& obj = module.GetRenderQueue(Modules::RQ_GENERAL)[obj_num];
             instance_inds[thread_id + 1] += obj.Model[frameind]->Meshes.size();
         }
         first_obj_size = sec_obj_size;
@@ -87,7 +86,7 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
         uint32_t inst_ind = inst;
         for (uint32_t obj_num = first_obj_size; obj_num < sec_obj_size; obj_num++) {
             
-            Gfx::RenderObject& obj = module.GetRenderQueue()[obj_num];
+            Gfx::RenderObject& obj = module.GetRenderQueue(Modules::RQ_GENERAL)[obj_num];
 
             if (!obj.IsVisible) {
                 inst_ind += obj.Model[frameind]->Meshes.size();
@@ -139,12 +138,13 @@ void Core::Scene::Render(Modules::Module& module)
 {
     Gfx::Renderer::GetInstance()->DebugRenderName(module.GetTag());
 
-    if (( module.GetTag() == "gbuffer" && module.GetRenderQueue().size() > Thread::MAX_RENDER_THREAD_NUM) ){
+    if (( module.GetTag() == "gbuffer" && module.GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM) ){
         RenderThreaded(module);
     }
     else {
         uint32_t frameind = Gfx::Renderer::GetInstance()->GetFrameInd();
-        for (Gfx::RenderObject& obj : module.GetRenderQueue()) {
+        for (auto& it : module.GetRenderQueueMap()) {
+        for (Gfx::RenderObject& obj : it.second) {
             if (!obj.IsVisible) {
                 Gfx::Renderer::GetInstance()->IncInstanceInd(obj.Model[frameind]->Meshes.size());
                 continue;
@@ -159,6 +159,7 @@ void Core::Scene::Render(Modules::Module& module)
             else {
                 Gfx::Renderer::GetInstance()->Draw(obj);
             }
+        }
         }
     }
     Gfx::Renderer::GetInstance()->EndRenderName();
@@ -190,7 +191,7 @@ void Core::Scene::RenderScene(bool playmode)
             }
             else {
                 // objects from map
-                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, GameModules->Get("gbuffer").GetRenderQueue().size() > Thread::MAX_RENDER_THREAD_NUM ? true : false);
+                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, GameModules->Get("gbuffer").GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM ? true : false);
                 Render(GameModules->Get("gbuffer"));
                 Gfx::Renderer::GetInstance()->EndRender();
             

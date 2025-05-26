@@ -32,14 +32,21 @@ namespace Modules
         TEXTURE_UI_MANAGER,
         SAMPLERS,
     };
-
+    
+    enum QueueType {
+        RQ_GENERAL,
+        RQ_LIGHT,
+    };
+    typedef std::vector<Gfx::RenderObject> RenderQueueVec;
+    typedef std::map<QueueType, std::vector<Gfx::RenderObject>> RenderQueueMap;
     class Module
     {
         public:
             Module() {}
             Module(Info info);
 
-            std::vector<Gfx::RenderObject>& GetRenderQueue() { return RenderQueue; }
+            RenderQueueVec& GetRenderQueue(QueueType type) { return RenderQueue[type]; }
+            RenderQueueMap& GetRenderQueueMap() { return RenderQueue; }
             Gfx::BindlessDataType GetBindlessType() const { return BindlessType; }
             Gfx::InputAttachments GetIAttachments() const { return IAttachments; }
 
@@ -53,13 +60,13 @@ namespace Modules
             void SetStorageBuffer(bool set) { HasStorageBuffer = set; }
             void SetCameraBuffer(bool set) { HasCameraBuffer = set; }
             void SetGizmo(bool gizmo) { HasGizmo = gizmo; }
-            void AddRQ(Gfx::RenderObject obj) { RenderQueue.push_back(obj); }
+            void AddRQ(QueueType type, Gfx::RenderObject obj) { RenderQueue[type].push_back(obj); }
 
-            void SetRenderQueue(std::vector<Gfx::RenderObject>& rq) { RenderQueue = rq; }
+            void SetRenderQueue(QueueType type, std::vector<Gfx::RenderObject>& rq) { RenderQueue[type] = rq; }
         private:
             std::string Tag;
             Gfx::InputAttachments IAttachments;
-            std::vector<Gfx::RenderObject> RenderQueue;
+            RenderQueueMap RenderQueue;
             Gfx::BindlessDataType BindlessType;
 
             int ColorID;
@@ -72,7 +79,6 @@ namespace Modules
 
     };
     typedef std::unordered_map<std::string, Module> ScenesMap;
-    typedef std::vector<Gfx::RenderObject> RenderQueueVec;
     class Base
     {
         public:
@@ -91,7 +97,7 @@ namespace Modules
             bool HasFrameOutline() const { return HasOutline; }
             void ReloadAnimation(uint32_t id, const std::string& s) { if (Animator) { Animator->Reload(id, s); } }
             bool HasAnimation(uint32_t id) { if (Animator) { return Animator->HasAnimation(id); } return false; }
-            void SetRenderQueue(const std::string& key, RenderQueueVec& rq) { SceneModules[key].SetRenderQueue(rq); }
+            void SetRenderQueue(QueueType type, const std::string& key, RenderQueueVec& rq) { SceneModules[key].SetRenderQueue(type, rq); }
 
             void RestartAnimator();
             const glm::mat4& GetGlobalTransform() const { return Animator->GetGlobalTransform(); }
