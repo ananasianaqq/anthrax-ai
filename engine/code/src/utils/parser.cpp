@@ -1,4 +1,6 @@
 #include "anthraxAI/utils/parser.h"
+#include "anthraxAI/gameobjects/gameobjects.h"
+#include "anthraxAI/gameobjects/objects/light.h"
 #include "anthraxAI/utils/defines.h"
 
 #include <algorithm>
@@ -6,6 +8,7 @@
 #include <fstream>
 #include <ostream>
 #include <string>
+#include <utility>
 
 std::string Utils::Parser::ConstructElementName(const LevelElements& element) const
 {
@@ -117,6 +120,43 @@ void Utils::Parser::Tokenize(std::vector<std::string>::const_iterator it)
     ASSERT(Tokens.empty(), "Utils::Parser::Tokenize() file was empty");
 }
 
+void Utils::Parser::AddToken(LevelElements element, const std::string& str)
+{
+    Tokens.emplace_back(std::make_pair(Utils::GetValue(element), str));
+}
+void Utils::Parser::UpdateTokens(const Keeper::Objects* obj)
+{
+    Keeper::Type type = obj->GetType();
+
+    AddToken(LEVEL_ELEMENT_OBJECT, "");
+    AddToken(LEVEL_ELEMENT_ID, obj->GetParsedID());
+    AddToken(LEVEL_ELEMENT_POSITION, "");
+    AddToken(LEVEL_ELEMENT_X, std::to_string(obj->GetPosition().x));
+    AddToken(LEVEL_ELEMENT_Y, std::to_string(obj->GetPosition().y));
+    AddToken(LEVEL_ELEMENT_Z, std::to_string(obj->GetPosition().z));
+    AddToken(LEVEL_ELEMENT_MATERIAL, "");
+    AddToken(LEVEL_ELEMENT_NAME, obj->GetMaterialName());
+    AddToken(LEVEL_ELEMENT_FRAG, obj->GetFragmentName());
+    AddToken(LEVEL_ELEMENT_VERT, obj->GetVertexName());
+    AddToken(LEVEL_ELEMENT_TEXTURE, "");
+    AddToken(LEVEL_ELEMENT_NAME, obj->GetTextureName());
+    if (type == Keeper::NPC) {
+        AddToken(LEVEL_ELEMENT_MODEL, "");
+        AddToken(LEVEL_ELEMENT_NAME, obj->GetModelName());
+    }
+    else if (type == Keeper::LIGHT) {
+        AddToken(LEVEL_ELEMENT_LIGHT, "");
+        AddToken(LEVEL_ELEMENT_NAME, obj->GetModelName());
+        AddToken(LEVEL_ELEMENT_COLOR, "");
+        AddToken(LEVEL_ELEMENT_X, std::to_string(obj->GetColor().x));
+        AddToken(LEVEL_ELEMENT_Y, std::to_string(obj->GetColor().y));
+        AddToken(LEVEL_ELEMENT_Z, std::to_string(obj->GetColor().z));
+    }
+    RootNode = Tokens.begin();
+    ChildRange = Tokens.end();
+
+}
+
 Utils::NodeIt Utils::Parser::GetChildByID(const NodeIt& node, const std::string& id)  const
 {
     std::string key =  Utils::GetValue(Utils::LEVEL_ELEMENT_ID);
@@ -134,9 +174,13 @@ Utils::NodeIt Utils::Parser::GetChild(const NodeIt& node, const LevelElements& e
     std::string key =  Utils::GetValue(elem);
     NodeIt obj_it = Tokens.end();
 
-    if (elem == Utils::LEVEL_ELEMENT_ANIMATION) {
+    if (elem == Utils::LEVEL_ELEMENT_ANIMATION || elem == Utils::LEVEL_ELEMENT_LIGHT) {
         std::string obj_key = Utils::GetValue(Utils::LEVEL_ELEMENT_OBJECT);
-        obj_it = std::find_if(node, Tokens.end(), [obj_key](const auto& n) { return n.first == obj_key; } );
+        NodeIt n = node;
+        if (elem == Utils::LEVEL_ELEMENT_LIGHT) {
+            ++n;
+        }
+        obj_it = std::find_if(n, Tokens.end(), [obj_key](const auto& n) { return n.first == obj_key; } );
         const_cast<NodeIt&>(ChildRange) = obj_it;
     }
 

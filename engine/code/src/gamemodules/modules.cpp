@@ -106,6 +106,7 @@ void Modules::Base::Insert(const Keeper::Objects* obj)
 
     SceneModules[CurrentScene].AddRQ(type, LoadResources(obj));
     UpdateResource(SceneModules[CurrentScene], SceneModules[CurrentScene].GetRenderQueue(type).at(SceneModules[CurrentScene].GetRenderQueue(type).size() - 1));
+    if (obj->GetType() != Keeper::SPRITE) {
     Gfx::RenderObject robj = SceneModules[CurrentScene].GetRenderQueue(type).at(SceneModules[CurrentScene].GetRenderQueue(type).size() - 1);
     robj.MaterialName = "gbuffer";
     robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
@@ -115,6 +116,7 @@ void Modules::Base::Insert(const Keeper::Objects* obj)
     robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
 ;
     SceneModules["mask"].AddRQ(type, robj);
+    }
 }
 
 void Modules::Base::RestartAnimator()

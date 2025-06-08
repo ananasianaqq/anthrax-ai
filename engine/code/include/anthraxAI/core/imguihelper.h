@@ -58,8 +58,8 @@ namespace UI
             Element(ElementType type, const std::string& label, bool isdyn, std::function<float (float)> func, std::function<float ()>  arg)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionFloatArg(func), DefinitionFloat(arg) {  }
             
-            Element(ElementType type, const std::string& label, bool isdyn, std::function<void (glm::vec3)> func, std::function<glm::vec3 ()>  arg)
-            : Type(type), Label(label), IsDynamic(isdyn), DefinitionFloat3Arg(func), GetDefinitionFloat3Arg(arg) {  }
+            Element(ElementType type, const std::string& label, bool isdyn, std::function<void (glm::vec3)> func, std::function<glm::vec3 ()>  arg, float minmax[2])
+            : Type(type), Label(label), IsDynamic(isdyn), DefinitionFloat3Arg(func), GetDefinitionFloat3Arg(arg) { SliderMinMax[0] = minmax[0]; SliderMinMax[1] = minmax[1];  }
 
             Element(ElementType type, const std::string& label, bool isdyn,std::function<float ()> func)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionFloat(func) { }
@@ -88,7 +88,8 @@ namespace UI
             std::function<float ()> DefinitionFloat;
             std::function<glm::vec3 ()> GetDefinitionFloat3Arg;
             std::function<std::string ()> DefinitionString;
-
+            
+            float SliderMinMax[2] = {-1.0f, 1.0f};
             inline bool operator<(const UI::Element& elem) const { return GetID() < elem.GetID(); }
             bool GetCheckbox() const { return Checkbox; }
             void SetCheckbox(bool b) { Checkbox = b;}
@@ -195,7 +196,9 @@ namespace Core
 
             ImGuiStyle 	EditorStyle;
             std::string EditorName;
-            std::string NewObjectName;
+            std::string NewObjectNameNPC;
+            std::string NewObjectNameSprite;
+            std::string NewObjectNameLight;
             std::string SelectedElement;
             UI::UIWindowsMap UIWindows;
             UI::Window* Editor;

@@ -31,6 +31,8 @@ namespace Keeper {
         bool IsModel = false;
         bool IsLight = false;
         bool VertexBase = false;
+        // used in UI object creation only
+        std::string Type;
     };
 
     enum Type {
@@ -131,12 +133,14 @@ namespace Keeper {
 
             size_t GetObjectsSize() const;
             void UpdateObjectNames();
+            void VerifyNewObject();
 
             Keeper::Objects* GetNotConstObject(Keeper::Type type, int id);
             Keeper::Objects* GetNotConstObject(Keeper::Type type, const std::string& str);
             const Keeper::Objects* GetObject(Keeper::Type type, int id) const;
             Keeper::Objects* GetLast(Keeper::Type type) { return ObjectsList[type].at(ObjectsList[type].size() - 1); }
             const std::vector<std::string>& GetObjectNames() const { return ObjectNames; }
+            const std::vector<std::string>& GetObjectTypes() const { return ObjectTypes; }
 
             Info GetInfo(Infos info) const { return DefaultObjects[info]; }
 
@@ -151,5 +155,6 @@ namespace Keeper {
             uint32_t SelectedID = 0;
             
             std::vector<std::string> ObjectNames;
+            std::vector<std::string> ObjectTypes;
     };
 }

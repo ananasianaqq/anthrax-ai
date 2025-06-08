@@ -1,5 +1,6 @@
 #pragma once
 
+#include "anthraxAI/gameobjects/gameobjects.h"
 #include "anthraxAI/utils/defines.h"
 #include <sstream>
 #include <algorithm>
@@ -72,6 +73,7 @@ namespace Utils
             void Clear() { if (!File.empty()) { File.clear(); Tokens.clear(); }  }
             void UpdateElement(NodeIt it, const std::string& s) { const_cast<std::pair<std::string, std::string>&>(*it).second = s; }
             void PrintTokenized();
+            void UpdateTokens(const Keeper::Objects* obj);
         private:
             std::vector<std::string> File;
             TokensPair Tokens;
@@ -83,6 +85,7 @@ namespace Utils
 
             void Tokenize(std::vector<std::string>::const_iterator it) ;
             std::string ConstructElementName(const LevelElements& element) const;
+            void AddToken(LevelElements element,  const std::string& str);
     };
 
     template<typename T>

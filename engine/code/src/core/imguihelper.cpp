@@ -173,9 +173,13 @@ void Core::ImGuiHelper::InitUIElements()
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     const ImVec2 pos = viewport->Pos;
         EditorName = "Engine ;p";
-        NewObjectName = "New Object";
+        NewObjectNameNPC = "NPC Object";
+        NewObjectNameSprite = "Sprite Object";
+        NewObjectNameLight = "Light Object";
         Add(EditorName, UI::Window(EditorName, { 400.0f, Core::WindowManager::GetInstance()->GetScreenResolution().y - 40.0f }, { pos.x, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings ));
-        Add(EditorName, UI::Window(NewObjectName, { 400.0f, 600.0f }, { 400.0f, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings, false));
+        Add(EditorName, UI::Window(NewObjectNameNPC, { 400.0f, 600.0f }, { 400.0f, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings, false));
+        Add(EditorName, UI::Window(NewObjectNameSprite, { 400.0f, 600.0f }, { 400.0f, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings, false));
+        Add(EditorName, UI::Window(NewObjectNameLight, { 400.0f, 600.0f }, { 400.0f, pos.y + 40.0f }, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings, false));
 
         std::string s = EditorName;
         auto it = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s](const UI::Window& win) { return win.GetName() == s; });
@@ -201,10 +205,11 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(rendertab, UI::Element(UI::DEBUG_IMAGE, "image", false));
         it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
         it->Add(rendertab, UI::Element(UI::TEXT, "Lighting"));
-        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Global Light Dir", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetGlobalLightDir(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetGlobalLightDir(); } ));
-        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Ambient", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetAmbient(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetAmbient(); } ));
-        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Specular", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetSpecular(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetSpecular(); } ));
-        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Diffuse", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetDiffuse(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetDiffuse(); } ));
+        float minmax[2] = {-1.0f, 1.0f};
+        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Global Light Dir", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetGlobalLightDir(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetGlobalLightDir(); }, minmax ));
+        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Ambient", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetAmbient(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetAmbient(); } , minmax ));
+        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Specular", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetSpecular(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetSpecular(); } , minmax ));
+        it->Add(rendertab, UI::Element(UI::SLIDER_3, "Diffuse", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetDiffuse(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetDiffuse(); } , minmax ));
     }   
 
     {
@@ -233,13 +238,42 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
     }
     {
-        std::string s1 = NewObjectName;
+        std::string s1 = NewObjectNameNPC;
         auto it_obj = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s1](const UI::Window& win) { return win.GetName() == s1; });
 
         it_obj->Add(UI::Element(UI::TEXT_ENTER, "Tag", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectParsedID(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectParsedID(); } ));
-        it_obj->Add(UI::Element(UI::SLIDER_3, "Position", false, [](glm::vec3 v) -> void { Scene::GetInstance()->SetNewObjectPosition(v); }, []() -> glm::vec3 { return Scene::GetInstance()->GetNewObjectPosition(); }));
+        float minmax[2] = {-1000.0, 1000.0};
+        it_obj->Add(UI::Element(UI::SLIDER_3, "Position", false, [](glm::vec3 v) -> void { Scene::GetInstance()->SetNewObjectPosition(v); }, []() -> glm::vec3 { return Scene::GetInstance()->GetNewObjectPosition(); }, minmax));
         it_obj->Add(UI::Element(UI::IMAGE, "Textures", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectTexture(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectTexture(); } ));
-        it_obj->Add(UI::Element(UI::SEPARATOR, "sep", false)); 
+        it_obj->Add(UI::Element(UI::SEPARATOR, "sep", false));
+        it_obj->Add(UI::Element(UI::COMBO, "Models", false, Gfx::Model::GetInstance()->GetModelNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectModel(tag); }, true));
+        it_obj->Add(UI::Element(UI::COMBO, "Material", false, Gfx::Pipeline::GetInstance()->GetMaterialNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectMaterial(tag); }));
+        it_obj->Add(UI::Element(UI::SAVE_OBJECT, "Save", false));
+    }
+    {
+        std::string s1 = NewObjectNameSprite;
+        auto it_obj = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s1](const UI::Window& win) { return win.GetName() == s1; });
+
+        it_obj->Add(UI::Element(UI::TEXT_ENTER, "Tag", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectParsedID(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectParsedID(); } ));
+        float minmax[2] = {-1000.0, 1000.0};
+        it_obj->Add(UI::Element(UI::SLIDER_3, "Position", false, [](glm::vec3 v) -> void { Scene::GetInstance()->SetNewObjectPosition(v); }, []() -> glm::vec3 { return Scene::GetInstance()->GetNewObjectPosition(); }, minmax));
+        it_obj->Add(UI::Element(UI::IMAGE, "Textures", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectTexture(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectTexture(); } ));
+        it_obj->Add(UI::Element(UI::SEPARATOR, "sep", false));
+        it_obj->Add(UI::Element(UI::COMBO, "Material", false, Gfx::Pipeline::GetInstance()->GetMaterialNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectMaterial(tag); }));
+        it_obj->Add(UI::Element(UI::SAVE_OBJECT, "Save", false));
+    }
+    {
+        std::string s1 = NewObjectNameLight;
+        auto it_obj = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s1](const UI::Window& win) { return win.GetName() == s1; });
+
+        it_obj->Add(UI::Element(UI::TEXT_ENTER, "Tag", false, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectParsedID(tag); }, []() -> std::string { return Scene::GetInstance()->GetNewObjectParsedID(); } ));
+        float minmax[2] = {-1000.0, 1000.0};
+        float minmaxcolor[2] = {0.0, 1.0};
+        std::vector<std::string> types = {"point"};
+        it_obj->Add(UI::Element(UI::COMBO, "Type", false, types, [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectLightType(tag); }, false));
+        it_obj->Add(UI::Element(UI::SLIDER_3, "Position", false, [](glm::vec3 v) -> void { Scene::GetInstance()->SetNewObjectPosition(v); }, []() -> glm::vec3 { return Scene::GetInstance()->GetNewObjectPosition(); }, minmax));
+        it_obj->Add(UI::Element(UI::SLIDER_3, "Color", false, [](glm::vec3 v) -> void { Scene::GetInstance()->SetNewObjectColor(v); }, []() -> glm::vec3 { return Scene::GetInstance()->GetNewObjectColor(); }, minmaxcolor));
+        it_obj->Add(UI::Element(UI::SEPARATOR, "sep", false));
         it_obj->Add(UI::Element(UI::COMBO, "Models", false, Gfx::Model::GetInstance()->GetModelNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectModel(tag); }, true));
         it_obj->Add(UI::Element(UI::COMBO, "Material", false, Gfx::Pipeline::GetInstance()->GetMaterialNames(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectMaterial(tag); }));
         it_obj->Add(UI::Element(UI::SAVE_OBJECT, "Save", false));
@@ -457,7 +491,22 @@ void Core::ImGuiHelper::Image(UI::Element& element)
 
 void Core::ImGuiHelper::AddObject()
 {
-    std::string s = NewObjectName;
+    //it_obj->Add(UI::Element(UI::COMBO, "Type", false, Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectType(tag); }));
+    static UI::Element select_type = UI::Element(UI::COMBO, "Type", false, Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectType(tag); });
+    
+        std::string s;
+    if (Scene::GetInstance()->GetNewObjectType() == "NPC") {
+        s = NewObjectNameNPC;
+    }
+    if (Scene::GetInstance()->GetNewObjectType() == "Light") {
+        s = NewObjectNameLight;
+    }
+    if (Scene::GetInstance()->GetNewObjectType() == "Sprite") {
+        s = NewObjectNameSprite;
+    }
+    if (s.empty()) {
+        return;
+    }
     auto it = std::find_if(UIWindows[EditorName].begin(), UIWindows[EditorName].end(), [s](const UI::Window& win) { return win.GetName() == s; });
     
 //    static bool test = false;
@@ -513,8 +562,19 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
         }
         case UI::ADD_OBJECT: {
             if (ImGui::Button(element.GetLabel().c_str())) {
-                AddObject();
+                ImGui::OpenPopup("my_select_popup");
             }
+            if (ImGui::BeginPopup("my_select_popup"))
+            {
+                ImGui::SeparatorText("Select Type:");
+                for (int i = 0; i < Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes().size(); i++) {
+                    if (ImGui::Selectable(Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes()[i].c_str())) {
+                        Scene::GetInstance()->SetNewObjectType(Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes()[i]);
+                    }
+                }
+                ImGui::EndPopup();
+            }
+            AddObject();
             break;
         }
         case UI::SAVE_OBJECT: {
@@ -565,7 +625,7 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
                 arg = element.GetDefinitionFloat3Arg();
             }
             float v[3] = { arg.x, arg.y, arg.z };
-            ImGui::SliderFloat3(element.GetLabel().c_str(), v, -1.0f, 1.0f);
+            ImGui::SliderFloat3(element.GetLabel().c_str(), v, element.SliderMinMax[0], element.SliderMinMax[1]);
             if (element.DefinitionFloat3Arg) {
                 element.DefinitionFloat3Arg(glm::vec3(v[0], v[1], v[2]));
             }

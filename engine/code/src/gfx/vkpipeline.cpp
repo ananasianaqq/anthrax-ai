@@ -320,6 +320,13 @@ void Gfx::Pipeline::Build()
     frag = "./shaders/lighting.frag";
     vert = "./shaders/sprite.vert";
     BuildMaterial("lighting", &vertexshader, vert, &fragshader, frag, main_rt);
+
+// sprite
+	VK_ASSERT(vkCreatePipelineLayout(Gfx::Device::GetInstance()->GetDevice(), &pipelinelayoutinfo, nullptr, &PipelineLayout), "failed to create pipeline layout!");
+	frag = "./shaders/sprite.frag";
+    vert = "./shaders/sprite.vert";
+    BuildMaterial("sprites", &vertexshader, vert, &fragshader, frag, main_rt);
+
 //clean shader modules
     vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), vertexshader, nullptr);
 	vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), fragshader, nullptr);

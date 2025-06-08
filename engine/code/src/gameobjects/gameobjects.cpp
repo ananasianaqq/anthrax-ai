@@ -12,7 +12,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <iterator>
 #include <string>
+#include <vector>
 Keeper::Base::~Base()
 {
   for (auto& it : ObjectsList) {
@@ -108,8 +110,54 @@ void Keeper::Base::UpdateObjectNames()
 
 }
 
+void Keeper::Base::VerifyNewObject()
+{
+    if (NewObjectInfo.ParsedID.empty()) {
+        NewObjectInfo.ParsedID = NewObjectInfo.Type;
+    }
+    if (NewObjectInfo.Texture.empty()) {
+        NewObjectInfo.Texture = Gfx::Renderer::GetInstance()->GetTextureMap().begin()->first;
+    }
+    if (NewObjectInfo.Model.empty()) {
+        NewObjectInfo.Model = *Gfx::Model::GetInstance()->GetModelNames().begin();
+    }
+    if (NewObjectInfo.Material.empty()) {
+        NewObjectInfo.Material = *Gfx::Pipeline::GetInstance()->GetMaterialNames().begin();
+    }
+
+    if (NewObjectInfo.Type == "Light") {
+        NewObjectInfo.IsLight = true;
+        NewObjectInfo.Texture = "dummy.png";
+    }
+
+    std::string name = NewObjectInfo.Type + ": " + NewObjectInfo.ParsedID;
+    size_t name_length = name.size();
+    std::vector<std::string> objs = ObjectNames;
+    std::sort(objs.begin(), objs.end());
+    auto it = std::find_if(objs.begin(), objs.end(), [name](const auto& n) { return n == name; });
+    int count = 0;
+    
+    //auto items = std::equal_range(std::begin(objs), std::end(objs), name);
+    //size_t num = std::distance(items.first, items.second);
+    if (it != objs.end()) {
+        for (; it != objs.end(); ++it) {
+            if (it->compare(0, name_length, name) != 0) {
+                break;
+            }
+            count++;
+        } 
+    }
+    if (count != 0) {
+        NewObjectInfo.ParsedID += "_" + std::to_string(count);
+        printf("[%s][%d]-----\n", std::to_string(count).c_str(), count);
+    }
+
+}
+
 Keeper::Base::Base()
 {
+    ObjectTypes = { "NPC", "Light" };
+
     Keeper::Info info;
     info.Fragment = "gizmo.frag";
     info.Vertex = "gizmo.vert";

@@ -5,6 +5,8 @@
 #include "anthraxAI/gamemodules/modules.h"
 #include "anthraxAI/gameobjects/gameobjects.h"
 #include "anthraxAI/gameobjects/objects/gizmo.h"
+#include "anthraxAI/gameobjects/objects/light.h"
+#include "anthraxAI/gameobjects/objects/sprite.h"
 #include "anthraxAI/gfx/renderhelpers.h"
 #include "anthraxAI/gfx/vkbase.h"
 #include "anthraxAI/gfx/vkrenderer.h"
@@ -17,6 +19,7 @@
 #include <ctime>
 #include <string>
 #include <sys/types.h>
+#include <utility>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
@@ -435,10 +438,22 @@ void Core::Scene::PopulateModules()
 }
 
 void Core::Scene::SaveObject() 
-{ 
-    GameObjects->Create<Keeper::Npc>(new Keeper::Npc(GameObjects->NewObjectInfo)); 
-    
-    GameModules->Insert(GameObjects->GetLast(Keeper::Type::NPC));
+{
+    GameObjects->VerifyNewObject();
+    Keeper::Type type;
+    if (GameObjects->NewObjectInfo.Type == "Light") {
+        GameObjects->Create<Keeper::Light>(new Keeper::Light(GameObjects->NewObjectInfo, GameObjects->NewObjectInfo.ParsedID));
+        type = Keeper::Type::LIGHT;
+    }
+    else if (GameObjects->NewObjectInfo.Type == "Sprite") {
+        GameObjects->Create<Keeper::Sprite>(new Keeper::Sprite(GameObjects->NewObjectInfo)); 
+        type = Keeper::Type::SPRITE;
+    }
+    else {
+        GameObjects->Create<Keeper::Npc>(new Keeper::Npc(GameObjects->NewObjectInfo)); 
+        type = Keeper::Type::NPC;
+    }
+    GameModules->Insert(GameObjects->GetLast(type));
     GameObjects->UpdateObjectNames();
     Core::ImGuiHelper::GetInstance()->UpdateObjectInfo();
 }        
@@ -457,7 +472,8 @@ void Core::Scene::ExportObjectInfo(const Keeper::Objects* obj)
     Utils::NodeIt obj_node = Parse.GetChildByID(Parse.GetRootNode(), obj->GetParsedID());
 
     if (!Parse.IsNodeValid(obj_node)) {
-        printf("Can't save file without ID Node!!!! ;p \n");
+        Parse.UpdateTokens(obj); 
+        Parse.Write(CurrentScene);
         return;
     }
 
@@ -466,6 +482,18 @@ void Core::Scene::ExportObjectInfo(const Keeper::Objects* obj)
     if (Parse.IsNodeValid(obj_textname)) {
         Parse.UpdateElement(obj_textname, obj->GetTextureName());
     }
+    Utils::NodeIt obj_mat = Parse.GetChild(obj_node, Utils::LEVEL_ELEMENT_MATERIAL);
+    Utils::NodeIt obj_matname = Parse.GetChild(obj_mat, Utils::LEVEL_ELEMENT_NAME);
+    if (Parse.IsNodeValid(obj_matname)) {
+        Parse.UpdateElement(obj_matname, obj->GetMaterialName());
+    }
+    
+    Utils::NodeIt obj_mod = Parse.GetChild(obj_node, Utils::LEVEL_ELEMENT_MODEL);
+    Utils::NodeIt obj_modname = Parse.GetChild(obj_mod, Utils::LEVEL_ELEMENT_NAME);
+    if (Parse.IsNodeValid(obj_modname)) {
+        Parse.UpdateElement(obj_modname, obj->GetModelName());
+    }
+
     Utils::NodeIt obj_position = Parse.GetChild(obj_node, Utils::LEVEL_ELEMENT_POSITION);
     if (Parse.IsNodeValid(obj_position)) {
         Utils::NodeIt x = Parse.GetChild(obj_position, Utils::LEVEL_ELEMENT_X);
@@ -539,7 +567,8 @@ void Core::Scene::LoadScene(const std::string& filename)
         }
 
         Utils::NodeIt light = Parse.GetChild(node, Utils::LEVEL_ELEMENT_LIGHT);
-        if (Parse.IsNodeValid(light)) {
+        if (Parse.IsNodeValidInRange(light)) {
+            printf("aaaaaa aaaaaa\n");
             info.Model = Parse.GetElement<std::string>(light, Utils::LEVEL_ELEMENT_NAME, "");
             info.IsLight = true;
             info.LightType = Parse.GetElement<std::string>(light, Utils::LEVEL_ELEMENT_TYPE, "");

@@ -37,8 +37,14 @@ namespace Core
 
             Keeper::Camera& GetCamera() { return *EditorCamera; }
             const Keeper::Base* GetGameObjects() const { return GameObjects; }
+            void SetNewObjectType(const std::string& str) { GameObjects->NewObjectInfo.Type = str; }
+            const std::string& GetNewObjectType() { return GameObjects->NewObjectInfo.Type; }
+            void SetNewObjectLightType(const std::string& str) { GameObjects->NewObjectInfo.LightType = str; }
+            const std::string& GetNewObjectLightType() { return GameObjects->NewObjectInfo.LightType; }
             void SetNewObjectParsedID(const std::string& str) { GameObjects->NewObjectInfo.ParsedID = str; }
             const std::string& GetNewObjectParsedID() { return GameObjects->NewObjectInfo.ParsedID; }
+            void SetNewObjectColor(glm::vec3 position) { GameObjects->NewObjectInfo.Color = position; }
+            glm::vec3 GetNewObjectColor() { return GameObjects->NewObjectInfo.Color.convert(); }
             void SetNewObjectPosition(glm::vec3 position) { GameObjects->NewObjectInfo.Position = position; }
             glm::vec3 GetNewObjectPosition() { return GameObjects->NewObjectInfo.Position.convert(); }
             void SetNewObjectTexture(const std::string& str) { GameObjects->NewObjectInfo.Texture = str; }
