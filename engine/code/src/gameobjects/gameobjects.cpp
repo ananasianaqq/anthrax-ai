@@ -129,6 +129,10 @@ void Keeper::Base::VerifyNewObject()
         NewObjectInfo.IsLight = true;
         NewObjectInfo.Texture = "dummy.png";
     }
+    else if (NewObjectInfo.Type == "Sprite") {
+        NewObjectInfo.Material = "sprites";
+        NewObjectInfo.Model.clear();
+    }
 
     std::string name = NewObjectInfo.Type + ": " + NewObjectInfo.ParsedID;
     size_t name_length = name.size();
@@ -156,7 +160,7 @@ void Keeper::Base::VerifyNewObject()
 
 Keeper::Base::Base()
 {
-    ObjectTypes = { "NPC", "Light" };
+    ObjectTypes = { "NPC", "Light", "Sprite" };
 
     Keeper::Info info;
     info.Fragment = "gizmo.frag";

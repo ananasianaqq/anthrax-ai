@@ -64,6 +64,7 @@ namespace Core
             uint32_t GetSelectedID() { return GameObjects->GetSelectedID(); }
 
             const glm::mat4& GetGlobalTransform() const { return GameModules->GetGlobalTransform(); }
+            bool RenderPassed = false;
         private:
             void PopulateModules();
 

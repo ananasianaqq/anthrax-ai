@@ -175,6 +175,7 @@ void Core::Scene::RenderScene(bool playmode)
     ZoneScopedN("Scene::RenderScene");
 #endif
     if (Gfx::Renderer::GetInstance()->BeginFrame()) {
+        RenderPassed = true;
         Thread::Pool::GetInstance()->Time.BeginTime(Thread::Task::Name::RENDER, (double)Gfx::Renderer::GetInstance()->Time);
         if (GameModules->Get(CurrentScene).GetStorageBuffer()) {
               Gfx::Renderer::GetInstance()->PrepareStorageBuffer();
@@ -209,7 +210,11 @@ void Core::Scene::RenderScene(bool playmode)
                 Render(GameModules->Get("grid"));
                 Gfx::Renderer::GetInstance()->EndRender();
             }
-
+            if (GameModules->Find("sprite")) {
+                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("sprite").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_LOAD);
+                Render(GameModules->Get("sprite"));
+                Gfx::Renderer::GetInstance()->EndRender();
+            }
             Gfx::Renderer::GetInstance()->CopyImage(Gfx::RT_MAIN_COLOR, Gfx::RT_MAIN_DEBUG);
             // gizmo, outline
             if (playmode && HasFrameGizmo) {
@@ -240,6 +245,9 @@ void Core::Scene::RenderScene(bool playmode)
         Thread::Pool::GetInstance()->Time.EndTime(Thread::Task::Name::RENDER, (double)Engine::GetInstance()->GetTime());
        // Thread::PrintTime(Thread::Task::Name::RENDER);
         Gfx::Renderer::GetInstance()->EndFrame();
+    }
+    else {
+        RenderPassed = false;
     }
 #ifdef TRACY
     END_FRAME("frame"); 
@@ -363,11 +371,19 @@ void Core::Scene::PopulateModules()
         info.IAttachments.Add(Gfx::RT_MAIN_COLOR);
         info.IAttachments.Add(Gfx::RT_DEPTH, true);
         GameModules->Populate(CurrentScene, info,
-            [](Keeper::Type t) { return t == Keeper::CAMERA || t == Keeper::GIZMO; }
+            [](Keeper::Type t) { return t == Keeper::CAMERA || t == Keeper::GIZMO || t == Keeper::SPRITE; }
         );
     }
 
+    bool sprite = GameObjects->Find(Keeper::SPRITE);
     bool npc = GameObjects->Find(Keeper::NPC);
+        
+    if (sprite) {
+        Modules::Info info;
+        info.BindlessType = Gfx::BINDLESS_DATA_CAM_STORAGE_SAMPLER ;
+        info.IAttachments.Add(Gfx::RT_MAIN_COLOR);
+        GameModules->Populate("sprite", info, GameObjects->GetObjects(Keeper::SPRITE));
+    }
     HasFrameGizmo = false;
     HasFrameGrid = false;
     HasGBuffer = false;
@@ -586,8 +602,8 @@ void Core::Scene::LoadScene(const std::string& filename)
 
         node = Parse.GetChild(texture, Utils::LEVEL_ELEMENT_OBJECT);
     printf("\n-----------------PARSED--------------------------");
-    printf("\n[scene]: |%s|\n[id]: %s\n[position]: [x]: %f [y]: %f [z]: %f\n[material][name]: %s [frag]: %s [vert]: %s\n[texture][name]: %s\n[model][name]: %s\n",
-        scenename.c_str(), id.c_str(), xpos, ypos, zpos, info.Material.c_str(), info.Fragment.c_str(), info.Vertex.c_str(), info.Texture.c_str(), info.Model.c_str());
+    printf("\n[scene]: |%s|\n[id]: %s\n[position]: [x]: %f [y]: %f [z]: %f\n[material][name]: %s [frag]: %s [vert]: %s\n[texture][name]: %s\n[model][name]: %s\n[isModel]: %d\n",
+        scenename.c_str(), id.c_str(), xpos, ypos, zpos, info.Material.c_str(), info.Fragment.c_str(), info.Vertex.c_str(), info.Texture.c_str(), info.Model.c_str(), info.IsModel);
     printf("Parsed animations:\n");
     for (std::string s : info.Animations) {
             printf("%s\n", s.c_str());

@@ -41,6 +41,26 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, std::f
     SceneModules[key] = module;
 }
 
+void Modules::Base::Populate(const std::string& key, Info scene, std::vector<Keeper::Objects*> vec)
+{
+    ASSERT(!GameObjects, "GameObjects is nullptr!");
+
+    Module module(scene);
+    module.SetTag(key);
+    for (auto& info : vec) {
+            if (info->GetType() == Keeper::NPC) {
+                module.SetGizmo(true);
+            }
+            QueueType type = RQ_GENERAL;
+            if (info->GetType() == Keeper::LIGHT) {
+                type = RQ_LIGHT;
+            }
+            module.AddRQ(type, LoadResources(info));
+    }
+    SceneModules[key] = module;
+ 
+}
+
 void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper::Info info)
 {
     Module module(scene);
@@ -104,18 +124,29 @@ void Modules::Base::Insert(const Keeper::Objects* obj)
         type = RQ_LIGHT;
     }
 
-    SceneModules[CurrentScene].AddRQ(type, LoadResources(obj));
-    UpdateResource(SceneModules[CurrentScene], SceneModules[CurrentScene].GetRenderQueue(type).at(SceneModules[CurrentScene].GetRenderQueue(type).size() - 1));
     if (obj->GetType() != Keeper::SPRITE) {
-    Gfx::RenderObject robj = SceneModules[CurrentScene].GetRenderQueue(type).at(SceneModules[CurrentScene].GetRenderQueue(type).size() - 1);
-    robj.MaterialName = "gbuffer";
-    robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
-    SceneModules["gbuffer"].AddRQ(type, robj);
+        SceneModules[CurrentScene].AddRQ(type, LoadResources(obj));
+        UpdateResource(SceneModules[CurrentScene], SceneModules[CurrentScene].GetRenderQueue(type).at(SceneModules[CurrentScene].GetRenderQueue(type).size() - 1));
+        Gfx::RenderObject robj = SceneModules[CurrentScene].GetRenderQueue(type).at(SceneModules[CurrentScene].GetRenderQueue(type).size() - 1);
+        robj.MaterialName = "gbuffer";
+        robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
+        SceneModules["gbuffer"].AddRQ(type, robj);
 
-    robj.MaterialName = "mask";
-    robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
+        robj.MaterialName = "mask";
+        robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
 ;
-    SceneModules["mask"].AddRQ(type, robj);
+        SceneModules["mask"].AddRQ(type, robj);
+    }
+    else {
+        std::string key = "sprite";
+        if (!Find("sprite")) {
+            Modules::Info info;
+            info.BindlessType = Gfx::BINDLESS_DATA_CAM_STORAGE_SAMPLER ;
+            info.IAttachments.Add(Gfx::RT_MAIN_COLOR);
+            SceneModules[key] = info;
+        }
+        SceneModules[key].AddRQ(type, LoadResources(obj));
+        UpdateResource(SceneModules[key], SceneModules[key].GetRenderQueue(type).at(SceneModules[key].GetRenderQueue(type).size() - 1));
     }
 }
 
@@ -263,7 +294,7 @@ void Modules::Base::UpdateRQ()
     }
 }
 
-void Modules::Base::UpdateTexture(const std::string& str, Core::ImGuiHelper::TextureForUpdate upd)
+bool Modules::Base::UpdateTexture(const std::string& str, Core::ImGuiHelper::TextureForUpdate upd)
 {
     int id = upd.ID;
     auto it = std::find_if(SceneModules[str].GetRenderQueue(RQ_GENERAL).begin(), SceneModules[str].GetRenderQueue(RQ_GENERAL).end(), [id](Gfx::RenderObject& obj) { return obj.ID == id; });
@@ -285,18 +316,25 @@ void Modules::Base::UpdateTexture(const std::string& str, Core::ImGuiHelper::Tex
                 it->TextureBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateTexture(it->Texture->GetImageView(), *(it->Texture->GetSampler()), it->Texture->GetName(), i);
             }
         }
+        return true;
     }
+    return false;
 }
 
 void Modules::Base::UpdateTextureUIManager()
 {
     if (Core::ImGuiHelper::GetInstance()->TextureNeedsUpdate()) {
         Core::ImGuiHelper::TextureForUpdate upd = Core::ImGuiHelper::GetInstance()->GetTextureForUpdate();
-        UpdateTexture(CurrentScene, upd);
+        if (UpdateTexture(CurrentScene, upd)) {
 
-        if (SceneModules.find("gbuffer") != SceneModules.end()) {
-            UpdateTexture("gbuffer", upd);
+            if (SceneModules.find("gbuffer") != SceneModules.end()) {
+                UpdateTexture("gbuffer", upd);
+            }
         }
+        else {
+            UpdateTexture("sprite", upd);
+        }
+
         Core::ImGuiHelper::GetInstance()->ResetTextureUpdate();
     }
 }

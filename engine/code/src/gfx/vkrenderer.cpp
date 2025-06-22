@@ -204,10 +204,11 @@ bool Gfx::Renderer::BeginFrame()
 {
     Utils::Debug::GetInstance()->NullDrawCall();
     Gfx::Renderer::GetInstance()->NullTmpBindings();
-	ImGui::Render();
 
-	SwapchainIndex = SyncFrame();
-    if (SwapchainIndex == -1) {
+	ImGui::Render();
+	
+    SwapchainIndex = SyncFrame();
+    if (SwapchainIndex == -1 || SwapchainIndex >= MAX_FRAMES + 1) {
         return false;
     }
     Cmd.SetCmd(GetFrame().MainCommandBuffer);
@@ -787,6 +788,7 @@ VkSubmitInfo SubmitInfo(VkCommandBuffer* cmd)
 uint32_t Gfx::Renderer::SyncFrame()
 {
   Time = Engine::GetInstance()->GetTime();
+
 	VK_ASSERT(vkWaitForFences(Gfx::Device::GetInstance()->GetDevice(), 1, &Frames[SwapchainIndex].RenderFence, true, 1000000000), "vkWaitForFences failed !");
 	uint32_t swapchainimageindex;
     PrevSwapchainIndex = SwapchainIndex;
@@ -806,6 +808,7 @@ uint32_t Gfx::Renderer::SyncFrame()
 
 void Gfx::Renderer::Sync()
 {
+    SwapchainIndex = 0;
    	VkFenceCreateInfo fencecreateinfo = FenceCreateInfo(VK_FENCE_CREATE_SIGNALED_BIT);
 	VkSemaphoreCreateInfo semcreateinfo = SemaphoreCreateInfo(0);
 

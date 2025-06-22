@@ -91,8 +91,10 @@ namespace Modules
             void Insert(const Keeper::Objects* obj);
             void Populate(const std::string& key, Info scene, std::function<bool(Keeper::Type)> skip_type);
             void Populate(const std::string& key, Info scene, Keeper::Info info);
+            void Populate(const std::string& key, Info scene, std::vector<Keeper::Objects*> vec);
 
             Module& Get(const std::string& key) { return SceneModules[key]; }
+            bool Find(const std::string& key) const { return SceneModules.find(key) != SceneModules.end(); }        
 
             bool HasFrameOutline() const { return HasOutline; }
             void ReloadAnimation(uint32_t id, const std::string& s) { if (Animator) { Animator->Reload(id, s); } }
@@ -116,7 +118,7 @@ namespace Modules
             void UpdateResources();
             void UpdateResource(Modules::Module& module, Gfx::RenderObject& obj);
             void UpdateMaterials();
-            void UpdateTexture(const std::string& str, Core::ImGuiHelper::TextureForUpdate upd);
+            bool UpdateTexture(const std::string& str, Core::ImGuiHelper::TextureForUpdate upd);
             void UpdateTextureUIManager();
             void UpdateSamplers();
             void UpdateRQ();
