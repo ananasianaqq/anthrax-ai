@@ -50,7 +50,12 @@ namespace UI
             template<typename T, typename... Args>
             Element(ElementType type, const std::string& label, bool isdyn, T t, Args... args, std::function<void (std::string, const UI::Element& elem)> func, bool addempty = false)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionWithElem(func), AddEmpty(addempty) { EvaluateArgs(t, args...); }
+ 
+            template<typename T, typename... Args>
+            Element(ElementType type, const std::string& label, bool isdyn, T t, Args... args, std::function<void (std::string)> func, std::function<std::string ()> func_ret, bool addempty = false)
+            : Type(type), Label(label), IsDynamic(isdyn), Definition(func), DefinitionString(func_ret),AddEmpty(addempty) { EvaluateArgs(t, args...); }
             
+           
             template<typename T, typename... Args>
             Element(ElementType type, const std::string& label, bool isdyn, T t, Args... args, std::function<void (bool)> func)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionBool(func) { EvaluateArgs(t, args...); }

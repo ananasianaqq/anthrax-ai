@@ -332,6 +332,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 void Core::WindowManager::ProcessEvents()
 {
     if (Utils::IsBitSet(Event, WINDOW_EVENT_KEY_PRESSED)) {
+        if (PressedKey == DEL_KEY) {
+            Core::Scene::GetInstance()->DeleteSelectedObject();
+            Utils::ClearBit(&Event, WINDOW_EVENT_KEY_PRESSED);
+        }
         if (PressedKey == ESC_KEY) {
             Engine::GetInstance()->CheckState();
             Utils::ClearBit(&Event, WINDOW_EVENT_KEY_PRESSED);

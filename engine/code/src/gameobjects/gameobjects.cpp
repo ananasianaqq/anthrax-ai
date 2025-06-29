@@ -110,6 +110,14 @@ void Keeper::Base::UpdateObjectNames()
 
 }
 
+void Keeper::Base::EraseSelected()
+{
+    for (auto& it : ObjectsList) {
+        int ind = SelectedID;
+        std::erase_if(it.second, [ind](const Keeper::Objects* obj) { return ind == obj->GetID(); } );
+    }
+}
+
 void Keeper::Base::VerifyNewObject()
 {
     if (NewObjectInfo.ParsedID.empty()) {
@@ -134,28 +142,47 @@ void Keeper::Base::VerifyNewObject()
         NewObjectInfo.Model.clear();
     }
 
-    std::string name = NewObjectInfo.Type + ": " + NewObjectInfo.ParsedID;
-    size_t name_length = name.size();
+    int count = 0;
     std::vector<std::string> objs = ObjectNames;
     std::sort(objs.begin(), objs.end());
-    auto it = std::find_if(objs.begin(), objs.end(), [name](const auto& n) { return n == name; });
-    int count = 0;
-    
-    //auto items = std::equal_range(std::begin(objs), std::end(objs), name);
-    //size_t num = std::distance(items.first, items.second);
-    if (it != objs.end()) {
-        for (; it != objs.end(); ++it) {
-            if (it->compare(0, name_length, name) != 0) {
-                break;
-            }
-            count++;
-        } 
+    std::vector<std::string>::iterator it = objs.begin();
+    for (int i = 0; i < ObjectTypes.size(); i++) {
+        std::string name = ObjectTypes[i] + ": " + NewObjectInfo.ParsedID;
+        size_t name_length = name.size();
+        it = std::find_if(objs.begin(), objs.end(), [name](const auto& n) { return n == name; });
+        
+        //auto items = std::equal_range(std::begin(objs), std::end(objs), name);
+        //size_t num = std::distance(items.first, items.second);
+        if (it != objs.end()) {
+            for (; it != objs.end(); ++it) {
+                if (it->compare(0, name_length, name) != 0) {
+                    break;
+                }
+                count++;
+            } 
+        }
+
+        objs.erase(objs.begin(), it);
     }
     if (count != 0) {
         NewObjectInfo.ParsedID += "_" + std::to_string(count);
         printf("[%s][%d]-----\n", std::to_string(count).c_str(), count);
     }
 
+}
+
+void Keeper::Base::ClearNewObjectInfo()
+{
+    NewObjectInfo.IsModel = false;
+    NewObjectInfo.Model.clear();
+    NewObjectInfo.Animations.clear();
+    NewObjectInfo.Color = Vector3<float>(0,0,0);
+    NewObjectInfo.Position = Vector3<float>(0,0,0);
+    NewObjectInfo.LightType.clear();
+    NewObjectInfo.IsLight = false;;
+    NewObjectInfo.Material.clear();
+    NewObjectInfo.Mesh.clear();
+    NewObjectInfo.Texture.clear();
 }
 
 Keeper::Base::Base()

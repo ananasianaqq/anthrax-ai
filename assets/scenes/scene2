@@ -21,7 +21,7 @@ Object:
 		ID: plane
 	Position:
 		x: 0.000000
-		y: 1.215431
+		y: -4.451660
 		z: 0.000000
 	Material:
 		name: models

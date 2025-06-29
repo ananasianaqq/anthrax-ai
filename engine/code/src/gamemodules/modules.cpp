@@ -117,6 +117,20 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
     }
 }
 
+void Modules::Base::EraseSelected()
+{
+    Gfx::RenderObject rem;
+    QueueType type = RQ_GENERAL;
+    int ind = GameObjects->GetSelectedID();
+    for (auto& it : SceneModules) {
+        int num = std::erase_if(it.second.GetRenderQueue(RQ_GENERAL), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
+        if (num == 0) {
+            num = std::erase_if(it.second.GetRenderQueue(RQ_LIGHT), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
+        }
+    }
+
+}
+
 void Modules::Base::Insert(const Keeper::Objects* obj)
 {
     QueueType type = RQ_GENERAL;

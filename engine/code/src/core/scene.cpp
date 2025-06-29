@@ -141,7 +141,7 @@ void Core::Scene::Render(Modules::Module& module)
 {
     Gfx::Renderer::GetInstance()->DebugRenderName(module.GetTag());
 
-    if (( module.GetTag() == "gbuffer" && module.GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM) ){
+    if (( module.GetTag() == "gbuffer" && module.GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM * 2) ){
         RenderThreaded(module);
     }
     else {
@@ -195,7 +195,7 @@ void Core::Scene::RenderScene(bool playmode)
             }
             else {
                 // objects from map
-                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, GameModules->Get("gbuffer").GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM ? true : false);
+                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, GameModules->Get("gbuffer").GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM * 2 ? true : false);
                 Render(GameModules->Get("gbuffer"));
                 Gfx::Renderer::GetInstance()->EndRender();
             
@@ -453,6 +453,23 @@ void Core::Scene::PopulateModules()
     GameModules->RestartAnimator();
 }
 
+void Core::Scene::ClearNewObjectInfo()
+{
+   GameObjects->ClearNewObjectInfo(); 
+}
+
+void Core::Scene::DeleteSelectedObject()
+{
+    if (GetSelectedID() == -1) {
+        return;
+    }
+    GameObjects->EraseSelected(); 
+    //GameModules->EraseSelected();
+    GameObjects->UpdateObjectNames();
+    Core::ImGuiHelper::GetInstance()->UpdateObjectInfo();
+
+}
+
 void Core::Scene::SaveObject() 
 {
     GameObjects->VerifyNewObject();
@@ -577,7 +594,7 @@ void Core::Scene::LoadScene(const std::string& filename)
         info.Texture = Parse.GetElement<std::string>(texture, Utils::LEVEL_ELEMENT_NAME, "");
 
         Utils::NodeIt model = Parse.GetChild(node, Utils::LEVEL_ELEMENT_MODEL);
-        if (Parse.IsNodeValid(model)) {
+        if (Parse.IsNodeValidInRange(model)) {
             info.Model = Parse.GetElement<std::string>(model, Utils::LEVEL_ELEMENT_NAME, "");
             info.IsModel = true;
         }

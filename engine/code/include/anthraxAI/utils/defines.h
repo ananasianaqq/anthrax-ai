@@ -17,6 +17,7 @@
 #ifdef AAI_LINUX
 	#define VK_USE_PLATFORM_XCB_KHR
 	#define ESC_KEY 65307
+	#define DEL_KEY 126 
 	#define W_KEY 119
 	#define D_KEY 100
 	#define A_KEY 97

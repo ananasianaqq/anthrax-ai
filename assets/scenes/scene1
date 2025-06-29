@@ -227,7 +227,7 @@ Object:
 		ID: mod
 	Position:
 		x: 0.000000
-		y: 0.520129
+		y: -0.942747
 		z: -7.272036
 	Material:
 		name: models
@@ -237,38 +237,6 @@ Object:
 		name: dummy.png
 	Model:
 		name: plane.obj
-Object:
-		ID: tt
-	Position:
-		x: 0.000000
-		y: 2.741478
-		z: -4.094358
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Light:
-		name: sphere.obj
-	Color:
-		x: 1.000000
-		y: 0.000000
-		z: 0.000000
-Object:
-		ID: teeeee
-	Position:
-		x: 2.249606
-		y: 4.072653
-		z: -11.179770
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Model:
-		name: sphere.obj
 Object:
 		ID: tee
 	Position:
@@ -343,4 +311,112 @@ Object:
 		x: 1.000000
 		y: 0.000000
 		z: 0.000000
+Object:
+		ID: eee_1
+	Position:
+		x: -9.286723
+		y: 3.194454
+		z: 0.000000
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: kote-v-bote.jpg
+	Model:
+		name: cube.obj
+Object:
+		ID: fff
+	Position:
+		x: 0.000000
+		y: 0.000000
+		z: 0.000000
+	Material:
+		name: sprites
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+Object:
+		ID: press
+	Position:
+		x: 0.000000
+		y: 6.039815
+		z: -2.747232
+	Material:
+		name: sprites
+	frag:
+	vert:
+	Texture:
+		name: zeroone.png
+	Model:
+		name: sphere.obj
+Object:
+		ID: ouo
+	Position:
+		x: 0.000000
+		y: 0.000000
+		z: 0.000000
+	Material:
+		name: sprites
+	frag:
+	vert:
+	Texture:
+		name: kote-v-bote.jpg
+Object:
+		ID: rr
+	Position:
+		x: 35.833374
+		y: 2.264566
+		z: 0.000000
+	Material:
+		name: sprites
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+Object:
+		ID: lol
+	Position:
+		x: 0.489769
+		y: 2.430108
+		z: 0.000000
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: zeroone.png
+	Model:
+		name: cube.obj
+Object:
+		ID: lol_1
+	Position:
+		x: 0.000000
+		y: 5.051809
+		z: 0.000000
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Light:
+		name: sphere.obj
+	Color:
+		x: 0.000000
+		y: 0.000000
+		z: 1.000000
+Object:
+		ID: lol_2
+	Position:
+		x: 0.000000
+		y: 0.000000
+		z: 0.000000
+	Material:
+		name: sprites
+	frag:
+	vert:
+	Texture:
+		name: zeroone.png
 

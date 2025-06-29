@@ -106,7 +106,8 @@ namespace Modules
 
             ScenesMap& GetSceneModules() { return SceneModules; }
             void SetCurrentScene(const std::string& str) { CurrentScene = str; }
-
+            
+            void EraseSelected();
         private:
             bool HasOutline = false;
             std::string CurrentScene;

@@ -52,6 +52,9 @@ namespace Core
             void SetNewObjectMaterial(const std::string& str) { GameObjects->NewObjectInfo.Material = str; }
             const std::string& GetNewObjectMaterial() { return GameObjects->NewObjectInfo.Material; }
             void SetNewObjectModel(const std::string& str) { GameObjects->NewObjectInfo.Model = str; }
+            const std::string& GetNewObjectModel() { return GameObjects->NewObjectInfo.Model; }
+            void ClearNewObjectInfo();
+            void DeleteSelectedObject();
             void SaveObject();// { GameObjects->Create<Keeper::Npc>(new Keeper::Npc(GameObjects->NewObjectInfo)); }        
 
             void ReloadResources();
