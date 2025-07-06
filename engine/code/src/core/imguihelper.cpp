@@ -498,7 +498,7 @@ void Core::ImGuiHelper::AddObject()
     //it_obj->Add(UI::Element(UI::COMBO, "Type", false, Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectType(tag); }));
     //static UI::Element select_type = UI::Element(UI::COMBO, "Type", false, Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes(), [](std::string tag) -> void { Scene::GetInstance()->SetNewObjectType(tag); });
     
-        std::string s;
+    std::string s;
     if (Scene::GetInstance()->GetNewObjectType() == "NPC") {
         s = NewObjectNameNPC;
     }
@@ -564,6 +564,7 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
             break;
         }
         case UI::ADD_OBJECT: {
+            bool test = false;
             if (ImGui::Button(element.GetLabel().c_str())) {
                 ImGui::OpenPopup("my_select_popup");
             }
@@ -573,11 +574,14 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
                 for (int i = 0; i < Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes().size(); i++) {
                     if (ImGui::Selectable(Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes()[i].c_str())) {
                         Scene::GetInstance()->SetNewObjectType(Core::Scene::GetInstance()->GetGameObjects()->GetObjectTypes()[i]);
+                        test = true;
                     }
                 }
                 ImGui::EndPopup();
             }
-            AddObject();
+            if (test) {
+                AddObject();
+            }
             break;
         }
         case UI::SAVE_OBJECT: {
@@ -643,11 +647,11 @@ void Core::ImGuiHelper::Render()
 {
     ImGui::ShowDemoWindow();
 
-    bool active = true;
 
     std::vector<UI::Window>& windows = UIWindows[EditorName];
 
     for (UI::Window& window : windows) {
+        bool active = true;
         if (!window.IsActive()) continue;
 
         ImGui::SetNextWindowPos(ImVec2(window.GetPosX(), window.GetPosY()), 0);

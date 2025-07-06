@@ -5,6 +5,7 @@
 #include "anthraxAI/engine.h"
 #include "anthraxAI/utils/debug.h"
 #include "anthraxAI/utils/defines.h"
+#include <cstdio>
 
 #ifdef AAI_LINUX
 void Core::WindowManager::InitLinuxWindow()

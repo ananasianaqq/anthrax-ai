@@ -460,11 +460,11 @@ void Core::Scene::ClearNewObjectInfo()
 
 void Core::Scene::DeleteSelectedObject()
 {
-    if (GetSelectedID() == -1) {
+    if (GetSelectedID() == -1 || !GameObjects->EraseSelected()) {
         return;
     }
-    GameObjects->EraseSelected(); 
-    //GameModules->EraseSelected();
+    Thread::Pool::GetInstance()->Reload();
+    GameModules->EraseSelected();
     GameObjects->UpdateObjectNames();
     Core::ImGuiHelper::GetInstance()->UpdateObjectInfo();
 

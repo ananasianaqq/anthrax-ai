@@ -110,12 +110,21 @@ void Keeper::Base::UpdateObjectNames()
 
 }
 
-void Keeper::Base::EraseSelected()
+bool Keeper::Base::EraseSelected()
 {
+    int ind = SelectedID;
+    auto it = std::find_if(ObjectsList[Keeper::GIZMO].begin(),  ObjectsList[Keeper::GIZMO].end(), [ind](const Keeper::Objects* obj) { return ind == obj->GetID(); } );
+    if (it != ObjectsList[Keeper::GIZMO].end()) {
+        return false;
+    }
     for (auto& it : ObjectsList) {
-        int ind = SelectedID;
+        if (it.first != Keeper::NPC && it.first != Keeper::SPRITE && it.first != Keeper::LIGHT) continue;
         std::erase_if(it.second, [ind](const Keeper::Objects* obj) { return ind == obj->GetID(); } );
     }
+    for (Keeper::Objects* obj : ObjectsList[Keeper::Type::GIZMO]) {
+        obj->SetHandle(nullptr);
+    }
+    return true;
 }
 
 void Keeper::Base::VerifyNewObject()
@@ -279,7 +288,6 @@ void Keeper::Base::Update()
     //     printf("Light: id %d| selected ID %d!!!\n", (*light_it)->GetID(), SelectedID);
     // }
     std::vector<Objects*>::iterator gizmo_it = std::find_if(ObjectsList[Keeper::Type::GIZMO].begin(), ObjectsList[Keeper::Type::GIZMO].end(), [id](const Keeper::Objects* obj) { return obj->GetID() == id;});
-    static bool gizmo = false;
 
     for (Keeper::Objects* obj : ObjectsList[Keeper::Type::GIZMO]) {
         if (selected_it != ObjectsList[Keeper::Type::NPC].end()) {
@@ -301,7 +309,7 @@ void Keeper::Base::Update()
 
     for (auto& it : ObjectsList) {
         if (it.first == Keeper::Type::GIZMO) continue;
-        if ((gizmo_it != ObjectsList[Keeper::Type::GIZMO].end() || gizmo )&& it.first == Keeper::Type::CAMERA) continue;
+        if ((gizmo_it != ObjectsList[Keeper::Type::GIZMO].end())&& it.first == Keeper::Type::CAMERA) continue;
         for (Keeper::Objects* obj : it.second) {
             if (!obj->IsVisible()) continue;
             Keeper::Objects* gizmo_handle = nullptr;

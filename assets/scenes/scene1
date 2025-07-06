@@ -134,9 +134,9 @@ Object:
 Object:
 		ID: anim
 	Position:
-		x: -1.460739
-		y: 2.000000
-		z: 5.927665
+		x: -1.406089
+		y: 4.359976
+		z: -11.704236
 	Material:
 		name: models
 		frag: model.frag
@@ -364,25 +364,13 @@ Object:
 	Texture:
 		name: kote-v-bote.jpg
 Object:
-		ID: rr
-	Position:
-		x: 35.833374
-		y: 2.264566
-		z: 0.000000
-	Material:
-		name: sprites
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-Object:
 		ID: lol
 	Position:
 		x: 0.489769
 		y: 2.430108
 		z: 0.000000
 	Material:
-		name: models
+		name: cube.obj
 	frag:
 	vert:
 	Texture:
@@ -418,5 +406,65 @@ Object:
 	frag:
 	vert:
 	Texture:
-		name: zeroone.png
+		name: kote-v-bote.jpg
+Object:
+		ID: rr
+	Position:
+		x: 10.398030
+		y: 0.000000
+		z: 0.000000
+	Material:
+	name:
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Model:
+		name: cube.obj
+Object:
+		ID: rr_1
+	Position:
+		x: 6.900009
+		y: 0.000000
+		z: 3.680303
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Model:
+		name: cube.obj
+Object:
+		ID: rr_2
+	Position:
+		x: -7.772639
+		y: 0.000000
+		z: 0.000000
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Model:
+		name: cube.obj
+Object:
+		ID: iii
+	Position:
+		x: 0.037847
+		y: 3.100649
+		z: 1.036498
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Light:
+		name: axisz.obj
+	Color:
+		x: 0.000000
+		y: 1.000000
+		z: 0.000000
 

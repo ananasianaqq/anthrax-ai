@@ -134,7 +134,7 @@ namespace Keeper {
             size_t GetObjectsSize() const;
             void UpdateObjectNames();
             void VerifyNewObject();
-            void EraseSelected();
+            bool EraseSelected();
 
             Keeper::Objects* GetNotConstObject(Keeper::Type type, int id);
             Keeper::Objects* GetNotConstObject(Keeper::Type type, const std::string& str);

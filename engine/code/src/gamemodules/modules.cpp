@@ -123,11 +123,27 @@ void Modules::Base::EraseSelected()
     QueueType type = RQ_GENERAL;
     int ind = GameObjects->GetSelectedID();
     for (auto& it : SceneModules) {
-        int num = std::erase_if(it.second.GetRenderQueue(RQ_GENERAL), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
-        if (num == 0) {
-            num = std::erase_if(it.second.GetRenderQueue(RQ_LIGHT), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
+        if (it.first == "lighting") continue;
+
+         int num = std::erase_if(it.second.GetRenderQueue(RQ_GENERAL), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
+        if (num != 0) {
+            printf("info about eraser obj in module: type[%s] tag[%s]\n", it.first.c_str(), it.second.GetTag().c_str());
+                 }
+        else {
+num = std::erase_if(it.second.GetRenderQueue(RQ_LIGHT), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
+        if (num != 0) {
+            printf("info about eraser obj in module: type[%s] tag[%s]\n", it.first.c_str(), it.second.GetTag().c_str());
+        }
+
         }
     }
+//        int num = std::erase_if(SceneModules["gbuffer"].GetRenderQueue(RQ_GENERAL), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
+//        num = std::erase_if(SceneModules[CurrentScene].GetRenderQueue(RQ_GENERAL), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
+//        num = std::erase_if(SceneModules["mask"].GetRenderQueue(RQ_GENERAL), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
+        //if (num == 0) {
+        //    num = std::erase_if(it.second.GetRenderQueue(RQ_LIGHT), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
+        //}
+    //}
 
 }
 
