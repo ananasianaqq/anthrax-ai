@@ -26,7 +26,8 @@ namespace Core
             void InitModules();
 
             void Loop();
-
+        
+            void ExportScene();
             void ExportObjectInfo(const Keeper::Objects* obj);
             void RenderScene(bool playmode);
             bool HasAnimation(uint32_t id) { if (GameModules) { return GameModules->HasAnimation(id); } return false; }

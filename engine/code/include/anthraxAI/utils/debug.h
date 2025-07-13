@@ -10,6 +10,7 @@ namespace Utils
     {
         float FPS;
         float DeltaMs;
+        bool HalfSpeed = false;
         long long AnimStartMs;
         bool Grid = true;
         bool Bones;

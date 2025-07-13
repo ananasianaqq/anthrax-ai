@@ -123,6 +123,7 @@ bool Keeper::Base::EraseSelected()
     }
     for (Keeper::Objects* obj : ObjectsList[Keeper::Type::GIZMO]) {
         obj->SetHandle(nullptr);
+        obj->SetVisible(false);
     }
     return true;
 }
@@ -139,7 +140,7 @@ void Keeper::Base::VerifyNewObject()
         NewObjectInfo.Model = *Gfx::Model::GetInstance()->GetModelNames().begin();
     }
     if (NewObjectInfo.Material.empty()) {
-        NewObjectInfo.Material = *Gfx::Pipeline::GetInstance()->GetMaterialNames().begin();
+        NewObjectInfo.Material = "models";//*Gfx::Pipeline::GetInstance()->GetMaterialNames().begin();
     }
 
     if (NewObjectInfo.Type == "Light") {
@@ -177,7 +178,8 @@ void Keeper::Base::VerifyNewObject()
         NewObjectInfo.ParsedID += "_" + std::to_string(count);
         printf("[%s][%d]-----\n", std::to_string(count).c_str(), count);
     }
-
+        
+    printf("inserted object:\n Name:%s\n Material: %s\n Model: %s\n Texture: %s\n, Type: %s\n", NewObjectInfo.ParsedID.c_str(),NewObjectInfo.Material.c_str(),NewObjectInfo.Model.c_str(), NewObjectInfo.Texture.c_str(), NewObjectInfo.Type.c_str() );
 }
 
 void Keeper::Base::ClearNewObjectInfo()

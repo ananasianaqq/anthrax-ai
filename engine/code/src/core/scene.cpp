@@ -228,10 +228,11 @@ void Core::Scene::RenderScene(bool playmode)
                     Render(GameModules->Get("outline"));
                     Gfx::Renderer::GetInstance()->EndRender();
                 }
-
-                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gizmo").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_LOAD);
-                Render(GameModules->Get("gizmo"));
-                Gfx::Renderer::GetInstance()->EndRender();
+                if (HasFrameGizmo) {
+                    Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gizmo").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_LOAD);
+                    Render(GameModules->Get("gizmo"));
+                    Gfx::Renderer::GetInstance()->EndRender();
+                }
             }
             // ui
             if (HasGBuffer) {
@@ -467,7 +468,10 @@ void Core::Scene::DeleteSelectedObject()
     GameModules->EraseSelected();
     GameObjects->UpdateObjectNames();
     Core::ImGuiHelper::GetInstance()->UpdateObjectInfo();
-
+    
+    if (GameModules->Get("gbuffer").GetRenderQueue(Modules::RQ_GENERAL).empty()) {
+        HasFrameGizmo = false;
+    }
 }
 
 void Core::Scene::SaveObject() 
@@ -489,6 +493,11 @@ void Core::Scene::SaveObject()
     GameModules->Insert(GameObjects->GetLast(type));
     GameObjects->UpdateObjectNames();
     Core::ImGuiHelper::GetInstance()->UpdateObjectInfo();
+
+    if (!GameModules->Get("gbuffer").GetRenderQueue(Modules::RQ_GENERAL).empty()) {
+        HasFrameGizmo = true;
+    }
+
 }        
 void Core::Scene::SetCurrentScene(const std::string& str)
 {
@@ -498,6 +507,14 @@ void Core::Scene::SetCurrentScene(const std::string& str)
     Engine::GetInstance()->SetState(ENGINE_STATE_RESOURCE_RELOAD);
 }
 
+void Core::Scene::ExportScene()
+{
+    for (auto& it : GameObjects->GetObjects()) {
+        for (Keeper::Objects* obj : it.second) {
+            ExportObjectInfo(obj);
+        }
+    }
+}
 void Core::Scene::ExportObjectInfo(const Keeper::Objects* obj)
 {
     std::string rootname = Parse.GetRootElement();

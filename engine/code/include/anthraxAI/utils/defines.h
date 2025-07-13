@@ -18,7 +18,8 @@
 	#define VK_USE_PLATFORM_XCB_KHR
 	#define ESC_KEY 65307
 	#define DEL_KEY 65535 
-	#define W_KEY 119
+    #define SHIFT_KEY 65505 
+    #define W_KEY 119
 	#define D_KEY 100
 	#define A_KEY 97
 	#define S_KEY 115

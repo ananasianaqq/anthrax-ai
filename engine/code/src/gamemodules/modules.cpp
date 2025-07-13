@@ -123,7 +123,7 @@ void Modules::Base::EraseSelected()
     QueueType type = RQ_GENERAL;
     int ind = GameObjects->GetSelectedID();
     for (auto& it : SceneModules) {
-        if (it.first == "lighting") continue;
+        if (it.first != "gbuffer" && it.first != "mask" && it.first != CurrentScene) continue;
 
          int num = std::erase_if(it.second.GetRenderQueue(RQ_GENERAL), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
         if (num != 0) {
@@ -304,14 +304,6 @@ void Modules::Base::UpdateRQ()
         auto light = GameObjects->Get(Keeper::Type::LIGHT);
         for (Keeper::Objects* info : light) {
             ThreadedRQ(i, info);
-            // SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected = info->IsVisible() && (info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0);
-            // SceneModules["mask"].GetRenderQueue()[i].IsSelected = info->IsVisible() && SceneModules[CurrentScene].GetRenderQueue()[i].IsSelected;//info->GetGizmo() || SceneModules[CurrentScene].GetRenderQueue()[i].ID == GameObjects->GetSelectedID() ? 1 : 0;
-            // if (SceneModules["mask"].GetRenderQueue()[i].IsSelected) {
-            //     HasOutline = true;
-            // }
-            // SceneModules[CurrentScene].GetRenderQueue()[i].IsVisible = info->IsVisible();
-            // SceneModules["gbuffer"].GetRenderQueue()[i].IsVisible = info->IsVisible();
-            // SceneModules[CurrentScene].GetRenderQueue()[i].Position = info->GetPosition();
             i++;
         }
         i = 0;

@@ -99,11 +99,19 @@ int Core::WindowManager::CatchEvent(xcb_generic_event_t *event)
 		case XCB_KEY_PRESS: {
 			xcb_key_press_event_t* e = (xcb_key_press_event_t*)event;
         	PressedKey = xcb_key_press_lookup_keysym(KeySymbols, e, 0);
+            //printf("pressed key:%d\n", PressedKey);
 			return WINDOW_EVENT_KEY_PRESSED;
 		}
-		case XCB_KEY_RELEASE:
-            PressedKey = -1;
+		case XCB_KEY_RELEASE: {
+            xcb_key_release_event_t* e = (xcb_key_release_event_t*)event;
+        	PressedKey = xcb_key_press_lookup_keysym(KeySymbols, e, 0);
+            //printf("----------\n");
+            //printf("released key:%d\n", PressedKey);
+            if (PressedKey != SHIFT_KEY) {
+                PressedKey = -1;
+            }
         	return WINDOW_EVENT_KEY_RELEASED;
+        }
 		case XCB_MOTION_NOTIFY: {
 			xcb_motion_notify_event_t* motion = (xcb_motion_notify_event_t*)event;
 			Mouse.Event = { motion->event_x, motion->event_y };
@@ -143,8 +151,8 @@ void Core::WindowManager::Events()
 	xcb_generic_event_t *event;
 	while ((event = xcb_poll_for_event(Connection))) {
 		Core::ImGuiHelper::GetInstance()->CatchEvent(event);
-		Event |= (CatchEvent(event));
-   	    free(event);
+        Event |= (CatchEvent(event));
+        free(event);
 	}
     ProcessEvents();
 }
@@ -337,6 +345,10 @@ void Core::WindowManager::ProcessEvents()
             Core::Scene::GetInstance()->DeleteSelectedObject();
             Utils::ClearBit(&Event, WINDOW_EVENT_KEY_PRESSED);
         }
+        if (PressedKey == SHIFT_KEY) {
+            Utils::Debug::GetInstance()->HalfSpeed = true;
+            //Utils::ClearBit(&Event, WINDOW_EVENT_KEY_PRESSED);
+        }
         if (PressedKey == ESC_KEY) {
             Engine::GetInstance()->CheckState();
             Utils::ClearBit(&Event, WINDOW_EVENT_KEY_PRESSED);
@@ -353,6 +365,9 @@ void Core::WindowManager::ProcessEvents()
         }
     }
     if (Utils::IsBitSet(Event, WINDOW_EVENT_KEY_RELEASED)) {
+        if (PressedKey == SHIFT_KEY) {
+            Utils::Debug::GetInstance()->HalfSpeed = false;
+        }
         Utils::ClearBit(&Event, WINDOW_EVENT_KEY_RELEASED);
         Utils::ClearBit(&Event, WINDOW_EVENT_KEY_PRESSED);
     }

@@ -192,6 +192,8 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(tab, UI::Element(UI::SEPARATOR, "tabseparator"));
         it->Add(UI::Element(UI::BUTTON, "Update Shaders", false, []() -> float { Gfx::Vulkan::GetInstance()->ReloadShaders(); return 0.0f; }));
         it->Add(UI::Element(UI::CHECKBOX, "Keep Editor", false, nullptr,[](bool show) -> void {  Core::Scene::GetInstance()->KeepEditor(show); }));
+        it->Add(UI::Element(UI::SEPARATOR, "sepa"));
+        it->Add(UI::Element(UI::BUTTON, "Save Scene", false, []() -> float { Core::Scene::GetInstance()->ExportScene(); return 0.0f; }));
     }
     {
         UI::Element scenetab(UI::TAB, "Scene");
