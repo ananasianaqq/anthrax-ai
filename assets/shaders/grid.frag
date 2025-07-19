@@ -17,15 +17,17 @@ vec4 grid(vec3 pos, float scale, float div, vec3 col) {
     float minimumx = min(derivative.x, 1);
 
     vec4 color = vec4(col, 1.0 - min(line, 1.0));
+    if (scale >= 10.0) {
     // z axis
-    if(pos.x > -0.1 * minimumx && pos.x < 0.1 * minimumx ) {
-        color.b = 1.0;
+    if(pos.x > -0.2 * minimumx && pos.x < 0.2 * minimumx ) {
+        color.b = (0.3);
     }
     // x axis
-    if(pos.z > -0.1 * minimumz && pos.z < 0.1 * minimumz) {
-        color.r = 1.0;
+    if(pos.z > -0.2 * minimumz && pos.z < 0.2 * minimumz) {
+        color.r = (0.3);
     }
-    color.ga *= div;
+    }
+    color.a *= div;
     return color;
 }
 
@@ -46,7 +48,9 @@ void main()
     float lineardepth = clamp(LinearDepth(clippos, proj, view), 0, 1);
     float fading = smoothstep(1, 0, lineardepth);
 
-    outfragcolor.rgba = (grid(clippos, 1, 1, vec3(0.4, 0.4, 0.4))).rgba;
+    outfragcolor.rgba = (grid(clippos, 0.1, 0.4, vec3(0.01, 0.01, 0.01))).rgba;
+    outfragcolor.rgba += (grid(clippos, 1, 0.3, vec3(0.04, 0.04, 0.04))).rgba;
     outfragcolor.rgba += (grid(clippos, 10, 0.2, vec3(0.005, 0.005, 0.005))).rgba;
+    outfragcolor.a *= 0.7;
     outfragcolor.a *= fading;
 }

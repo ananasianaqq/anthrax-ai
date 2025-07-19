@@ -395,6 +395,7 @@ void Gfx::Renderer::DestroyTracy()
 
 }
 
+
 void Gfx::Renderer::PrepareStorageBuffer()
 {
     /*if (!Core::WindowManager::GetInstance()->IsMousePressed()) {*/
@@ -408,19 +409,21 @@ void Gfx::Renderer::PrepareStorageBuffer()
 
 
     int selectedID = -1;
-    // TODO: improve pressision
+
+       // TODO: improve pressision
    // printf("--------------------\n");
-	if (!Core::WindowManager::GetInstance()->IsMouseSelected()) {
-    void* storage;
+	if (!Core::WindowManager::GetInstance()->IsMouseSelected() && !Core::WindowManager::GetInstance()->IsMouseMove()) { void* storage;
     VkDeviceSize storagesize = sizeof(uint32_t) * DEPTH_ARRAY_SCALE;
     vkMapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetStorageBufferMemory(GetFrameInd()), 0, storagesize, 0, (void**)&storage);
 
+
+     
     uint32_t* u = static_cast<uint32_t*>(storage);
     for (int i = 0; i < DEPTH_ARRAY_SCALE; i++) {
         if (u[i] != 0) {
             selectedID = u[i];
 			Core::Scene::GetInstance()->SetSelectedID(selectedID);
-           //printf("[%d][%d] \n ",i, u[i]);
+           printf("[%d][%d] \n ",i, u[i]);
 			/* 		 uint32_t dst[DEPTH_ARRAY_SCALE] = {0};*/
 			/*memcpy(storage, dst, DEPTH_ARRAY_SCALE * sizeof(uint32_t));*/
 			/*vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetStorageBufferMemory());*/
@@ -430,21 +433,34 @@ void Gfx::Renderer::PrepareStorageBuffer()
         }
     }
 
-
 		  if (selectedID == -1) {
 		Core::Scene::GetInstance()->SetSelectedID(0);
 		  //printf("-----|%d|\n\n", selectedID);
 
-		  }
-    //Core::WindowManager::GetInstance()->ReleaseMouseSelected();
-
-    uint32_t dst[DEPTH_ARRAY_SCALE] = {0};
+		  } uint32_t dst[DEPTH_ARRAY_SCALE] = {0};
+    memset(dst, 0, DEPTH_ARRAY_SCALE * sizeof(uint32_t));
     memcpy(storage, dst, DEPTH_ARRAY_SCALE * sizeof(uint32_t));
     vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetStorageBufferMemory(GetFrameInd()));
 
+   // Core::WindowManager::GetInstance()->ReleaseMouseSelected();
+
+ //   Core::WindowManager::GetInstance()->ReleaseMouseSelected();
+  
 	}
+    else {void* storage;
+
+VkDeviceSize storagesize = sizeof(uint32_t) * DEPTH_ARRAY_SCALE;
+    vkMapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetStorageBufferMemory(GetFrameInd()), 0, storagesize, 0, (void**)&storage);
+
+uint32_t dst[DEPTH_ARRAY_SCALE] = {0};
+    memset(dst, 0, DEPTH_ARRAY_SCALE * sizeof(uint32_t));
+    memcpy(storage, dst, DEPTH_ARRAY_SCALE * sizeof(uint32_t));
+    vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetStorageBufferMemory(GetFrameInd()));
 
 
+    }
+
+ 
    // printf("-----|%d|---\n", Core::Scene::GetInstance()->GetSelectedID());
 	//}
 
@@ -694,7 +710,7 @@ void Gfx::Renderer::PrepareInstanceBuffer()
 void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
 {
 	glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetFront(), camera.GetUp());
-	glm::mat4 projection = glm::perspective(glm::radians(45.f), float(Gfx::Device::GetInstance()->GetSwapchainSize().x) / float(Gfx::Device::GetInstance()->GetSwapchainSize().y), 0.01f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.f), float(Gfx::Device::GetInstance()->GetSwapchainSize().x) / float(Gfx::Device::GetInstance()->GetSwapchainSize().y), 1.0f, 1000.0f);
 	projection[1][1] *= -1;
 
 	CamData.model = glm::mat4(1.0f);
@@ -703,7 +719,7 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
 	CamData.viewproj = projection * view;
 	CamData.viewpos = glm::vec4(camera.GetPos(), 1.0);
     //printf("%f|%f|%f\n", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
-	CamData.mousepos = { Core::WindowManager::GetInstance()->GetMousePos().x, Core::WindowManager::GetInstance()->GetMousePos().y, 0, 0};
+	CamData.mousepos = { Core::WindowManager::GetInstance()->GetMouseBeginPress().x, Core::WindowManager::GetInstance()->GetMouseBeginPress().y, 0, 0};
 	CamData.viewport = /*{ Gfx::Device::GetInstance()->GetSwapchainSize().x, Gfx::Device::GetInstance()->GetSwapchainSize().y , 0, 0 };*/{ Core::WindowManager::GetInstance()->GetScreenResolution().x ,Core::WindowManager::GetInstance()->GetScreenResolution().y, 0, 0};
     CamData.time = static_cast<float>(Engine::GetInstance()->GetTimeSinceStart()) / 1000.0;
         

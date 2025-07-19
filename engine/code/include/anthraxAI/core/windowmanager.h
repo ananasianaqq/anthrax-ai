@@ -48,6 +48,7 @@ namespace Core
         Vector2<int> Event = { 0, 0};
         bool Pressed = false;
         bool Selected = false;
+        bool Move = false;
     };
 
     class WindowManager : public Utils::Singleton<WindowManager>
@@ -85,6 +86,7 @@ namespace Core
             Vector2<int> GetMouseDelta() const { return Mouse.Delta; }
             bool IsMousePressed() const { return Mouse.Pressed; }
             bool IsMouseSelected() const { return Mouse.Selected; }
+            bool IsMouseMove() const { return Mouse.Move; }
             void ReleaseMouseSelected() { Mouse.Selected = false;}
             void SetResizeExtents(int x, int y) { OnResizeExtents.x = x; OnResizeExtents.y = y; }
             void SetEvent(int event) { Event |= event; }

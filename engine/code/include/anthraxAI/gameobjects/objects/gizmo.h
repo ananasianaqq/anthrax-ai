@@ -22,7 +22,7 @@ namespace Keeper
 
             Keeper::Type GetType() const override { return ObjectType; }
             int GetAxis() const override { return Axis; }
-            void SetSelected(bool id) override { }
+            void SetSelected(bool id) override { Selected = id; }
             void SetVisible(bool vis) override { Visible = vis; }
             bool IsVisible() const override{ return Visible; }
             void Update() override;
@@ -51,5 +51,6 @@ namespace Keeper
             std::string MaterialName;
             std::string ModelName;
             bool Visible = false;
+            bool Selected = false;
   };
 }

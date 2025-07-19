@@ -21,7 +21,7 @@ namespace Gfx
     {
         public:
             void CleanTextures();
-
+                
             void CreateCommands();
             void CreateRenderTargets();
             void DestroyRenderTarget(RenderTarget* rt);

@@ -311,6 +311,7 @@ void Modules::Base::UpdateRQ()
         for (Keeper::Objects* info : gizmo) {
             SceneModules["gizmo"].GetRenderQueue(RQ_GENERAL)[i].IsVisible = info->IsVisible();
             SceneModules["gizmo"].GetRenderQueue(RQ_GENERAL)[i].Position = info->GetPosition();
+           // SceneModules["gizmo"].GetRenderQueue(RQ_GENERAL)[i].IsSelected = info->IsSelected();
             i++;
         }
     }

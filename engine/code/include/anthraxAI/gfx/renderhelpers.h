@@ -49,7 +49,7 @@ namespace Gfx
         uint32_t TextureBind[MAX_FRAMES];
     };
 
-    #define DEPTH_ARRAY_SCALE 512
+    #define DEPTH_ARRAY_SCALE 1000 
     #define MAX_BONES 200
     #define MAX_INSTANCES 10000
     #define INSTANCES_ARRAY_SIZE (sizeof(glm::mat4) * MAX_INSTANCES)

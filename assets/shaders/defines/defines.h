@@ -42,6 +42,7 @@ layout( push_constant ) uniform constants
     int selected;
     int boneID;
     int gizmo;
+
 } pushconstants;
 
 int GetStorageInd() {
@@ -81,7 +82,7 @@ RegisterUniform(Camera, {
     float p2;   
 });
 
-#define DEPTH_ARRAY_SCALE 512
+#define DEPTH_ARRAY_SCALE 1000 
 #define INSTANCE_SIZE 20
 const int MAX_BONES = 200;
 

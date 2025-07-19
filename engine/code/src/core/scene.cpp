@@ -177,10 +177,7 @@ void Core::Scene::RenderScene(bool playmode)
     if (Gfx::Renderer::GetInstance()->BeginFrame()) {
         RenderPassed = true;
         Thread::Pool::GetInstance()->Time.BeginTime(Thread::Task::Name::RENDER, (double)Gfx::Renderer::GetInstance()->Time);
-        if (GameModules->Get(CurrentScene).GetStorageBuffer()) {
-              Gfx::Renderer::GetInstance()->PrepareStorageBuffer();
-        }
-
+        
         Gfx::Renderer::GetInstance()->PrepareInstanceBuffer();
         Gfx::Renderer::GetInstance()->PrepareCameraBuffer(*EditorCamera);
         {
@@ -244,7 +241,12 @@ void Core::Scene::RenderScene(bool playmode)
         }
 
         Thread::Pool::GetInstance()->Time.EndTime(Thread::Task::Name::RENDER, (double)Engine::GetInstance()->GetTime());
+        if (GameModules->Get(CurrentScene).GetStorageBuffer()) {
+              Gfx::Renderer::GetInstance()->PrepareStorageBuffer();
+        }
+
        // Thread::PrintTime(Thread::Task::Name::RENDER);
+        
         Gfx::Renderer::GetInstance()->EndFrame();
     }
     else {

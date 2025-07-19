@@ -373,30 +373,37 @@ void Core::WindowManager::ProcessEvents()
     }
 
     if (Utils::IsBitSet(Engine::GetInstance()->GetState(), ENGINE_STATE_PLAY)) {
+
+
+
         if (Utils::IsBitSet(Event, WINDOW_EVENT_MOUSE_RELEASED)) {
             Mouse.Delta = {0, 0};
             Mouse.Pressed = false;
             Mouse.Selected = false;
-         //  printf("------MOUSE RELEASED--------\n");
+          // printf("------MOUSE RELEASED--------\n");
             Utils::ClearBit(&Event, WINDOW_EVENT_MOUSE_MOVE);
             Utils::ClearBit(&Event, WINDOW_EVENT_MOUSE_RELEASED);
         }
         if (Utils::IsBitSet(Event, WINDOW_EVENT_MOUSE_PRESSED)) {
-         //  printf("------MOUSE PRESSED--- %d %d-----\n", Mouse.Position.x, Mouse.Position.y);
+            Mouse.Move = false;
             Mouse.Pressed = true;
             Mouse.Selected = true;
             Mouse.Begin = Mouse.Event;
             Mouse.BeginPress = Mouse.Event;
+           //printf("------MOUSE PRESSED--- %d %d-----\n", Mouse.BeginPress.x, Mouse.BeginPress.y);
             Utils::ClearBit(&Event, WINDOW_EVENT_MOUSE_PRESSED);
         }
-        if (Utils::IsBitSet(Event,  WINDOW_EVENT_MOUSE_MOVE) && Mouse.Pressed) {
-           // Mouse.Selected = false;
+        if (Utils::IsBitSet(Event,  WINDOW_EVENT_MOUSE_MOVE) && Mouse.Pressed ) {
             Mouse.Position.x = Mouse.Event.x;
-         //  printf("------MOUSE MOVE--------\n");
+          // printf("------MOUSE MOVE--------\n");
             Mouse.Position.y = Mouse.Event.y;
             Mouse.Delta.x = Mouse.Begin.x - Mouse.Event.x;
             Mouse.Delta.y = Mouse.Begin.y - Mouse.Event.y;
             Mouse.Begin = Mouse.Position;
+           
+           //printf("------MOUSE --- %d %d-----\n", Mouse.Delta.x, Mouse.Delta.y);
+            if ((Mouse.Delta.x != 0  || Mouse.Delta.y != 0)) 
+                Mouse.Move = true;;
         }
     }
     if (Utils::IsBitSet(Event, WINDOW_EVENT_EXIT)) {

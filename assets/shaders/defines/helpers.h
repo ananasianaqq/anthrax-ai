@@ -1,4 +1,4 @@
-float near = 0.1;
+float near = 1;
 float far  = 100.0;
 
 float LinearizeDepth(float depth)
