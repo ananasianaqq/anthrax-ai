@@ -40,8 +40,11 @@ namespace Gfx
             void CreateSampler(RenderTarget* rt);
 
             TexturesMap GetTextureMap() const { return Textures; }
+            CubemapsMap GetCubemapMap() const { return Cubemaps; }
+            TexturesMap GetCubemapImguiMap() const { return CubemapsImgui; }
             RenderTarget* GetTexture(const std::string& path);
             RenderTarget* GetCubemap(const std::string& path);
+            RenderTarget* GetCubemapImgui(const std::string& path);
 
             RenderTarget* GetRT(Gfx::RenderTargetsList id) const { return RTs[id]; }
             std::vector<std::string> GetRTList();
@@ -117,11 +120,14 @@ namespace Gfx
             glm::vec3 GetSpecular() { return LightData.Specular; }
             void SetDiffuse(glm::vec3 a) { LightData.Diffuse = a; }
             glm::vec3 GetDiffuse() { return LightData.Diffuse; }
-
+            
+            bool GetCubemapRendering() { return HasFrameCubemap; }
+            void SetCubemapRendering(bool cube) { HasFrameCubemap = cube; }
         private:
             RenderTarget* RTs[RT_SIZE];
             TexturesMap Textures;
             CubemapsMap Cubemaps;
+            TexturesMap CubemapsImgui;
             
             StorageData StorageBuffer;
             InstanceData InstanceBuffer;
@@ -133,7 +139,8 @@ namespace Gfx
 
             uint32_t InstanceCount = 0;
             uint32_t InstanceIndex = 0;
-
+            
+            bool HasFrameCubemap = true;
             bool UpdateSamples = false;
             bool OnResize = false;
 	        int FrameIndex = 0;

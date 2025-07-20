@@ -50,11 +50,14 @@ vec3 PointLight(LightInfo light, vec3 normal, vec3 position, vec3 view_dir, vec3
 void main()
 {
     //debugPrintfEXT("%f|%f", gl_FragCoord.x, gl_FragCoord.y);
+    bool has_cube = GetResource(Camera, GetUniformInd()).hascubemap;
     int cube_ind = GetResource(Camera, GetUniformInd()).cubemapbind;
-    vec2 sky_uv = inpos.xy ;
-sky_uv.y *= -1.0;//sky_uv.y;
-
-    vec3 sky = texture(cubemaps[cube_ind], vec3(sky_uv, 1)).xyz;
+    vec3 sky = vec3(0);
+    if (has_cube) {
+        vec2 sky_uv = inpos.xy ;
+        sky_uv.y *= -1.0;//sky_uv.y;
+        sky = texture(cubemaps[cube_ind], vec3(sky_uv, 1)).xyz;
+    }
     vec3 result = sky;
     vec3 cam_pos = GetResource(Camera, GetUniformInd()).viewpos.xyz;
 
@@ -73,17 +76,20 @@ sky_uv.y *= -1.0;//sky_uv.y;
     vec3 albedo = texture(textures[GetTextureInd() + 2], uv.xy).xyz;
 
     vec3 view_dir = normalize(cam_pos - position.xyz);
+    vec3 cubemap = vec3(1);
+    if (has_cube) {
+        vec3 I = normalize(position.xyz - cam_pos);
+        vec3 R = reflect(I, normalize(normal.xyz));
 
-    vec3 I = normalize(position.xyz - cam_pos);
-    vec3 R = reflect(I, normalize(normal.xyz));
-
-    vec3 cubemap = texture(cubemaps[cube_ind], R).xyz;
+        cubemap = texture(cubemaps[cube_ind], R).xyz;
+    }
     vec3 p = position.xyz;
     LightInfo dirLight = { vec3(0),  glob_light_dir, vec3(1), ambient, diffuse, specular };
-   vec3 dirlight = DirLight(dirLight, normal.xyz, view_dir, albedo);
-   if (dirlight.x > 0 && dirlight.y > 0 && dirlight.z > 0) {
-    result = dirlight;
-   }
+    
+    vec3 dirlight = DirLight(dirLight, normal.xyz, view_dir, albedo);
+    if (dirlight.x > 0 && dirlight.y > 0 && dirlight.z > 0) {
+        result = dirlight;
+    }
     int point_size = GetResource(Camera, GetUniformInd()).point_light_size;
     int j = 0;
     for (int i = 0; i < point_size; i++) {
@@ -99,5 +105,5 @@ sky_uv.y *= -1.0;//sky_uv.y;
    // debugPrintfEXT("%d|||%f|%f|---||%f|%f|%f-----%f|%f|%f\n",GetTextureInd() + 1, uv.x, uv.y, position.r, position.g, position.b, albedo.x, albedo.y, albedo.z);
     }
     result = clamp(result, vec3(0), vec3(1));
-     outfragcolor = vec4(result  * cubemap, 1);//outfragcolor = vec4(position.xyz / 10.0, 1.0);
+    outfragcolor = vec4(result  * cubemap, 1);//outfragcolor = vec4(position.xyz / 10.0, 1.0);
 }

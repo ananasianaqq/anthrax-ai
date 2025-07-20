@@ -35,6 +35,7 @@ namespace Core
 
             void SetCurrentScene(const std::string& str);
             Modules::ScenesMap& GetScenes() { return GameModules->GetSceneModules(); }
+            Modules::Module& GetModule(const std::string& name) const { return GameModules->Get(name); }        
 
             Keeper::Camera& GetCamera() { return *EditorCamera; }
             const Keeper::Base* GetGameObjects() const { return GameObjects; }
@@ -63,6 +64,7 @@ namespace Core
             const std::vector<std::string>& GetSceneNames() const { return SceneNames; }
 
             void KeepEditor(bool keep) { HasEditor = keep; }
+            bool GetKeepEditor() { return HasEditor; }
             const std::string& GetCurrentScene() const { return CurrentScene; }
             void SetSelectedID(uint32_t id) { GameObjects->SetSelectedID(id); }
             uint32_t GetSelectedID() { return GameObjects->GetSelectedID(); }
@@ -91,7 +93,7 @@ namespace Core
             Utils::Parser Parse;
             VkPipeline ThreadedPipeline;
             std::vector<VkCommandBuffer> sec_cmds;
-            bool HasEditor = false;
+            bool HasEditor = true;
             bool HasGBuffer = false;
             bool HasFrameGizmo = false;
             bool HasFrameOutline = false;

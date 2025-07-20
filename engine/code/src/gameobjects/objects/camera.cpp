@@ -17,7 +17,7 @@ void Keeper::Camera::UpdateMovement()
     float delta = Utils::Debug::GetInstance()->DeltaMs;
     bool half_speed = Utils::Debug::GetInstance()->HalfSpeed;
 #ifdef AAI_LINUX
-    const float camspeed = delta * (half_speed ? 0.01 : 0.05);
+    const float camspeed = delta * (half_speed ? 0.005 : 0.05);
 #else
     const float camspeed = 0.05f * delta;
 #endif

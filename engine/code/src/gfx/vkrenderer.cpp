@@ -359,6 +359,16 @@ Gfx::RenderTarget* Gfx::Renderer::GetCubemap(const std::string& name)
 		return &(*it).second;
 	}
 }
+Gfx::RenderTarget* Gfx::Renderer::GetCubemapImgui(const std::string& name)
+{
+	TexturesMap::iterator it = CubemapsImgui.find(name);
+	if (it == CubemapsImgui.end()) {
+		return nullptr;
+	}
+	else {
+		return &(*it).second;
+	}
+}
 
 Gfx::RenderTarget* Gfx::Renderer::GetTexture(const std::string& name)
 {
@@ -738,6 +748,7 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
     CamData.diffuse = glm::vec4(LightData.Diffuse, 1.0);
     CamData.ambient = glm::vec4(LightData.Ambient, 1.0);
     
+    CamData.hascubemap = HasFrameCubemap;
     CamData.cubemapbind = Core::Scene::GetInstance()->GetCubemapBind(GetFrameInd());
     Keeper::GameObjectsMap map = Core::Scene::GetInstance()->GetGameObjects()->GetObjects();
     int i = 0;
@@ -875,6 +886,11 @@ void Gfx::Renderer::CleanResources()
 	    vkFreeMemory(Gfx::Device::GetInstance()->GetDevice(), list.second.GetDeviceMemory(), nullptr);
     }
     Cubemaps.clear();
+
+    for (auto& it : CubemapsImgui) {
+        it.second.Clean();
+    }
+    CubemapsImgui.clear();
 
 
     for (int i = 0; i < Gfx::RT_SIZE; i++) {

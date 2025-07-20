@@ -13,7 +13,7 @@ namespace Utils
         bool HalfSpeed = false;
         long long AnimStartMs;
         bool Grid = true;
-        bool Bones;
+        bool Bones = false;
         int BoneID = 0;
         bool Tracy = false;
         int DrawCalls = 0;

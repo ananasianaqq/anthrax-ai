@@ -2,6 +2,7 @@
 #include "anthraxAI/core/audio.h"
 #include "anthraxAI/core/scene.h"
 #include "anthraxAI/core/windowmanager.h"
+#include "anthraxAI/gamemodules/modules.h"
 #include "anthraxAI/gameobjects/gameobjects.h"
 #include "anthraxAI/gfx/renderhelpers.h"
 #include "anthraxAI/gfx/vkrenderer.h"
@@ -13,6 +14,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <iterator>
 #include <string>
@@ -191,7 +193,7 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(tab, UI::Element(UI::COMBO, "Scenes", false, Core::Scene::GetInstance()->GetSceneNames(), [](std::string tag) -> void { Core::Scene::GetInstance()->SetCurrentScene(tag); }, true));
         it->Add(tab, UI::Element(UI::SEPARATOR, "tabseparator"));
         it->Add(UI::Element(UI::BUTTON, "Update Shaders", false, []() -> float { Gfx::Vulkan::GetInstance()->ReloadShaders(); return 0.0f; }));
-        it->Add(UI::Element(UI::CHECKBOX, "Keep Editor", false, nullptr,[](bool show) -> void {  Core::Scene::GetInstance()->KeepEditor(show); }));
+        it->Add(UI::Element(UI::CHECKBOX, "Keep Editor", false, nullptr, [](bool show) -> void {  Core::Scene::GetInstance()->KeepEditor(show); }, []() -> bool {  return Core::Scene::GetInstance()->GetKeepEditor(); }));
         it->Add(UI::Element(UI::SEPARATOR, "sepa"));
         it->Add(UI::Element(UI::BUTTON, "Save Scene", false, []() -> float { Core::Scene::GetInstance()->ExportScene(); return 0.0f; }));
     }
@@ -212,6 +214,11 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(rendertab, UI::Element(UI::SLIDER_3, "Ambient", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetAmbient(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetAmbient(); } , minmax ));
         it->Add(rendertab, UI::Element(UI::SLIDER_3, "Specular", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetSpecular(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetSpecular(); } , minmax ));
         it->Add(rendertab, UI::Element(UI::SLIDER_3, "Diffuse", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetDiffuse(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetDiffuse(); } , minmax ));
+
+        it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(rendertab, UI::Element(UI::CHECKBOX, "Cubemap", false, nullptr, [](bool show) -> void { Gfx::Renderer::GetInstance()->SetCubemapRendering(show); }, []() -> bool { return Gfx::Renderer::GetInstance()->GetCubemapRendering(); }));
+        it->Add(rendertab, UI::Element(UI::CUBEMAP_IMAGE, "maps", false));
+        it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
     }   
 
     {
@@ -220,7 +227,7 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(audiotab, UI::Element(UI::SEPARATOR, "sep"));
         it->Add(audiotab, UI::Element(UI::TEXT, "Current Sound:", false, []() -> std::string { return Core::Audio::GetInstance()->GetCurrentSound(); } ));
         it->Add(audiotab, UI::Element(UI::SEPARATOR, "sep"));
-        it->Add(audiotab, UI::Element(UI::CHECKBOX, "play", false, nullptr, [](bool visible) -> void {  Core::Audio::GetInstance()->SetState(visible); }));
+        it->Add(audiotab, UI::Element(UI::CHECKBOX, "play", false, nullptr, [](bool visible) -> void {  Core::Audio::GetInstance()->SetState(visible); }, []() -> bool {return Core::Audio::GetInstance()->GetState(); }));
         it->Add(audiotab, UI::Element(UI::SLIDER, "volume", false, [](float volume) -> float { Core::Audio::GetInstance()->SetVolume(volume); return 0.0f; }, []() -> float { return Core::Audio::GetInstance()->GetVolume(); } ));
     }
 
@@ -230,8 +237,8 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
         it->Add(debugtab, UI::Element(UI::FLOAT, "fps", false, []() -> float { return Utils::Debug::GetInstance()->FPS; }));
         it->Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
-        it->Add(debugtab, UI::Element(UI::CHECKBOX, "3d grid", false, nullptr, [](bool visible) -> void {  Utils::Debug::GetInstance()->Grid = visible; }));
-        it->Add(debugtab, UI::Element(UI::CHECKBOX, "show bones weight", false, nullptr, [](bool show) -> void {  Utils::Debug::GetInstance()->Bones = show; }));
+        it->Add(debugtab, UI::Element(UI::CHECKBOX, "3d grid", false, nullptr, [](bool visible) -> void {  Utils::Debug::GetInstance()->Grid = visible; }, []() -> bool { return Utils::Debug::GetInstance()->Grid ; }));
+        it->Add(debugtab, UI::Element(UI::CHECKBOX, "show bones weight", false, nullptr, [](bool show) -> void {  Utils::Debug::GetInstance()->Bones = show; }, []() -> bool { return Utils::Debug::GetInstance()->Bones; }));
         it->Add(debugtab, UI::Element(UI::TEXT, "Threads and info"));
         it->Add(debugtab, UI::Element(UI::SEPARATOR, "sep"));
         it->Add(debugtab, UI::Element(UI::TEXT, "draw calls:", false, []() -> std::string { return Utils::Debug::GetInstance()->GetDrawCalls(); }));
@@ -444,12 +451,13 @@ void Core::ImGuiHelper::DebugImage(UI::Element& element)
     }
     Gfx::RenderTargetsList id = Gfx::GetKey(DebugRT);
     Gfx::RenderTarget* rt = Gfx::Renderer::GetInstance()->GetRT(id);
+    float ratio = float(rt->GetSize().x) / float(rt->GetSize().y);
     if (rt) {
         active = true;
         const ImGuiViewport* viewport = ImGui::GetMainViewport();
         const ImVec2 pos = viewport->Pos;
-        ImGui::SetNextWindowPos(ImVec2(0, viewport->GetCenter().y), 0);
-        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(0.0f, viewport->GetCenter().y), 0);
+        ImGui::SetNextWindowSize(ImVec2(400.0f, 400.0f / ratio), ImGuiCond_FirstUseEver);
         ImGui::Begin(DebugRT.c_str(), &active, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings );
 
         if (!rt->IsDepthSet()) {
@@ -458,12 +466,37 @@ void Core::ImGuiHelper::DebugImage(UI::Element& element)
             });
         }
 
-        ImGui::Image((ImTextureID)rt->GetImGuiDescriptor(), ImVec2(500, 400));
+        ImGui::Image((ImTextureID)rt->GetImGuiDescriptor(), ImVec2(400.0f, 400.0f / ratio));
         ImGui::End();
 
         if (!active) {
             DebugRT = "none";
         }
+    }
+}
+void Core::ImGuiHelper::CubemapImage(UI::Element& element)
+{
+    ImGui::Text(element.GetLabel().c_str());
+                
+    if (element.DefinitionString) {
+        ImGui::Text("Current texture: %s", element.DefinitionString().c_str());
+    }
+    for (auto& it : Gfx::Renderer::GetInstance()->GetCubemapImguiMap()) {
+        Gfx::RenderTarget* rt = Gfx::Renderer::GetInstance()->GetCubemapImgui(it.first);
+        if (ImGui::ImageButton((ImTextureID)rt->GetImGuiDescriptor(), ImVec2(50, 50))) {
+            if (element.DefinitionString && element.Definition) {
+                element.Definition(it.first);
+            }
+            else {
+                TextureUpdateInfo.OldTextureName = Core::Scene::GetInstance()->GetModule("lighting").GetRenderQueue(Modules::RQ_GENERAL)[0].TextureName;// obj->GetTextureName();
+                Core::Scene::GetInstance()->GetModule("lighting").GetRenderQueue(Modules::RQ_GENERAL)[0].TextureName = it.first;
+                TextureUpdateInfo.NewTextureName = it.first;
+                TextureUpdateInfo.Cubemap = true;;
+                printf("INFO TEXTURE: new ->%s !!! old->%s\n", TextureUpdateInfo.NewTextureName.c_str(), TextureUpdateInfo.OldTextureName.c_str());
+                TextureUpdate = true;
+            }
+        }
+        ImGui::SameLine();
     }
 }
 
@@ -481,6 +514,7 @@ void Core::ImGuiHelper::Image(UI::Element& element)
                 element.Definition(it.first);
             }
             else {
+                TextureUpdateInfo.Cubemap = false;
                 Keeper::Objects* obj = ParseObjectID(SelectedElement);
                 TextureUpdateInfo.OldTextureName = obj->GetTextureName();
                 obj->SetTextureName(it.first);
@@ -535,6 +569,10 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
     switch (element.GetType()) {
         case UI::TREE: {
             Tree(element);
+            break;
+        }
+        case UI::CUBEMAP_IMAGE: {
+            CubemapImage(element);
             break;
         }
         case UI::IMAGE: {
@@ -593,10 +631,11 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
             break;
         }
         case UI::CHECKBOX: {
-            bool check = element.GetCheckbox();
-            ImGui::Checkbox(element.GetLabel().c_str(), &check);
-            element.DefinitionBool(check);
-            element.SetCheckbox(check);
+            if (element.DefinitionBoolRet) {
+                bool check = element.DefinitionBoolRet();
+                ImGui::Checkbox(element.GetLabel().c_str(), &check);
+                element.DefinitionBool(check);
+            }
             break;
         }
         case UI::TEXT: {

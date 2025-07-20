@@ -89,7 +89,7 @@ namespace Gfx
         float time;
         int point_light_size;
         int cubemapbind;
-        float p2;
+        bool hascubemap;
     };
    
     struct LightsData {

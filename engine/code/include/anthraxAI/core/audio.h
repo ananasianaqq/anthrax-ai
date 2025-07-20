@@ -23,6 +23,7 @@ namespace Core
             const std::string& GetCurrentSound() const { return CurrentSound; }
             void ResetState() { State = AL_STOPPED; }
             void SetState(bool state);//{ if (state) { State = AL_PLAYING; } else { State = AL_PAUSED; } }
+            bool GetState() { return State == AL_PLAYING; }
         private:
             ALCdevice* Device = nullptr;
             ALCcontext* Context = nullptr;

@@ -29,6 +29,7 @@ namespace UI
         LISTBOX,
         TREE,
         IMAGE,
+        CUBEMAP_IMAGE,
         SLIDER,
         SLIDER_3,
         DEBUG_IMAGE,
@@ -59,6 +60,11 @@ namespace UI
             template<typename T, typename... Args>
             Element(ElementType type, const std::string& label, bool isdyn, T t, Args... args, std::function<void (bool)> func)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionBool(func) { EvaluateArgs(t, args...); }
+
+            template<typename T, typename... Args>
+            Element(ElementType type, const std::string& label, bool isdyn, T t, Args... args, std::function<void (bool)> func, std::function<bool ()> funcret)
+            : Type(type), Label(label), IsDynamic(isdyn), DefinitionBool(func), DefinitionBoolRet(funcret) { EvaluateArgs(t, args...); }
+
 
             Element(ElementType type, const std::string& label, bool isdyn, std::function<float (float)> func, std::function<float ()>  arg)
             : Type(type), Label(label), IsDynamic(isdyn), DefinitionFloatArg(func), DefinitionFloat(arg) {  }
@@ -96,8 +102,6 @@ namespace UI
             
             float SliderMinMax[2] = {-1.0f, 1.0f};
             inline bool operator<(const UI::Element& elem) const { return GetID() < elem.GetID(); }
-            bool GetCheckbox() const { return Checkbox; }
-            void SetCheckbox(bool b) { Checkbox = b;}
             
             char InputText[MAX_INPUT_TEXT_SIZE] = {};
             int ComboInd = 0;
@@ -120,7 +124,6 @@ namespace UI
             ElementType Type;
             std::string Label;
             bool IsDynamic = false;
-            bool Checkbox = true;
     };
 
     //typedef std::map<std::string, std::vector<Element>>
@@ -184,6 +187,7 @@ namespace Core
 
             struct TextureForUpdate {
                 int ID;
+                bool Cubemap = false;;
                 std::string OldTextureName;
                 std::string NewTextureName;
             };
@@ -192,6 +196,7 @@ namespace Core
         private:
             Keeper::Objects* ParseObjectID(const std::string& id);
             void Image(UI::Element& element);
+            void CubemapImage(UI::Element& element);
             void DebugImage(UI::Element& element);
             void Combo(UI::Element& element);
             void Tree(UI::Element& element);

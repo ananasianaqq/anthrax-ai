@@ -209,7 +209,6 @@ void Modules::Base::UpdateResource(Modules::Module& module, Gfx::RenderObject& o
                     Gfx::DescriptorsBase::GetInstance()->UpdateTexture((*it)->GetImageView(), *((*it)->GetSampler()), (*it)->GetName(), i);
                 }
                 if (obj.Texture) {
-                        printf("UPDATED BIND: %s\n", obj.Texture->GetName().c_str());
                     CubemapBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateTexture(obj.Texture->GetImageView(), *(obj.Texture->GetSampler()), obj.Texture->GetName(), i);
                 }
             }
@@ -328,6 +327,9 @@ bool Modules::Base::UpdateTexture(const std::string& str, Core::ImGuiHelper::Tex
 {
     int id = upd.ID;
     auto it = std::find_if(SceneModules[str].GetRenderQueue(RQ_GENERAL).begin(), SceneModules[str].GetRenderQueue(RQ_GENERAL).end(), [id](Gfx::RenderObject& obj) { return obj.ID == id; });
+    if (upd.Cubemap) {
+        it = SceneModules[str].GetRenderQueue(RQ_GENERAL).begin();
+    }
     if (it != SceneModules[str].GetRenderQueue(RQ_GENERAL).end()) {
         for (int i = 0; i < MAX_FRAMES; i++) {
             if (!it->Textures.empty()) {
@@ -338,6 +340,12 @@ bool Modules::Base::UpdateTexture(const std::string& str, Core::ImGuiHelper::Tex
                     ASSERT(!(*texture_it), "Modules::Base::UpdateResource() invalid render target pointer!");
                     Gfx::DescriptorsBase::GetInstance()->UpdateTexture((*texture_it)->GetImageView(), *((*texture_it)->GetSampler()), (*texture_it)->GetName(), i);
                 }
+                if (it->Texture) {
+                    it->Texture = Gfx::Renderer::GetInstance()->GetCubemap(upd.NewTextureName);
+                    it->TextureName = upd.NewTextureName;
+                    CubemapBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateTexture(it->Texture->GetImageView(), *(it->Texture->GetSampler()), it->Texture->GetName(), i);
+                }
+
             }
             else {
                 it->Texture = Gfx::Renderer::GetInstance()->GetTexture(upd.NewTextureName);
@@ -355,14 +363,21 @@ void Modules::Base::UpdateTextureUIManager()
 {
     if (Core::ImGuiHelper::GetInstance()->TextureNeedsUpdate()) {
         Core::ImGuiHelper::TextureForUpdate upd = Core::ImGuiHelper::GetInstance()->GetTextureForUpdate();
-        if (UpdateTexture(CurrentScene, upd)) {
-
-            if (SceneModules.find("gbuffer") != SceneModules.end()) {
-                UpdateTexture("gbuffer", upd);
+        if (upd.Cubemap) {
+            if (SceneModules.find("lighting") != SceneModules.end()) {
+                    UpdateTexture("lighting", upd);
             }
         }
         else {
-            UpdateTexture("sprite", upd);
+            if (UpdateTexture(CurrentScene, upd)) {
+
+                if (SceneModules.find("gbuffer") != SceneModules.end()) {
+                    UpdateTexture("gbuffer", upd);
+                }
+            }
+            else {
+                UpdateTexture("sprite", upd);
+            }
         }
 
         Core::ImGuiHelper::GetInstance()->ResetTextureUpdate();

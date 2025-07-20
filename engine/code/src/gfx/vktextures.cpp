@@ -43,6 +43,11 @@ void Gfx::Renderer::CleanTextures()
         it.second.Clean();
     }
     Cubemaps.clear();
+    
+    for (auto& it : CubemapsImgui) {
+        it.second.Clean();
+    }
+    CubemapsImgui.clear();
 
 }
 
@@ -102,23 +107,33 @@ void Gfx::Renderer::CreateTextures()
     std::vector<std::string> sorted_arr;
    // std::string faces[6] = { "front.jpg", "back.jpg", "top.jpg", "bottom.jpg", "right.jpg", "left.jpg" };
     std::string faces[6] = { "right.jpg", "left.jpg", "top.jpg", "bottom.jpg", "front.jpg", "back.jpg"};
+    std::string faces2[6] = { "px.png", "nx.png", "py.png", "ny.png", "pz.png", "nz.png"};
     for (auto& s : cb_names)
     {
         for (int i = 0; i < 6; i++) {
-        auto it = std::find(s.second.begin(), s.second.end(), s.first + "/" + faces[i]);
-        ASSERT(it == s.second.end(), "can't find needed cubemap face!");
+            auto it = std::find(s.second.begin(), s.second.end(), s.first + "/" + faces[i]);
+            if (it == s.second.end()) {
+                it = std::find(s.second.begin(), s.second.end(), s.first + "/" + faces2[i]);
+            }
+            ASSERT(it == s.second.end(), "can't find needed cubemap face!");
 
-        sorted_arr.push_back(*it);
+            sorted_arr.push_back(*it);
         }
         cb_names[s.first].clear();
         cb_names[s.first] = sorted_arr;
+        sorted_arr.clear();
     }
     for (const auto& s : cb_names) {
         if (!CreateCubemaps(s.first, s.second)) {
             continue;
         }
+        if (Core::ImGuiHelper::GetInstance()->IsInit()) {
+            CubemapsImgui[s.first] = CreateTexture(s.second[0]);
+            CreateSampler(CubemapsImgui[s.first]);
+            CubemapsImgui[s.first].SetImGuiDescriptor();
+        }
     }
-
+    
 }
 void Gfx::Renderer::BindTextures()
 {

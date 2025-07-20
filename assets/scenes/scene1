@@ -326,18 +326,6 @@ Object:
 	Model:
 		name: cube.obj
 Object:
-		ID: fff
-	Position:
-		x: 0.000000
-		y: 0.000000
-		z: 0.000000
-	Material:
-		name: sprites
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-Object:
 		ID: press
 	Position:
 		x: 0.000000
@@ -351,18 +339,6 @@ Object:
 		name: zeroone.png
 	Model:
 		name: sphere.obj
-Object:
-		ID: ouo
-	Position:
-		x: 0.000000
-		y: 0.000000
-		z: 0.000000
-	Material:
-		name: sprites
-	frag:
-	vert:
-	Texture:
-		name: kote-v-bote.jpg
 Object:
 		ID: lol
 	Position:
@@ -395,18 +371,6 @@ Object:
 		x: 0.000000
 		y: 0.000000
 		z: 1.000000
-Object:
-		ID: lol_2
-	Position:
-		x: 0.000000
-		y: 0.000000
-		z: 0.000000
-	Material:
-		name: sphere.obj
-	frag:
-	vert:
-	Texture:
-		name: kote-v-bote.jpg
 Object:
 		ID: rr
 	Position:
@@ -467,4 +431,18 @@ Object:
 		x: 0.000000
 		y: 1.000000
 		z: 0.000000
+Object:
+		ID: ee
+	Position:
+		x: 1.467097
+		y: 10.982866
+		z: 10.452340
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: zeroone.png
+	Model:
+		name: monkeytextured.obj
 
