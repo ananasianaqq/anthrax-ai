@@ -35,11 +35,13 @@ namespace Gfx
             void BindTextures();
             bool CreateTextureFromInfo(const std::string& texturename);
             RenderTarget CreateTexture(const std::string& path);
+            bool CreateCubemaps(const std::string& name, const std::vector<std::string>& path);
             void CreateSampler(RenderTarget& rt);
             void CreateSampler(RenderTarget* rt);
 
             TexturesMap GetTextureMap() const { return Textures; }
             RenderTarget* GetTexture(const std::string& path);
+            RenderTarget* GetCubemap(const std::string& path);
 
             RenderTarget* GetRT(Gfx::RenderTargetsList id) const { return RTs[id]; }
             std::vector<std::string> GetRTList();
@@ -119,7 +121,8 @@ namespace Gfx
         private:
             RenderTarget* RTs[RT_SIZE];
             TexturesMap Textures;
-
+            CubemapsMap Cubemaps;
+            
             StorageData StorageBuffer;
             InstanceData InstanceBuffer;
             CameraData 	CamData;

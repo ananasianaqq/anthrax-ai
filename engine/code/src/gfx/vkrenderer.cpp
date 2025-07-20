@@ -349,6 +349,16 @@ void Gfx::Renderer::EndFrame()
 
    SetFrameInd();
 }
+Gfx::RenderTarget* Gfx::Renderer::GetCubemap(const std::string& name)
+{
+	CubemapsMap::iterator it = Cubemaps.find(name);
+	if (it == Cubemaps.end()) {
+		return nullptr;
+	}
+	else {
+		return &(*it).second;
+	}
+}
 
 Gfx::RenderTarget* Gfx::Renderer::GetTexture(const std::string& name)
 {
@@ -423,7 +433,7 @@ void Gfx::Renderer::PrepareStorageBuffer()
         if (u[i] != 0) {
             selectedID = u[i];
 			Core::Scene::GetInstance()->SetSelectedID(selectedID);
-           printf("[%d][%d] \n ",i, u[i]);
+          // printf("[%d][%d] \n ",i, u[i]);
 			/* 		 uint32_t dst[DEPTH_ARRAY_SCALE] = {0};*/
 			/*memcpy(storage, dst, DEPTH_ARRAY_SCALE * sizeof(uint32_t));*/
 			/*vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetStorageBufferMemory());*/
@@ -727,7 +737,8 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
     CamData.specular = glm::vec4(LightData.Specular, 1.0);
     CamData.diffuse = glm::vec4(LightData.Diffuse, 1.0);
     CamData.ambient = glm::vec4(LightData.Ambient, 1.0);
-   
+    
+    CamData.cubemapbind = Core::Scene::GetInstance()->GetCubemapBind(GetFrameInd());
     Keeper::GameObjectsMap map = Core::Scene::GetInstance()->GetGameObjects()->GetObjects();
     int i = 0;
     int j = 0;
@@ -856,6 +867,15 @@ void Gfx::Renderer::CleanResources()
 	    vkFreeMemory(Gfx::Device::GetInstance()->GetDevice(), list.second.GetDeviceMemory(), nullptr);
     }
     Textures.clear();
+
+    for (auto& list : Cubemaps) {
+        vkDestroySampler(Gfx::Device::GetInstance()->GetDevice(), *list.second.GetSampler(), nullptr);
+		vkDestroyImageView(Gfx::Device::GetInstance()->GetDevice(), list.second.GetImageView(), nullptr);
+        vkDestroyImage(Gfx::Device::GetInstance()->GetDevice(), list.second.GetImage(), nullptr);
+	    vkFreeMemory(Gfx::Device::GetInstance()->GetDevice(), list.second.GetDeviceMemory(), nullptr);
+    }
+    Cubemaps.clear();
+
 
     for (int i = 0; i < Gfx::RT_SIZE; i++) {
         if (RTs[i]) {

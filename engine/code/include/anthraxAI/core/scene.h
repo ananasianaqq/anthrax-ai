@@ -69,6 +69,8 @@ namespace Core
 
             const glm::mat4& GetGlobalTransform() const { return GameModules->GetGlobalTransform(); }
             bool RenderPassed = false;
+
+            uint32_t GetCubemapBind(uint32_t ind) { return GameModules->GetCubemapBind(ind);} 
         private:
             void PopulateModules();
 

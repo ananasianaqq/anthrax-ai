@@ -241,7 +241,7 @@ Keeper::Base::Base()
     DefaultObjects[Infos::INFO_GBUFFER] = modules;
 
     modules.Material = "lighting";
-    modules.Texture.clear();
+    modules.Texture = "cubemaps/skybox";
     modules.Textures.reserve(3);
     modules.Textures.push_back("normal");
     modules.Textures.push_back("position");

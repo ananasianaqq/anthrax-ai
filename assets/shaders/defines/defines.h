@@ -30,6 +30,8 @@ RegisterBuffer(std430, readonly, DummyBuffer, { uint ignore; });
 
 layout(set = BindlessDescriptorSet, binding = BindlessSamplerBinding) \
     uniform sampler2D textures[];
+layout(set = BindlessDescriptorSet, binding = BindlessSamplerBinding) \
+    uniform samplerCube cubemaps[];
 
 layout( push_constant ) uniform constants
 {
@@ -78,7 +80,7 @@ RegisterUniform(Camera, {
 
     float time;          
     int point_light_size;
-    float p1;
+    int cubemapbind;
     float p2;   
 });
 

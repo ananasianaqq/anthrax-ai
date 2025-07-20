@@ -108,7 +108,10 @@ namespace Modules
             void SetCurrentScene(const std::string& str) { CurrentScene = str; }
             
             void EraseSelected();
+
+            uint32_t GetCubemapBind(uint32_t ind) { return CubemapBind[ind]; }
         private:
+            uint32_t CubemapBind[MAX_FRAMES];
             bool HasOutline = false;
             std::string CurrentScene;
             ScenesMap SceneModules;

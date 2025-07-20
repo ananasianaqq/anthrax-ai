@@ -60,15 +60,18 @@ namespace Gfx
             void CreateRenderTarget();
             void AllocateRTMemory();
 
-	        void MemoryBarrier(VkCommandBuffer cmd, VkImageLayout oldlayout, VkImageLayout newlayout);
+	        void MemoryBarrier(VkCommandBuffer cmd, VkImageLayout oldlayout, VkImageLayout newlayout, int layer_count = 1);
 	        void Copy(VkCommandBuffer cmd, VkBuffer buffer, uint32_t width, uint32_t height);
+	        void Copy(VkCommandBuffer cmd, VkBuffer buffer,  uint32_t width, uint32_t height,VkDeviceSize layer_size, int layer_count);
 
             VkFormat GetFormat() { return Format; }
 
             void SetFormat(VkFormat format) { Format = format; }
             void SetDimensions(Vector2<int> dim) { Dimensions = dim; }
+            void SetDeviceSize(VkDeviceSize dim) { DeviceSize = dim; }
             void SetDepth(bool depth) { IsDepth = depth; }
             void SetSampler(bool samp) { IsSampler = samp; }
+            void SetCube(bool cube) { IsCube = cube; }
 
             const std::string& GetName() const { ASSERT(Name.empty(), "RenderTarget::GetName() Name is empty!"); return Name; }
             VkSampler* GetSampler() { return &Sampler; }
@@ -91,6 +94,7 @@ namespace Gfx
             VkSampler Sampler;
             VkFormat Format;
             Vector2<int> Dimensions;
+            VkDeviceSize DeviceSize;
 
             VkDescriptorSet ImGuiDescriptor;
 
@@ -98,6 +102,7 @@ namespace Gfx
             bool IsSampler = false;
             bool IsDepth = false;
             bool IsStorage = false;
+            bool IsCube = false;
             std::string Name;
     };
 }

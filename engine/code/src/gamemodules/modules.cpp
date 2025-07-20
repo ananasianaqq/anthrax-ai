@@ -78,6 +78,9 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
         rqobj.Texture = Gfx::Renderer::GetInstance()->GetRT(Gfx::GetKey(info.Texture));
     }
     if (!info.Textures.empty()) {
+        if (!info.Texture.empty()) {
+            rqobj.Texture = Gfx::Renderer::GetInstance()->GetCubemap(info.Texture);
+        }
         rqobj.Textures.resize(info.Textures.size());
         int i = 0;
         for (Gfx::RenderTarget*& rt : rqobj.Textures) {
@@ -204,6 +207,10 @@ void Modules::Base::UpdateResource(Modules::Module& module, Gfx::RenderObject& o
                 for (; it != obj.Textures.end(); ++it) {
                     ASSERT(!(*it), "Modules::Base::UpdateResource() invalid render target pointer!");
                     Gfx::DescriptorsBase::GetInstance()->UpdateTexture((*it)->GetImageView(), *((*it)->GetSampler()), (*it)->GetName(), i);
+                }
+                if (obj.Texture) {
+                        printf("UPDATED BIND: %s\n", obj.Texture->GetName().c_str());
+                    CubemapBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateTexture(obj.Texture->GetImageView(), *(obj.Texture->GetSampler()), obj.Texture->GetName(), i);
                 }
             }
             else {

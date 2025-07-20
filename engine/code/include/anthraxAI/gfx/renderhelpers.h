@@ -88,7 +88,7 @@ namespace Gfx
 
         float time;
         int point_light_size;
-        float p1;
+        int cubemapbind;
         float p2;
     };
    
@@ -157,6 +157,7 @@ namespace Gfx
 
     typedef std::array<FrameData, MAX_FRAMES + 1> FrameArray;
     typedef std::unordered_map<std::string, RenderTarget> TexturesMap;
+    typedef std::unordered_map<std::string, RenderTarget> CubemapsMap;
 
 
     struct BasicParams {
