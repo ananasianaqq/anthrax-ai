@@ -236,16 +236,20 @@ Keeper::Base::Base()
     DefaultObjects[Infos::INFO_MASK] = modules;
     modules.VertexBase = false;
     modules.Material = "gbuffer";
-    modules.Texture = "albedo";
     modules.Mesh = "dummy.png";
+    modules.Texture = "albedo";
     DefaultObjects[Infos::INFO_GBUFFER] = modules;
+    modules.Texture = "";
+    modules.Material = "shadows";
+    DefaultObjects[Infos::INFO_SHADOWS] = modules;
 
     modules.Material = "lighting";
     modules.Texture = "cubemaps/skybox";
-    modules.Textures.reserve(3);
+    modules.Textures.reserve(4);
     modules.Textures.push_back("normal");
     modules.Textures.push_back("position");
     modules.Textures.push_back("albedo");
+    modules.Textures.push_back("shadows");
     modules.Mesh = "dummy";
     DefaultObjects[Infos::INFO_LIGHTING] = modules;
 

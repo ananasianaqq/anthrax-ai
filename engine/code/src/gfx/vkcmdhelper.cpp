@@ -207,9 +207,11 @@ const VkRenderingInfoKHR Gfx::CommandBuffer::GetRenderingInfo(std::vector<Render
             colors.emplace_back(GetAttachmentInfo(info.ImageView, true, info.Rules));
 		}
 	}
-    renderinfo.colorAttachmentCount = colors.size();
-	renderinfo.pColorAttachments = (colors.data());
-	return renderinfo;
+    if (!colors.empty()) {
+        renderinfo.colorAttachmentCount = colors.size();
+	    renderinfo.pColorAttachments = (colors.data());
+    }
+    return renderinfo;
 }
 
 void Gfx::CommandBuffer::CopyImage(VkImage src, Vector2<int> srcsize, VkImageLayout srcoldlayout, VkImageLayout srcnewlayout, VkImage dst, Vector2<int> dstsize, VkImageLayout dstoldlayout, VkImageLayout dstnewlayout)

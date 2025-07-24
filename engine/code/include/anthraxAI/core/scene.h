@@ -95,6 +95,7 @@ namespace Core
             std::vector<VkCommandBuffer> sec_cmds;
             bool HasEditor = true;
             bool HasGBuffer = false;
+            bool HasShadows = false;
             bool HasFrameGizmo = false;
             bool HasFrameOutline = false;
             bool HasFrameGrid = false;

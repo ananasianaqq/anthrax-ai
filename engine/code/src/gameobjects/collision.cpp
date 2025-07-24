@@ -54,9 +54,9 @@ bool Keeper::Collision::Cull(const glm::mat4& vp, const Objects* data)
         glm::vec4 corner = mvp * corners[corner_idx];
         // Check vertex against clip space bounds
         culled = culled ||
-            (corner.x >=  -corner.w && corner.x <= corner.w) &&
-            (corner.y >=  -corner.w && corner.y <= corner.w) &&
-            (corner.z >=  0 && corner.z <= corner.w);
+            (corner.x >=  -corner.w * 1.5 && corner.x <= corner.w * 1.5) &&
+            (corner.y >=  -corner.w * 1.5 && corner.y <= corner.w * 1.5) &&
+            (corner.z >=  0 && corner.z <= corner.w * 1.5);
 
        // if (!culled) break;
     }

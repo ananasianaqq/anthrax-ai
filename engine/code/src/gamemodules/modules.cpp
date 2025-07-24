@@ -99,7 +99,7 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
 
     SceneModules[key] = module;
 
-    if (key == "mask" || key == "gbuffer") {
+    if (key == "mask" || key == "gbuffer" || key == "shadows") {
         Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue(RQ_GENERAL);
         for (Gfx::RenderObject& obj : rq) {
             obj.MaterialName = key;
@@ -108,7 +108,7 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
         SetRenderQueue(RQ_GENERAL, key, rq);
 
         rq = SceneModules[CurrentScene].GetRenderQueue(RQ_LIGHT);
-        if (rq.empty()) {
+        if (rq.empty() || key == "shadows") {
             return;
         }
         for (Gfx::RenderObject& obj : rq) {
@@ -126,7 +126,7 @@ void Modules::Base::EraseSelected()
     QueueType type = RQ_GENERAL;
     int ind = GameObjects->GetSelectedID();
     for (auto& it : SceneModules) {
-        if (it.first != "gbuffer" && it.first != "mask" && it.first != CurrentScene) continue;
+        if (it.first != "shadows" && it.first != "gbuffer" && it.first != "mask" && it.first != CurrentScene) continue;
 
          int num = std::erase_if(it.second.GetRenderQueue(RQ_GENERAL), [ind](const Gfx::RenderObject& obj) { return ind == obj.ID; } );
         if (num != 0) {
@@ -167,8 +167,11 @@ void Modules::Base::Insert(const Keeper::Objects* obj)
 
         robj.MaterialName = "mask";
         robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
-;
         SceneModules["mask"].AddRQ(type, robj);
+
+        robj.MaterialName = "shadows";
+        robj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(robj.MaterialName);
+        SceneModules["shadows"].AddRQ(type, robj);
     }
     else {
         std::string key = "sprite";

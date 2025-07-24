@@ -77,6 +77,7 @@ RegisterUniform(Camera, {
     mat4 view;
     mat4 proj;
     mat4 viewproj;
+    mat4 shadow_matrix;
 
     float time;          
     int point_light_size;

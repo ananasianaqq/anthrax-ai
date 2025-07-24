@@ -67,13 +67,38 @@ void main()
 
     vec3 glob_light_dir = GetResource(Camera, GetUniformInd()).global_light_dir.xyz;
 
-    vec2 uv = incoord.xy;//inpos.xy * 0.5 + 0.5;//1.0f / (incoord.xy / viewport.xy);
-        //uv.y *= -1.0;
+    vec2 uv = incoord.xy;
     uv.y = 1.0 - uv.y;
+    
     vec4 normal = texture(textures[GetTextureInd()], uv.xy);
     vec4 position = texture(textures[GetTextureInd() + 1], uv.xy );
     normal = normalize(normal);
     vec3 albedo = texture(textures[GetTextureInd() + 2], uv.xy).xyz;
+    
+    float shadow = 0.0;
+    // shadows
+    {
+        const mat4 bias = mat4( 
+             0.5, 0.0, 0.0, 0.0,
+             0.0, 0.5, 0.0, 0.0,
+             0.0, 0.0, 1.0, 0.0,
+             0.5, 0.5, 0.0, 1.0 );
+
+        vec4 lightpos = bias * GetResource(Camera, GetUniformInd()).shadow_matrix * vec4(position.xyz, 1);
+        vec4 shadow_coord = lightpos / lightpos.w;
+        float current_depth = shadow_coord.z;  
+        float depth_bias = 0.0001;
+        vec2 texelSize = 1.0 / textureSize(textures[GetTextureInd() + 3], 0);
+        for(int x = -1; x <= 1; ++x)
+        {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float closest_depth = texture(textures[GetTextureInd() + 3], shadow_coord.xy + vec2(x, y) * texelSize).r; 
+            shadow += current_depth - depth_bias > closest_depth ? 1.0 : 0.0;        
+        }    
+        }
+        shadow /= 9.0;
+    }
 
     vec3 view_dir = normalize(cam_pos - position.xyz);
     vec3 cubemap = vec3(1);
@@ -84,11 +109,11 @@ void main()
         cubemap = texture(cubemaps[cube_ind], R).xyz;
     }
     vec3 p = position.xyz;
-    LightInfo dirLight = { vec3(0),  glob_light_dir, vec3(1), ambient, diffuse, specular };
+    LightInfo dirLight = { vec3(0), normalize(glob_light_dir), vec3(1), ambient, diffuse, specular };
     
     vec3 dirlight = DirLight(dirLight, normal.xyz, view_dir, albedo);
     if (dirlight.x > 0 && dirlight.y > 0 && dirlight.z > 0) {
-        result = dirlight;
+        result = dirlight * (1.0 - shadow);
     }
     int point_size = GetResource(Camera, GetUniformInd()).point_light_size;
     int j = 0;
@@ -104,6 +129,6 @@ void main()
         result += PointLight(point, normal.xyz, position.xyz, view_dir, albedo) * 10.0 ;
    // debugPrintfEXT("%d|||%f|%f|---||%f|%f|%f-----%f|%f|%f\n",GetTextureInd() + 1, uv.x, uv.y, position.r, position.g, position.b, albedo.x, albedo.y, albedo.z);
     }
-    result = clamp(result, vec3(0), vec3(1));
+    result = clamp(result , vec3(0), vec3(1));
     outfragcolor = vec4(result  * cubemap, 1);//outfragcolor = vec4(position.xyz / 10.0, 1.0);
 }

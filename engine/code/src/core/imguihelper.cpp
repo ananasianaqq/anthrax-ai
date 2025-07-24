@@ -209,7 +209,7 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(rendertab, UI::Element(UI::DEBUG_IMAGE, "image", false));
         it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
         it->Add(rendertab, UI::Element(UI::TEXT, "Lighting"));
-        float minmax[2] = {-1.0f, 1.0f};
+        float minmax[2] = {-50.0f,50.0f};
         it->Add(rendertab, UI::Element(UI::SLIDER_3, "Global Light Dir", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetGlobalLightDir(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetGlobalLightDir(); }, minmax ));
         it->Add(rendertab, UI::Element(UI::SLIDER_3, "Ambient", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetAmbient(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetAmbient(); } , minmax ));
         it->Add(rendertab, UI::Element(UI::SLIDER_3, "Specular", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetSpecular(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetSpecular(); } , minmax ));
@@ -673,7 +673,7 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
                 arg = element.GetDefinitionFloat3Arg();
             }
             float v[3] = { arg.x, arg.y, arg.z };
-            ImGui::SliderFloat3(element.GetLabel().c_str(), v, element.SliderMinMax[0], element.SliderMinMax[1]);
+            ImGui::SliderFloat3(element.GetLabel().c_str(), v, element.SliderMinMax[0], element.SliderMinMax[1], "%.3f");
             if (element.DefinitionFloat3Arg) {
                 element.DefinitionFloat3Arg(glm::vec3(v[0], v[1], v[2]));
             }

@@ -18,6 +18,7 @@ namespace Gfx
     X(RT_NORMAL, "normal") \
     X(RT_POSITION, "position") \
     X(RT_MASK, "mask") \
+    X(RT_SHADOWS, "shadows") \
     X(RT_SIZE, "rts size") \
 
 #define X(element, name) element,

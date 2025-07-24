@@ -51,6 +51,7 @@ namespace Keeper {
         INFO_MASK,
         INFO_OUTLINE,
         INFO_GBUFFER,
+        INFO_SHADOWS,
         INFO_LIGHTING,
         INFO_SIZE
     };

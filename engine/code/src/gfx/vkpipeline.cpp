@@ -5,6 +5,7 @@
 #include "anthraxAI/gfx/vkdevice.h"
 #include "anthraxAI/gfx/vkdescriptors.h"
 #include "anthraxAI/core/deletor.h"
+#include "anthraxAI/gfx/vkrendertarget.h"
 #include <cstdio>
 #include <string>
 #include <vulkan/vulkan_core.h>
@@ -201,15 +202,19 @@ void Gfx::Pipeline::BuildMaterial(const std::string& material, VkShaderModule* v
 	}
 
     std::string shaderbuf;
-    CompileShader(fragname, shaderc_glsl_fragment_shader, shaderbuf);
-	LoadShader(shaderbuf, fragshader);
+    if (!fragname.empty()) {
+        CompileShader(fragname, shaderc_glsl_fragment_shader, shaderbuf);
+	    LoadShader(shaderbuf, fragshader);
+    }
 	shaderbuf.clear();
 	CompileShader(vertname, shaderc_glsl_vertex_shader, shaderbuf);
 	LoadShader(shaderbuf, vertexshader);
 	shaderbuf.clear();
 
     ShaderStages.push_back(PipelineShaderCreateinfo(VK_SHADER_STAGE_VERTEX_BIT, *vertexshader));
-    ShaderStages.push_back(PipelineShaderCreateinfo(VK_SHADER_STAGE_FRAGMENT_BIT, *fragshader));
+    if (!fragname.empty()) {
+        ShaderStages.push_back(PipelineShaderCreateinfo(VK_SHADER_STAGE_FRAGMENT_BIT, *fragshader));
+    }
     Setup(id);
     CreateMaterial(Pipeline, PipelineLayout, material);
 
@@ -222,6 +227,7 @@ void Gfx::Pipeline::Build()
         VertexDescription.Attributes.clear();
     }
     Gfx::RenderTargetsList main_rt = Gfx::RT_MAIN_COLOR;
+    Gfx::RenderTargetsList shadow_rt = Gfx::RT_SHADOWS;
     Gfx::RenderTargetsList albedo_rt = Gfx::RT_ALBEDO;
     Gfx::RenderTargetsList mask_rt = Gfx::RT_MASK;
 
@@ -251,9 +257,15 @@ void Gfx::Pipeline::Build()
 	Viewport.height = (float)Core::WindowManager::GetInstance()->GetScreenResolution().y;
 	Viewport.minDepth = 0.0f;
 	Viewport.maxDepth = 1.0f;
+    
+    ViewportShadows = Viewport;
+    ViewportShadows.width = 1028;
+    ViewportShadows.height = 1028;
 
 	Scissor.offset = { 0, 0 };
 	Scissor.extent = { (uint32_t)Core::WindowManager::GetInstance()->GetScreenResolution().x, (uint32_t)Core::WindowManager::GetInstance()->GetScreenResolution().y };
+    ScissorShadows = Scissor;
+    ScissorShadows.extent = { 1028, 1028 };
 
 	Rasterizer = RasterizationCreateInfo(VK_POLYGON_MODE_FILL);
 	Multisampling = MultiSamplingCreateInfo();
@@ -327,9 +339,16 @@ void Gfx::Pipeline::Build()
     vert = "./shaders/sprite.vert";
     BuildMaterial("sprites", &vertexshader, vert, &fragshader, frag, main_rt);
 
+// shadows
+    VK_ASSERT(vkCreatePipelineLayout(Gfx::Device::GetInstance()->GetDevice(), &pipelinelayoutinfo, nullptr, &PipelineLayout), "failed to create pipeline layout!");
+    frag = "";
+    vert = "./shaders/shadows.vert";
+    BuildMaterial("shadows", &vertexshader, vert, &fragshader, frag, shadow_rt);
+
 //clean shader modules
     vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), vertexshader, nullptr);
-	vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), fragshader, nullptr);
+//since shadow dont use frag shader
+    //	vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), fragshader, nullptr);
     ShaderStages.clear();
 }
 
@@ -348,7 +367,7 @@ void Gfx::Pipeline::Setup(Gfx::RenderTargetsList id) {
         pipelineRenderingCreateInfo.colorAttachmentCount = 3;
         pipelineRenderingCreateInfo.pColorAttachmentFormats = formats3;
     }
-    else {
+    else if (id != Gfx::RT_SHADOWS) {
         pipelineRenderingCreateInfo.colorAttachmentCount = 1;
         pipelineRenderingCreateInfo.pColorAttachmentFormats = formats;
     }
@@ -363,6 +382,10 @@ void Gfx::Pipeline::Setup(Gfx::RenderTargetsList id) {
 	viewportstate.scissorCount = 1;
 	viewportstate.pScissors = &Scissor;
 
+    if (id == Gfx::RT_SHADOWS) {
+        viewportstate.pViewports = &ViewportShadows;
+        viewportstate.pScissors = &ScissorShadows;
+    }
 
     std::vector<VkPipelineColorBlendAttachmentState> blendAttachmentStates;
     VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
@@ -382,6 +405,9 @@ void Gfx::Pipeline::Setup(Gfx::RenderTargetsList id) {
 	colorblending.logicOpEnable = VK_FALSE;
 	colorblending.logicOp = VK_LOGIC_OP_COPY;
 	colorblending.attachmentCount = id == Gfx::RT_ALBEDO ? 3 : 1;
+    if (id == Gfx::RT_SHADOWS) {
+        colorblending.attachmentCount = 0;
+    }
     if (id == Gfx::RT_ALBEDO) {
         blendAttachmentStates.reserve(colorblending.attachmentCount);
         for (int i = 0; i < colorblending.attachmentCount; i++) {
@@ -389,7 +415,7 @@ void Gfx::Pipeline::Setup(Gfx::RenderTargetsList id) {
         }
         colorblending.pAttachments = blendAttachmentStates.data();
     }
-    else {
+    else if (id != Gfx::RT_SHADOWS){
     	colorblending.pAttachments = &ColorBlendAttachment;
     	colorblending.blendConstants[0] = 1.f;
     	colorblending.blendConstants[1] = 1.f;

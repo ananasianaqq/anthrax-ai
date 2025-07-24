@@ -48,7 +48,9 @@ namespace Gfx
             VkPipelineVertexInputStateCreateInfo 	VertexInputInfo;
             VkPipelineInputAssemblyStateCreateInfo 	InputAssembly;
             VkViewport 								Viewport;
+            VkViewport 								ViewportShadows;
             VkRect2D 								Scissor;
+            VkRect2D 								ScissorShadows;
             VkPipelineRasterizationStateCreateInfo 	Rasterizer;
             VkPipelineColorBlendAttachmentState 	ColorBlendAttachment;
             VkPipelineMultisampleStateCreateInfo 	Multisampling;

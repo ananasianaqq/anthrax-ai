@@ -85,6 +85,7 @@ namespace Gfx
         glm::mat4 view;
         glm::mat4 proj;
         glm::mat4 viewproj;
+        glm::mat4 shadow_matrix;
 
         float time;
         int point_light_size;
@@ -93,7 +94,7 @@ namespace Gfx
     };
    
     struct LightsData {
-        glm::vec3 GlobalDirection = glm::vec3(0.5f, -1.0f, -1.0f);
+        glm::vec3 GlobalDirection = glm::vec3(30, 26, 50);//glm::vec3(0.5f, -1.0f, -1.0f);
         glm::vec3 Specular = glm::vec3(1.0f);
         glm::vec3 Ambient = glm::vec3(0.2f);
         glm::vec3 Diffuse = glm::vec3(1.0f);

@@ -10,8 +10,10 @@
 #include "anthraxAI/core/windowmanager.h"
 #include "anthraxAI/gameobjects/objects/camera.h"
 #include "anthraxAI/gfx/vkmesh.h"
+#include "anthraxAI/gfx/vkrendertarget.h"
 #include "anthraxAI/utils/debug.h"
 #include "anthraxAI/utils/defines.h"
+#include "anthraxAI/utils/mathdefines.h"
 #include "anthraxAI/utils/thread.h"
 #include "anthraxAI/gfx/vkdefines.h"
 #include "glm/detail/qualifier.hpp"
@@ -227,7 +229,8 @@ void Gfx::Renderer::StartRender(Gfx::InputAttachments inputs, AttachmentRules ru
     Gfx::RenderingAttachmentInfo info;
    	std::vector<RenderingAttachmentInfo> attachmentinfo;
 	attachmentinfo.reserve(Gfx::RT_SIZE);
-
+        
+    Vector2<int> extents = {(int)Gfx::Device::GetInstance()->GetSwapchainExtent().width, (int)Gfx::Device::GetInstance()->GetSwapchainExtent().height};
 	if (inputs.HasColor()) {
         Gfx::RenderingAttachmentInfo info;
 		info.IsDepth = false;
@@ -253,19 +256,22 @@ void Gfx::Renderer::StartRender(Gfx::InputAttachments inputs, AttachmentRules ru
         }
     }
 	if (inputs.HasDepth()) {
+        if (inputs.GetDepth() == Gfx::RT_SHADOWS) {
+            extents = RTs[Gfx::RT_SHADOWS]->GetSize();
+        }
         Gfx::RenderingAttachmentInfo info;
 		info.IsDepth = true;
         if ((rules & Gfx::ATTACHMENT_RULE_LOAD) == Gfx::ATTACHMENT_RULE_LOAD) {
             info.Layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
         }
-		info.Image = GetRT(Gfx::RT_DEPTH)->GetImage();
-        info.ImageView = GetRT(Gfx::RT_DEPTH)->GetImageView();
+		info.Image = GetRT(inputs.GetDepth())->GetImage();
+        info.ImageView = GetRT(inputs.GetDepth())->GetImageView();
         attachmentinfo.push_back(info);
 	}
 
     VkRenderingAttachmentInfoKHR depthinfo = {};
     std::vector<VkRenderingAttachmentInfoKHR> infos;
-	const VkRenderingInfo& renderinfo = Cmd.GetRenderingInfo(attachmentinfo, infos, depthinfo,  {(int)Gfx::Device::GetInstance()->GetSwapchainExtent().width, (int)Gfx::Device::GetInstance()->GetSwapchainExtent().height}, multithreaded);
+	const VkRenderingInfo& renderinfo = Cmd.GetRenderingInfo(attachmentinfo, infos, depthinfo, extents , multithreaded);
     BeginRendering(Cmd.GetCmd(), &renderinfo);
 }
 
@@ -274,6 +280,7 @@ void Gfx::Renderer::TransferLayoutsDebug()
     GetRT(Gfx::RT_ALBEDO)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     GetRT(Gfx::RT_POSITION)->MemoryBarrier(Cmd.GetCmd(),VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     GetRT(Gfx::RT_NORMAL)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    GetRT(Gfx::RT_SHADOWS)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
    // GetRT(Gfx::RT_MASK)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
@@ -773,6 +780,16 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
     }
 
     CamData.point_light_size = i;
+ 
+    glm::vec3 light_pos = glm::vec3(50.0f, 0.0f, -15.0f);
+    float near_plane = 1.0f;
+    float far_plane = 1000.0f;
+    
+    glm::mat4 light_view = glm::lookAt(LightData.GlobalDirection, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    glm::mat4 light_proj = glm::perspective(glm::radians(45.0f), 1.0f, near_plane, far_plane);
+    light_proj[1][1] *= -1;
+
+    CamData.shadow_matrix = light_proj * light_view;
     const size_t buffersize = (sizeof(CameraData));
     BufferHelper::MapMemory(Gfx::DescriptorsBase::GetInstance()->GetCameraUBO(GetFrameInd()), buffersize, 0, &CamData);
 }
@@ -979,6 +996,16 @@ void Gfx::Renderer::CreateRenderTargets()
     RTs[Gfx::RT_ALBEDO]->SetFormat(VK_FORMAT_R16G16B16A16_SFLOAT);
     RTs[Gfx::RT_ALBEDO]->CreateRenderTarget();
     CreateSampler(RTs[Gfx::RT_ALBEDO]);
+    
+    if (RTs[Gfx::RT_SHADOWS]) {
+        DestroyRenderTarget(RTs[Gfx::RT_SHADOWS]);
+    }
+    RTs[Gfx::RT_SHADOWS] = new RenderTarget(*RTs[Gfx::RT_DEPTH], Gfx::RT_SHADOWS);
+    RTs[Gfx::RT_SHADOWS]->SetFormat(VK_FORMAT_D32_SFLOAT);
+	RTs[Gfx::RT_SHADOWS]->SetDepth(true);
+    RTs[Gfx::RT_SHADOWS]->SetDimensions({1028, 1028});
+    RTs[Gfx::RT_SHADOWS]->CreateRenderTarget();
+    CreateSampler(RTs[Gfx::RT_SHADOWS]);
 
     CreateImGuiDescSet();
 }
@@ -992,6 +1019,7 @@ void Gfx::Renderer::CreateImGuiDescSet()
         RTs[Gfx::RT_NORMAL]->SetImGuiDescriptor();
         RTs[Gfx::RT_ALBEDO]->SetImGuiDescriptor();
         RTs[Gfx::RT_DEPTH]->SetImGuiDescriptor(VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
+        RTs[Gfx::RT_SHADOWS]->SetImGuiDescriptor(VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL);
     }
 }
 

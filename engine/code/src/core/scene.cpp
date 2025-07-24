@@ -195,7 +195,12 @@ void Core::Scene::RenderScene(bool playmode)
                 Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, GameModules->Get("gbuffer").GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM * 2 ? true : false);
                 Render(GameModules->Get("gbuffer"));
                 Gfx::Renderer::GetInstance()->EndRender();
-            
+                
+                Gfx::Renderer::GetInstance()->ResetInstanceInd();
+                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("shadows").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
+                Render(GameModules->Get("shadows"));
+                Gfx::Renderer::GetInstance()->EndRender();
+
                 Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("lighting").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
                 Render(GameModules->Get("lighting"));
                 Gfx::Renderer::GetInstance()->EndRender();
@@ -402,6 +407,15 @@ void Core::Scene::PopulateModules()
                 GameObjects->GetInfo(Keeper::Infos::INFO_GBUFFER)
             );
             HasGBuffer = true;
+        }
+        {
+            Modules::Info info;
+            info.BindlessType = Gfx::BINDLESS_DATA_CAM_STORAGE_SAMPLER ;
+            info.IAttachments.Add(Gfx::RT_SHADOWS, true);
+            GameModules->Populate("shadows", info,
+                GameObjects->GetInfo(Keeper::Infos::INFO_SHADOWS)
+            );
+            HasShadows =  true;
         }
         {
             Modules::Info info;

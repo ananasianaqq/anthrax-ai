@@ -44,10 +44,10 @@ void Gfx::Renderer::CleanTextures()
     }
     Cubemaps.clear();
     
-    for (auto& it : CubemapsImgui) {
-        it.second.Clean();
-    }
-    CubemapsImgui.clear();
+    // for (auto& it : CubemapsImgui) {
+    //     it.second.Clean();
+    // }
+    // CubemapsImgui.clear();
 
 }
 
@@ -99,7 +99,7 @@ void Gfx::Renderer::CreateTextures()
         if (exists) {
             std::string dir_name =dir.path().c_str();
             cb_names[dir_name].push_back(str);
-            printf("BASENAME: %s|%s\n", str.c_str(), dir.path().c_str());
+          //  printf("BASENAME: %s|%s\n", str.c_str(), dir.path().c_str());
         }
     }
     }
@@ -261,9 +261,17 @@ void Gfx::Renderer::CreateSampler(RenderTarget* rt)
 
 	samplerinfo.magFilter = VK_FILTER_NEAREST;
 	samplerinfo.minFilter = VK_FILTER_NEAREST;
-	samplerinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerinfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    if (rt == RTs[Gfx::RT_SHADOWS]) {
+        samplerinfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        samplerinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        samplerinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        samplerinfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    }
+    else {
+	    samplerinfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	    samplerinfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	    samplerinfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    }
 
     rt->SetSampler(true);
 	VK_ASSERT(vkCreateSampler(Gfx::Device::GetInstance()->GetDevice(), &samplerinfo, nullptr, rt->GetSampler()), "failed to create sampler!");
