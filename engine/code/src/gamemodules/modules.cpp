@@ -195,7 +195,6 @@ void Modules::Base::RestartAnimator()
 
     Utils::Debug::GetInstance()->AnimStartMs = Engine::GetInstance()->GetTime();
     Animator->Init();
-
 }
 
 void Modules::Base::UpdateResource(Modules::Module& module, Gfx::RenderObject& obj)

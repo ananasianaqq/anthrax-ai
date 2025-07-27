@@ -70,10 +70,13 @@ namespace Utils
             std::string GetRootElement() const;
             NodeIt GetRootNode() const { return RootNode; }
 
-            void Clear() { if (!File.empty()) { File.clear(); Tokens.clear(); }  }
+            void Clear() { File.clear(); Tokens.clear();  }
             void UpdateElement(NodeIt it, const std::string& s) { const_cast<std::pair<std::string, std::string>&>(*it).second = s; }
             void PrintTokenized();
             void UpdateTokens(const Keeper::Objects* obj);
+        
+            void ClearFile(const std::string& filename);
+            void AddRoot(LevelElements element,  const std::string& str) { AddToken(element, str); }
         private:
             std::vector<std::string> File;
             TokensPair Tokens;

@@ -1,0 +1,16 @@
+Scene: New Scene
+Object:
+		ID: cube
+	Position:
+		x: 0.000000
+		y: 0.000000
+		z: 0.000000
+	Material:
+		name: models
+		frag: model.frag
+		vert: model.vert
+	Texture:
+		name: dummy.png
+	Model:
+		name: cube.obj
+

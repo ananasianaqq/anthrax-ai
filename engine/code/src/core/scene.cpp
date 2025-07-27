@@ -12,6 +12,7 @@
 #include "anthraxAI/gfx/vkrenderer.h"
 #include "anthraxAI/gfx/model.h"
 #include "anthraxAI/utils/debug.h"
+#include "anthraxAI/utils/mathdefines.h"
 #include "anthraxAI/utils/parser.h"
 #include "anthraxAI/utils/thread.h"
 #include "anthraxAI/utils/tracy.h"
@@ -328,14 +329,37 @@ void Core::Scene::InitModules()
     Core::Audio::GetInstance()->SetVolume(0.0f);
 }
 
+void Core::Scene::NewScene()
+{
+    SetCurrentScene("New Scene");
+    CurrentSceneForUpdate = "New Scene"; 
+    ParsedSceneInfo.clear();
+    
+    IsNewScene = true;
+
+    Keeper::Info info;
+    info.ParsedID = "cube";
+    info.Position = Vector3<float>(0.0f,0.0f, 0.0f);
+    info.Material = "models";
+    info.Vertex = "model.vert";
+    info.Fragment = "model.frag";
+    info.Texture = "dummy.png";
+    info.Model = "cube.obj";
+    info.IsModel = true;
+    ParsedSceneInfo.push_back(info);
+}
+
 void Core::Scene::ReloadResources()
 {
     Thread::Pool::GetInstance()->Reload();
 
-    ParsedSceneInfo.clear();
-    ParsedSceneInfo.reserve(10);
-    LoadScene(CurrentScene);
-
+    if (!IsNewScene) {
+        CurrentSceneForUpdate = CurrentScene;
+        ParsedSceneInfo.clear();
+        ParsedSceneInfo.reserve(10);
+        LoadScene(CurrentScene);
+    }
+    IsNewScene = false;
     GameObjects->CleanIfNot(Keeper::Type::CAMERA, true);
 
     GameObjects->Create(ParsedSceneInfo);
@@ -521,16 +545,25 @@ void Core::Scene::SetCurrentScene(const std::string& str)
     Engine::GetInstance()->ClearState(ENGINE_STATE_PLAY);
     Engine::GetInstance()->ClearState(ENGINE_STATE_EDITOR);
     Engine::GetInstance()->SetState(ENGINE_STATE_RESOURCE_RELOAD);
+
 }
 
 void Core::Scene::ExportScene()
 {
+    Parse.ClearFile(CurrentScene);
+    Parse.Clear();
+
+    Parse.AddRoot(Utils::LEVEL_ELEMENT_SCENE, CurrentScene);
+    Parse.Write(CurrentScene);
+    
     for (auto& it : GameObjects->GetObjects()) {
+        if (it.first != Keeper::NPC && it.first != Keeper::SPRITE && it.first != Keeper::LIGHT) continue;
         for (Keeper::Objects* obj : it.second) {
             ExportObjectInfo(obj);
         }
     }
 }
+
 void Core::Scene::ExportObjectInfo(const Keeper::Objects* obj)
 {
     std::string rootname = Parse.GetRootElement();

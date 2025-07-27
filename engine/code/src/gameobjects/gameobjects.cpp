@@ -117,14 +117,21 @@ bool Keeper::Base::EraseSelected()
     if (it != ObjectsList[Keeper::GIZMO].end()) {
         return false;
     }
+
     for (auto& it : ObjectsList) {
         if (it.first != Keeper::NPC && it.first != Keeper::SPRITE && it.first != Keeper::LIGHT) continue;
-        std::erase_if(it.second, [ind](const Keeper::Objects* obj) { return ind == obj->GetID(); } );
+        //std::erase_if(it.second, [ind](const Keeper::Objects* obj) { return ind == obj->GetID(); } );
+        for (std::vector<Keeper::Objects*>::iterator o = it.second.begin(); o != it.second.end(); ++o) {
+            if ((*o)->GetID() == ind) {
+                it.second.erase(o);
+            }
+        }
     }
     for (Keeper::Objects* obj : ObjectsList[Keeper::Type::GIZMO]) {
         obj->SetHandle(nullptr);
         obj->SetVisible(false);
     }
+
     return true;
 }
 

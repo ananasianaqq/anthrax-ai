@@ -32,7 +32,8 @@ namespace Core
             void RenderScene(bool playmode);
             bool HasAnimation(uint32_t id) { if (GameModules) { return GameModules->HasAnimation(id); } return false; }
             void ReloadAnimation(uint32_t id, const std::string& s) { if (GameModules) { return GameModules->ReloadAnimation(id, s); }}
-
+            
+            void SetCurrentSceneForUpdate(const std::string& name) { CurrentSceneForUpdate = name; }
             void SetCurrentScene(const std::string& str);
             Modules::ScenesMap& GetScenes() { return GameModules->GetSceneModules(); }
             Modules::Module& GetModule(const std::string& name) const { return GameModules->Get(name); }        
@@ -62,10 +63,12 @@ namespace Core
             void ReloadResources();
             void ParseSceneNames();
             const std::vector<std::string>& GetSceneNames() const { return SceneNames; }
+            void NewScene();
 
             void KeepEditor(bool keep) { HasEditor = keep; }
             bool GetKeepEditor() { return HasEditor; }
             const std::string& GetCurrentScene() const { return CurrentScene; }
+            const std::string& GetCurrentSceneForUpdate() const { return CurrentSceneForUpdate; }
             void SetSelectedID(uint32_t id) { GameObjects->SetSelectedID(id); }
             uint32_t GetSelectedID() { return GameObjects->GetSelectedID(); }
 
@@ -83,9 +86,10 @@ namespace Core
             Keeper::Base* GameObjects = nullptr;
             Modules::Base* GameModules = nullptr;
 
+            std::string CurrentSceneForUpdate;
             std::string CurrentScene = "intro";
             std::vector<Keeper::Info> ParsedSceneInfo;
-
+            bool IsNewScene = false;
             std::vector<std::string> SceneNames;
 
             Keeper::Camera* EditorCamera;

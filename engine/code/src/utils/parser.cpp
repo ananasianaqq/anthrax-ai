@@ -76,7 +76,7 @@ void Utils::Parser::Load(const std::string& filename)
     }
 
     read.close();
-
+    
     Tokenize(File.begin());
     RootNode = Tokens.begin();
     ChildRange = Tokens.end();
@@ -124,6 +124,14 @@ void Utils::Parser::AddToken(LevelElements element, const std::string& str)
 {
     Tokens.emplace_back(std::make_pair(Utils::GetValue(element), str));
 }
+
+void Utils::Parser::ClearFile(const std::string& filename)
+{
+    std::ofstream fs;
+    fs.open(LEVEL_PATH + filename);
+    fs.close();
+}
+
 void Utils::Parser::UpdateTokens(const Keeper::Objects* obj)
 {
     Keeper::Type type = obj->GetType();
@@ -143,6 +151,12 @@ void Utils::Parser::UpdateTokens(const Keeper::Objects* obj)
     if (type == Keeper::NPC) {
         AddToken(LEVEL_ELEMENT_MODEL, "");
         AddToken(LEVEL_ELEMENT_NAME, obj->GetModelName());
+        if (obj->HasAnimations()) {
+            for (auto& str : obj->GetAnimations()) {
+                AddToken(LEVEL_ELEMENT_ANIMATION, "");
+                AddToken(LEVEL_ELEMENT_NAME, str);
+            }
+        }
     }
     else if (type == Keeper::LIGHT) {
         AddToken(LEVEL_ELEMENT_LIGHT, "");
@@ -154,7 +168,6 @@ void Utils::Parser::UpdateTokens(const Keeper::Objects* obj)
     }
     RootNode = Tokens.begin();
     ChildRange = Tokens.end();
-
 }
 
 Utils::NodeIt Utils::Parser::GetChildByID(const NodeIt& node, const std::string& id)  const

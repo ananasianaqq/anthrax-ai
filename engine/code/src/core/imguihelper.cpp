@@ -192,6 +192,8 @@ void Core::ImGuiHelper::InitUIElements()
         UI::Element tab(UI::TAB, tablabel);
         it->Add(tab, UI::Element(UI::COMBO, "Scenes", false, Core::Scene::GetInstance()->GetSceneNames(), [](std::string tag) -> void { Core::Scene::GetInstance()->SetCurrentScene(tag); }, true));
         it->Add(tab, UI::Element(UI::SEPARATOR, "tabseparator"));
+        it->Add(UI::Element(UI::BUTTON, "New Scene", false, []() -> float { Core::Scene::GetInstance()->NewScene(); return 0.0f; }));
+        it->Add(tab, UI::Element(UI::SEPARATOR, "tabseparator"));
         it->Add(UI::Element(UI::BUTTON, "Update Shaders", false, []() -> float { Gfx::Vulkan::GetInstance()->ReloadShaders(); return 0.0f; }));
         it->Add(UI::Element(UI::CHECKBOX, "Keep Editor", false, nullptr, [](bool show) -> void {  Core::Scene::GetInstance()->KeepEditor(show); }, []() -> bool {  return Core::Scene::GetInstance()->GetKeepEditor(); }));
         it->Add(UI::Element(UI::SEPARATOR, "sepa"));
@@ -199,7 +201,7 @@ void Core::ImGuiHelper::InitUIElements()
     }
     {
         UI::Element scenetab(UI::TAB, "Scene");
-        Editor->Add(scenetab, UI::Element(UI::TEXT, "Name:", false, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentScene(); } ));
+        Editor->Add(scenetab, UI::Element(UI::TEXT_ENTER, "Name", false,  [](std::string name) -> void { Core::Scene::GetInstance()->SetCurrentSceneForUpdate(name); }, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentSceneForUpdate(); }));
         Editor->Add(scenetab, UI::Element(UI::SEPARATOR, "sep"));
     }
 
@@ -367,7 +369,8 @@ void Core::ImGuiHelper::UpdateObjectInfo()
             }
             it.second.clear();
 
-            Editor->Add(it.first, UI::Element(UI::TEXT, "Name:", false, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentScene(); } ));
+            Editor->Add(it.first, UI::Element(UI::TEXT_ENTER, "Name", false,  [](std::string name) -> void { Core::Scene::GetInstance()->SetCurrentSceneForUpdate(name); }, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentSceneForUpdate(); }));
+            //Editor->Add(it.first, UI::Element(UI::TEXT, "Name:", false, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentScene(); } ));
             Editor->Add(it.first, UI::Element(UI::SEPARATOR, "sep"));
             Editor->Add(it.first, UI::Element(UI::LISTBOX, "Objects", false, Core::Scene::GetInstance()->GetGameObjects()->GetObjectNames(), [this](std::string tag, const UI::Element& elem) -> void { DisplayObjectInfo(tag, elem); }, false));
             Editor->Add(it.first, UI::Element(UI::SEPARATOR, "sep"));
@@ -649,6 +652,9 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
         }
         case UI::TEXT_ENTER: {
             if (element.DefinitionString) {
+                if (!element.DefinitionString().empty()) {
+                    strcpy(element.InputText, element.DefinitionString().c_str());
+                }
                 ImGui::InputText(element.GetLabel().c_str(), element.InputText, MAX_INPUT_TEXT_SIZE);
                 if (strlen(element.InputText) != 0) {
                     element.Definition(element.InputText);
@@ -656,9 +662,10 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
             }
             break;
         }
-        case UI::SEPARATOR:
+        case UI::SEPARATOR: {
             ImGui::Separator();
             break;
+        }
         case UI::SLIDER: {
             float arg = element.DefinitionFloat();
             ImGui::SliderFloat(element.GetLabel().c_str(), &arg, 0.0f, 1.0f);
