@@ -4,7 +4,7 @@
 
 ![language](https://img.shields.io/badge/language-C%2FC%2B%2B-green)
 ![OS](https://img.shields.io/badge/OS-linux%2C%20windows-green)
-[![youtube](https://img.shields.io/badge/youtube-channel-green)](https://www.youtube.com/@sudolovemebaby)
+[![youtube](https://img.shields.io/badge/youtube-channel-red)](https://www.youtube.com/@sudolovemebaby)
 [![getting started](https://img.shields.io/badge/available-features-green)](#-features)
 [![Free](https://img.shields.io/badge/MIT-license-brightgreen)](#-license)
 
@@ -14,7 +14,7 @@
 - [usage](#-usage)
 - [how to build](#-how-to-build)
 - [known issues](#-known-issues)
-- [license](#tab=MIT-1-ov-file)
+- [license](#-tab=MIT-1-ov-file)
 
 ## 💥 about anthrax-ai project
 
@@ -35,25 +35,18 @@ I really appreciate your input but I can't promise that I will merge your PR sin
 - [real time shader compilation](#real-time-shader-compilation)
 
 ### mouse picking and gizmo
-<div>
-<img alt="gizmo" height="100" src="readme/gizmo.gif"><span style="align-items: center">Custom implementation for object mouse picking using SSBO.
-Translation of objects using gizmo `x, y, z` axis</span>
-</div>
+| ![gizmo](readme/gizmo.gif) | Custom implementation for object mouse picking using SSBO.
+Translation of objects using gizmo `x, y, z` axis |
 
 ### debug render target visualization
-<div>
-<img alt="rt" height="100" src="readme/rt-vis.gif"><span style="align-items: center">Visualize your render targets in order to help debugging and analyzing in real time</span>
-</div>
+| ![rt](readme/rt-vis.gif) | Visualize your render targets in order to help debugging and analyzing in real time |
 
 ### outlines
-<div>
-<img alt="outlines" height="100" src="readme/outlines.gif"><span style="align-items: center">Outlines are rendered for selected object using object's mask</span>
-</div>
+| ![outlines](readme/outlines.gif) | Outlines are rendered for selected object using object's mask |
 
 ### real time shader compilation
-<div>
-<img alt="shaders" height="100" src="readme/shaders.gif"><span style="align-items: center">You can recompile shaders in real time</span>
-</div>
+| ![shaders](readme/shaders.gif) | You can recompile shaders in real time |
+
 
 ## 🎮 usage
 
