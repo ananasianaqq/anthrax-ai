@@ -6,7 +6,7 @@
 ![OS](https://img.shields.io/badge/OS-linux%2C%20windows-green)
 [![youtube](https://img.shields.io/badge/youtube-channel-red)](https://www.youtube.com/@sudolovemebaby)
 [![getting started](https://img.shields.io/badge/available-features-green)](#-features)
-[![Free](https://img.shields.io/badge/MIT-license-brightgreen)](#-license)
+[![Free](https://img.shields.io/badge/MIT-license-brightgreen)](https://github.com/svatostop/anthrax-ai?tab=MIT-1-ov-file)
 
 ## ✨ table of contents
 - [about anthrax-ai project](#-about-anthrax-ai-project)
@@ -14,7 +14,7 @@
 - [usage](#-usage)
 - [how to build](#-how-to-build)
 - [known issues](#-known-issues)
-- [license](#-tab=MIT-1-ov-file)
+- [license](https://github.com/svatostop/anthrax-ai?tab=MIT-1-ov-file)
 
 ## 💥 about anthrax-ai project
 
@@ -35,18 +35,28 @@ I really appreciate your input but I can't promise that I will merge your PR sin
 - [real time shader compilation](#real-time-shader-compilation)
 
 ### mouse picking and gizmo
-| ![gizmo](readme/gizmo.gif) | Custom implementation for object mouse picking using SSBO.
-Translation of objects using gizmo `x, y, z` axis |
+<img align="left" width="150" src="readme/gizmo.gif">
+Custom implementation for object mouse picking using SSBO.
+Translation of objects using gizmo `x, y, z` axis
+
+---
 
 ### debug render target visualization
-| ![rt](readme/rt-vis.gif) | Visualize your render targets in order to help debugging and analyzing in real time |
+<img align="left" width="150" src="readme/rt-vis.gif">
+Visualize your render targets in order to help debugging and analyzing in real time
+
+---
 
 ### outlines
-| ![outlines](readme/outlines.gif) | Outlines are rendered for selected object using object's mask |
+<img align="left" width="150" src="readme/outlines.gif">
+Outlines are rendered for selected object using object's mask
+---
 
 ### real time shader compilation
-| ![shaders](readme/shaders.gif) | You can recompile shaders in real time |
+<img align="left" width="150" src="readme/shaders.gif">
+You can recompile shaders in real time
 
+---
 
 ## 🎮 usage
 
