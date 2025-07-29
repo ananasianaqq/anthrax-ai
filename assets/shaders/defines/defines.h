@@ -82,7 +82,12 @@ RegisterUniform(Camera, {
     float time;          
     int point_light_size;
     int cubemapbind;
+    int pad0;
+
+    bool hasshadows;
+    int pad1;
     bool hascubemap;   
+    int pad2;
 });
 
 #define DEPTH_ARRAY_SCALE 1000 

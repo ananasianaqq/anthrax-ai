@@ -1,4 +1,19 @@
 Scene: scene1
+	Shadows:
+	Cubemaps:
+		name: cubemaps/clear_sky
+Object:
+		ID: kkk
+	Position:
+		x: 0.000000
+		y: 0.000000
+		z: 0.000000
+	Material:
+		name: sprites
+	frag:
+	vert:
+	Texture:
+		name: zeroone.png
 Object:
 		ID: plane
 	Position:
@@ -14,25 +29,11 @@ Object:
 	Model:
 		name: sphere.obj
 Object:
-		ID: cube
-	Position:
-		x: -3.399200
-		y: 2.461193
-		z: -13.578024
-	Material:
-		name: models
-		frag: model.frag
-		vert: model.vert
-	Texture:
-		name: dummy.png
-	Model:
-		name: cube.obj
-Object:
 		ID: anim
 	Position:
 		x: -1.406089
-		y: 4.359976
-		z: -11.704236
+		y: -0.020308
+		z: -4.379540
 	Material:
 		name: models
 		frag: model.frag
@@ -50,66 +51,24 @@ Object:
 Object:
 		ID: anim-dancing
 	Position:
-		x: -4.638832
-		y: 5.191078
-		z: -7.181327
+		x: 2.193838
+		y: 0.086327
+		z: -18.251839
 	Material:
 		name: models
 		frag: model.frag
 		vert: model.vert
 	Texture:
-		name: dummy.png
+		name: MocapSuit02_diffuse.png
 	Model:
 		name: DancingTwerk.dae
 	Animation:
 		name: DancingTwerk.dae
 Object:
-		ID: tete
-	Position:
-		x: 0.000000
-		y: 5.646563
-		z: -14.896271
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Model:
-		name: cube.obj
-Object:
-		ID: tete_1
-	Position:
-		x: -6.300923
-		y: 3.028409
-		z: -9.494375
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Model:
-		name: cube.obj
-Object:
-		ID: mymonkey_1
-	Position:
-		x: -1.736598
-		y: -0.082000
-		z: -8.981966
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Model:
-		name: monkeytextured.obj
-Object:
 		ID: mod
 	Position:
 		x: 0.000000
-		y: 0.058808
+		y: 0.030331
 		z: -7.272036
 	Material:
 		name: models
@@ -119,34 +78,6 @@ Object:
 		name: dummy.png
 	Model:
 		name: plane.obj
-Object:
-		ID: cube1
-	Position:
-		x: 5.682796
-		y: 6.568351
-		z: -16.297043
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Model:
-		name: cube.obj
-Object:
-		ID: cube1_2
-	Position:
-		x: -1.224240
-		y: 6.901815
-		z: -8.287754
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Model:
-		name: monkeytextured.obj
 Object:
 		ID: press
 	Position:
@@ -158,29 +89,15 @@ Object:
 	frag:
 	vert:
 	Texture:
-		name: zeroone.png
-	Model:
-		name: sphere.obj
-Object:
-		ID: rr
-	Position:
-		x: 10.398030
-		y: 0.000000
-		z: 0.000000
-	Material:
-		name: sphere.obj
-	frag:
-	vert:
-	Texture:
 		name: dummy.png
 	Model:
-		name: cube.obj
+		name: sphere.obj
 Object:
-		ID: rr_2
+		ID: cubes
 	Position:
-		x: -7.772639
-		y: 0.000000
-		z: 0.000000
+		x: 0.142491
+		y: 2.235741
+		z: -35.209938
 	Material:
 		name: models
 	frag:
@@ -190,25 +107,81 @@ Object:
 	Model:
 		name: cube.obj
 Object:
-		ID: ee
+		ID: cubes_1
 	Position:
-		x: 1.467097
-		y: 10.982866
-		z: 10.452340
+		x: 4.379946
+		y: 1.691170
+		z: -33.119781
 	Material:
-		name: axisz.obj
+		name: models
 	frag:
 	vert:
 	Texture:
-		name: zeroone.png
+		name: dummy.png
+	Model:
+		name: cube.obj
+Object:
+		ID: cubes_1_1
+	Position:
+		x: -7.873919
+		y: 1.622925
+		z: -41.769527
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Model:
+		name: cube.obj
+Object:
+		ID: cubes_1_1_1
+	Position:
+		x: -8.261957
+		y: 2.364709
+		z: -16.593443
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Model:
+		name: cube.obj
+Object:
+		ID: cubes_1_1_1_1
+	Position:
+		x: 2.866899
+		y: 5.544104
+		z: -33.842155
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Model:
+		name: cube.obj
+Object:
+		ID: monrkeke
+	Position:
+		x: 4.518597
+		y: 0.749523
+		z: -22.673784
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
 	Model:
 		name: monkeytextured.obj
 Object:
-		ID: jjj
+		ID: monrkeke_1
 	Position:
-		x: 8.736403
-		y: 4.639799
-		z: -12.493004
+		x: 0.436378
+		y: 3.554800
+		z: -26.619633
 	Material:
 		name: models
 	frag:
@@ -216,62 +189,12 @@ Object:
 	Texture:
 		name: dummy.png
 	Model:
-		name: cube.obj
-Object:
-		ID: jjj_1
-	Position:
-		x: -9.393410
-		y: 4.386690
-		z: 0.000000
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: zeroone.png
-	Model:
-		name: cube.obj
-Object:
-		ID: light
-	Position:
-		x: -0.968415
-		y: 5.656617
-		z: -10.299357
-	Material:
-		name: models
-		frag: model.frag
-		vert: model.vert
-	Texture:
-		name: dummy.png
-	Light:
-		name: sphere.obj
-	Color:
-		x: 1.000000
-		y: 0.000000
-		z: 0.000000
-Object:
-		ID: 12light
-	Position:
-		x: -3.918924
-		y: 4.647874
-		z: -4.126928
-	Material:
-		name: models
-		frag: model.frag
-		vert: model.vert
-	Texture:
-		name: dummy.png
-	Light:
-		name: sphere.obj
-	Color:
-		x: 1.000000
-		y: 0.000000
-		z: 0.000000
+		name: monkeytextured.obj
 Object:
 		ID: light11
 	Position:
 		x: -6.688829
-		y: 7.031487
+		y: 2.582448
 		z: -9.711782
 	Material:
 		name: models
@@ -288,9 +211,9 @@ Object:
 Object:
 		ID: light2
 	Position:
-		x: 5.355585
-		y: 3.244534
-		z: -0.784492
+		x: 5.344560
+		y: 1.201775
+		z: 0.477807
 	Material:
 		name: models
 		frag: model.frag
@@ -307,8 +230,8 @@ Object:
 		ID: light3
 	Position:
 		x: 5.721473
-		y: 9.680084
-		z: -10.574345
+		y: 2.847253
+		z: -9.654973
 	Material:
 		name: models
 		frag: model.frag
@@ -343,8 +266,8 @@ Object:
 		ID: lol_1
 	Position:
 		x: 0.000000
-		y: 9.205066
-		z: -6.963202
+		y: 2.218746
+		z: -4.362978
 	Material:
 		name: models
 	frag:
@@ -358,29 +281,11 @@ Object:
 		y: 0.000000
 		z: 1.000000
 Object:
-		ID: iii
+		ID: light5
 	Position:
-		x: 0.037847
-		y: 3.100649
-		z: 1.036498
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Light:
-		name: axisz.obj
-	Color:
-		x: 0.000000
-		y: 1.000000
+		x: 1.151046
+		y: 4.081539
 		z: 0.000000
-Object:
-		ID: jjo
-	Position:
-		x: 0.000000
-		y: 3.335166
-		z: -6.718650
 	Material:
 		name: models
 	frag:
@@ -390,7 +295,25 @@ Object:
 	Light:
 		name: sphere.obj
 	Color:
-		x: 1.000000
-		y: 0.500000
+		x: 0.000000
+		y: 0.000000
+		z: 1.000000
+Object:
+		ID: liiight
+	Position:
+		x: 0.000000
+		y: 1.380689
+		z: -14.976179
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Light:
+		name: sphere.obj
+	Color:
+		x: 0.000000
+		y: 0.000000
 		z: 1.000000
 

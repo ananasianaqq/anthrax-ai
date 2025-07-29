@@ -120,12 +120,7 @@ bool Keeper::Base::EraseSelected()
 
     for (auto& it : ObjectsList) {
         if (it.first != Keeper::NPC && it.first != Keeper::SPRITE && it.first != Keeper::LIGHT) continue;
-        //std::erase_if(it.second, [ind](const Keeper::Objects* obj) { return ind == obj->GetID(); } );
-        for (std::vector<Keeper::Objects*>::iterator o = it.second.begin(); o != it.second.end(); ++o) {
-            if ((*o)->GetID() == ind) {
-                it.second.erase(o);
-            }
-        }
+        std::erase_if(it.second, [ind](const Keeper::Objects* obj) { return ind == obj->GetID(); } );
     }
     for (Keeper::Objects* obj : ObjectsList[Keeper::Type::GIZMO]) {
         obj->SetHandle(nullptr);
@@ -145,6 +140,11 @@ void Keeper::Base::VerifyNewObject()
     }
     if (NewObjectInfo.Model.empty()) {
         NewObjectInfo.Model = *Gfx::Model::GetInstance()->GetModelNames().begin();
+    }
+    else {
+        if (!Gfx::Model::GetInstance()->GetModel(NewObjectInfo.Model)) {
+            Gfx::Model::GetInstance()->LoadModel("./models/" + NewObjectInfo.Model);
+        }
     }
     if (NewObjectInfo.Material.empty()) {
         NewObjectInfo.Material = "models";//*Gfx::Pipeline::GetInstance()->GetMaterialNames().begin();

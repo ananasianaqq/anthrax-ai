@@ -193,16 +193,17 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(tab, UI::Element(UI::COMBO, "Scenes", false, Core::Scene::GetInstance()->GetSceneNames(), [](std::string tag) -> void { Core::Scene::GetInstance()->SetCurrentScene(tag); }, true));
         it->Add(tab, UI::Element(UI::SEPARATOR, "tabseparator"));
         it->Add(UI::Element(UI::BUTTON, "New Scene", false, []() -> float { Core::Scene::GetInstance()->NewScene(); return 0.0f; }));
+
+        it->Add(UI::Element(UI::SEPARATOR, "sepa"));
+        it->Add(UI::Element(UI::BUTTON, "Save Scene", false, []() -> float { Core::Scene::GetInstance()->ExportScene(); return 0.0f; }));
         it->Add(tab, UI::Element(UI::SEPARATOR, "tabseparator"));
         it->Add(UI::Element(UI::BUTTON, "Update Shaders", false, []() -> float { Gfx::Vulkan::GetInstance()->ReloadShaders(); return 0.0f; }));
         it->Add(UI::Element(UI::CHECKBOX, "Keep Editor", false, nullptr, [](bool show) -> void {  Core::Scene::GetInstance()->KeepEditor(show); }, []() -> bool {  return Core::Scene::GetInstance()->GetKeepEditor(); }));
-        it->Add(UI::Element(UI::SEPARATOR, "sepa"));
-        it->Add(UI::Element(UI::BUTTON, "Save Scene", false, []() -> float { Core::Scene::GetInstance()->ExportScene(); return 0.0f; }));
     }
     {
         UI::Element scenetab(UI::TAB, "Scene");
         Editor->Add(scenetab, UI::Element(UI::TEXT_ENTER, "Name", false,  [](std::string name) -> void { Core::Scene::GetInstance()->SetCurrentSceneForUpdate(name); }, []() -> std::string { return Core::Scene::GetInstance()->GetCurrentSceneForUpdate(); }));
-        Editor->Add(scenetab, UI::Element(UI::SEPARATOR, "sep"));
+        // Editor->Add(scenetab, UI::Element(UI::SEPARATOR, "sep"));
     }
 
     {
@@ -211,6 +212,9 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(rendertab, UI::Element(UI::DEBUG_IMAGE, "image", false));
         it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
         it->Add(rendertab, UI::Element(UI::TEXT, "Lighting"));
+        it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(rendertab, UI::Element(UI::CHECKBOX, "Shadows", false, nullptr, [](bool show) -> void { Core::Scene::GetInstance()->SetShadows(show); }, []() -> bool { return Core::Scene::GetInstance()->GetShadows(); }));
+        it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
         float minmax[2] = {-50.0f,50.0f};
         it->Add(rendertab, UI::Element(UI::SLIDER_3, "Global Light Dir", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetGlobalLightDir(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetGlobalLightDir(); }, minmax ));
         it->Add(rendertab, UI::Element(UI::SLIDER_3, "Ambient", false, [](glm::vec3 v) -> void { Gfx::Renderer::GetInstance()->SetAmbient(v); }, []() -> glm::vec3 { return Gfx::Renderer::GetInstance()->GetAmbient(); } , minmax ));
@@ -693,7 +697,7 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
 
 void Core::ImGuiHelper::Render()
 {
-    ImGui::ShowDemoWindow();
+    //ImGui::ShowDemoWindow();
 
 
     std::vector<UI::Window>& windows = UIWindows[EditorName];

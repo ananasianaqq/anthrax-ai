@@ -196,12 +196,12 @@ void Core::Scene::RenderScene(bool playmode)
                 Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, GameModules->Get("gbuffer").GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM * 2 ? true : false);
                 Render(GameModules->Get("gbuffer"));
                 Gfx::Renderer::GetInstance()->EndRender();
-                
-                Gfx::Renderer::GetInstance()->ResetInstanceInd();
-                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("shadows").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
-                Render(GameModules->Get("shadows"));
-                Gfx::Renderer::GetInstance()->EndRender();
-
+                if (HasFrameShadows) { 
+                    Gfx::Renderer::GetInstance()->ResetInstanceInd();
+                    Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("shadows").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
+                    Render(GameModules->Get("shadows"));
+                    Gfx::Renderer::GetInstance()->EndRender();
+                }
                 Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("lighting").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
                 Render(GameModules->Get("lighting"));
                 Gfx::Renderer::GetInstance()->EndRender();
@@ -308,7 +308,7 @@ void Core::Scene::Init()
     ParseSceneNames();
 
     GameObjects = new Keeper::Base;
-    GameObjects->Create<Keeper::Camera>(new Keeper::Camera(Keeper::Camera::Type::EDITOR, {1.0f, 1.0f, 3.0f}));
+    GameObjects->Create<Keeper::Camera>(new Keeper::Camera(Keeper::Camera::Type::EDITOR, {10.0f, 10.0f, 3.0f}));
     EditorCamera = reinterpret_cast<Keeper::Camera*>(*(GameObjects->Get(Keeper::Type::CAMERA).begin()));
 }
 
@@ -331,6 +331,8 @@ void Core::Scene::InitModules()
 
 void Core::Scene::NewScene()
 {
+    Gfx::Renderer::GetInstance()->SetCubemapRendering(false);
+    HasFrameShadows = false;
     SetCurrentScene("New Scene");
     CurrentSceneForUpdate = "New Scene"; 
     ParsedSceneInfo.clear();
@@ -366,7 +368,7 @@ void Core::Scene::ReloadResources()
     GameObjects->Create<Keeper::Gizmo>(new Keeper::Gizmo(GameObjects->GetGizmoInfo(Keeper::Gizmo::Type::Y), Keeper::Gizmo::Type::Y));
     GameObjects->Create<Keeper::Gizmo>(new Keeper::Gizmo(GameObjects->GetGizmoInfo(Keeper::Gizmo::Type::X), Keeper::Gizmo::Type::X));
     GameObjects->Create<Keeper::Gizmo>(new Keeper::Gizmo(GameObjects->GetGizmoInfo(Keeper::Gizmo::Type::Z), Keeper::Gizmo::Type::Z));
-    EditorCamera->SetPosition({1.0f, 1.0f, 3.0f});
+    EditorCamera->SetPosition({5.0f, 10.0f, -3.0f});
 
     Gfx::Vulkan::GetInstance()->ReloadResources();
     Core::Audio::GetInstance()->ResetState();
@@ -439,7 +441,6 @@ void Core::Scene::PopulateModules()
             GameModules->Populate("shadows", info,
                 GameObjects->GetInfo(Keeper::Infos::INFO_SHADOWS)
             );
-            HasShadows =  true;
         }
         {
             Modules::Info info;
@@ -554,6 +555,13 @@ void Core::Scene::ExportScene()
     Parse.Clear();
 
     Parse.AddRoot(Utils::LEVEL_ELEMENT_SCENE, CurrentScene);
+    if (HasFrameShadows) {
+        Parse.AddRoot(Utils::LEVEL_ELEMENT_SHADOWS, "");
+    }
+    if (Gfx::Renderer::GetInstance()->GetCubemapRendering()) {
+        Parse.AddRoot(Utils::LEVEL_ELEMENT_CUBEMAPS, "");
+        Parse.AddRoot(Utils::LEVEL_ELEMENT_NAME, GameModules->GetCubemapTexture());
+    }
     Parse.Write(CurrentScene);
     
     for (auto& it : GameObjects->GetObjects()) {
@@ -615,6 +623,21 @@ void Core::Scene::LoadScene(const std::string& filename)
 
     float xpos, ypos, zpos = 0.0f;
     std::string matname, textname, modname, frag, vert, id;
+     
+    Gfx::Renderer::GetInstance()->SetCubemapRendering(false);
+    HasFrameShadows = false;
+    Utils::NodeIt cube_node = Parse.GetChild(Parse.GetRootNode(), Utils::LEVEL_ELEMENT_CUBEMAPS);
+    if (Parse.IsNodeValid(cube_node)) {
+        std::string texture = Parse.GetElement<std::string>(cube_node, Utils::LEVEL_ELEMENT_NAME, "");
+        if (!texture.empty()) {
+            Gfx::Renderer::GetInstance()->SetCubemapRendering(true);
+            GameModules->SetCubemapTexture(texture);
+        }
+    }
+    Utils::NodeIt shadows_node = Parse.GetChild(Parse.GetRootNode(), Utils::LEVEL_ELEMENT_SHADOWS);
+    if (Parse.IsNodeValid(cube_node)) {
+        HasFrameShadows = true;    
+    }
 
     Utils::NodeIt node = Parse.GetChild(Parse.GetRootNode(), Utils::LEVEL_ELEMENT_OBJECT);
     while (Parse.IsNodeValid(node)) {

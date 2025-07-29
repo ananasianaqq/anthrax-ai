@@ -4,12 +4,12 @@
 
 void Keeper::Camera::SetDirections()
 {
-    Direction = glm::normalize(Position - Target);
+    Direction = glm::normalize(Position);
     WorldUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
     Front = glm::vec3(0.0f, 0.0f, -1.0f);
     Right = glm::normalize(glm::cross(WorldUp, Direction));
-    Up = glm::cross(Direction, Right);
+    Up = glm::vec3(0.0f, 1.0f,  0.0f);//glm::cross(Direction, Right);
 }
 
 void Keeper::Camera::UpdateMovement()
@@ -37,7 +37,7 @@ void Keeper::Camera::UpdateMovement()
 
 void Keeper::Camera::UpdateDirection()
 {
-    if (GizmoHandle) {
+    if (GizmoHandle || !Core::WindowManager::GetInstance()->IsMousePressed()) {
         return;
     }
     float delta = Utils::Debug::GetInstance()->DeltaMs;
@@ -53,9 +53,11 @@ void Keeper::Camera::UpdateDirection()
         Rotation = glm::rotate(Rotation, -pitch, Right);
         Yaw = yaw;
         Pitch = pitch;
-    }
-    Direction = glm::normalize(glm::mat3(Rotation) * Direction);
+
+        Direction = glm::normalize(glm::mat3(Rotation) * Direction);
     Up = glm::normalize(glm::mat3(Rotation) * Up);
     Right = glm::normalize(glm::cross(Direction, Up));
     Front = -Direction;
+    }
+
 }

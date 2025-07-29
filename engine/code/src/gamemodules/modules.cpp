@@ -78,7 +78,13 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
         rqobj.Texture = Gfx::Renderer::GetInstance()->GetRT(Gfx::GetKey(info.Texture));
     }
     if (!info.Textures.empty()) {
-        if (!info.Texture.empty()) {
+        if (!CubemapTexture.empty()) {
+            rqobj.TextureName =  CubemapTexture;
+            rqobj.Texture = Gfx::Renderer::GetInstance()->GetCubemap(CubemapTexture);
+        }
+        else if (!info.Texture.empty()) {
+            rqobj.TextureName =  info.Texture;
+            CubemapTexture = info.Texture;
             rqobj.Texture = Gfx::Renderer::GetInstance()->GetCubemap(info.Texture);
         }
         rqobj.Textures.resize(info.Textures.size());
@@ -344,6 +350,7 @@ bool Modules::Base::UpdateTexture(const std::string& str, Core::ImGuiHelper::Tex
                 }
                 if (it->Texture) {
                     it->Texture = Gfx::Renderer::GetInstance()->GetCubemap(upd.NewTextureName);
+                    CubemapTexture = upd.NewTextureName;
                     it->TextureName = upd.NewTextureName;
                     CubemapBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateTexture(it->Texture->GetImageView(), *(it->Texture->GetSampler()), it->Texture->GetName(), i);
                 }
@@ -367,12 +374,11 @@ void Modules::Base::UpdateTextureUIManager()
         Core::ImGuiHelper::TextureForUpdate upd = Core::ImGuiHelper::GetInstance()->GetTextureForUpdate();
         if (upd.Cubemap) {
             if (SceneModules.find("lighting") != SceneModules.end()) {
-                    UpdateTexture("lighting", upd);
+                UpdateTexture("lighting", upd);
             }
         }
         else {
             if (UpdateTexture(CurrentScene, upd)) {
-
                 if (SceneModules.find("gbuffer") != SceneModules.end()) {
                     UpdateTexture("gbuffer", upd);
                 }

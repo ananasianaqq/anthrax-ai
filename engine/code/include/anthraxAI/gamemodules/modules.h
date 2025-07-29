@@ -110,6 +110,8 @@ namespace Modules
             void EraseSelected();
 
             uint32_t GetCubemapBind(uint32_t ind) { return CubemapBind[ind]; }
+            void SetCubemapTexture(const std::string& s) { CubemapTexture = s; }
+            const std::string& GetCubemapTexture() const { return CubemapTexture; }
         private:
             uint32_t CubemapBind[MAX_FRAMES];
             bool HasOutline = false;
@@ -117,6 +119,8 @@ namespace Modules
             ScenesMap SceneModules;
             Keeper::Base* GameObjects = nullptr;
             Core::AnimatorBase* Animator = nullptr;
+
+            std::string CubemapTexture;
 
             Gfx::RenderObject LoadResources(const Keeper::Objects* info);
             void UpdateResources();

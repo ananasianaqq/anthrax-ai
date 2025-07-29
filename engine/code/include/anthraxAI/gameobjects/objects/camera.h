@@ -18,7 +18,7 @@ class Camera : public Keeper::Objects
             : Type(info), Position(pos.x, pos.y, pos.z) { SetDirections(); }
 
 
-        void SetPosition(glm::vec3 pos) { Position = pos; };
+        void SetPosition(glm::vec3 pos) { Position = pos; SetDirections();};
         void SetDirections();
 
         glm::vec3 GetDir() const { return Direction; }

@@ -1,9 +1,9 @@
 Scene: animated
 Object:
 Spawn:
-x: 52
+x: 32 
 y: 1
-z: 52
+z: 32
 ID: 0
 Position:
 x: 0
@@ -14,7 +14,7 @@ name: models
 frag: model.frag
 vert: model.vert
 Texture:
-name: zeroone.png
+name: dummy.png
 Model:
 name: Defeated.dae
 Animation:

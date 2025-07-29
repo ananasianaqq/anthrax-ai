@@ -140,7 +140,7 @@ namespace Gfx
             uint32_t InstanceCount = 0;
             uint32_t InstanceIndex = 0;
             
-            bool HasFrameCubemap = true;
+            bool HasFrameCubemap = false;
             bool UpdateSamples = false;
             bool OnResize = false;
 	        int FrameIndex = 0;

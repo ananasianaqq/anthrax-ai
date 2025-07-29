@@ -75,7 +75,10 @@ namespace Core
             const glm::mat4& GetGlobalTransform() const { return GameModules->GetGlobalTransform(); }
             bool RenderPassed = false;
 
-            uint32_t GetCubemapBind(uint32_t ind) { return GameModules->GetCubemapBind(ind);} 
+            uint32_t GetCubemapBind(uint32_t ind) { return GameModules->GetCubemapBind(ind);}
+
+            void SetShadows(bool shadows) { HasFrameShadows = shadows; }
+            bool GetShadows() { return HasFrameShadows; }
         private:
             void PopulateModules();
 
@@ -99,11 +102,10 @@ namespace Core
             std::vector<VkCommandBuffer> sec_cmds;
             bool HasEditor = true;
             bool HasGBuffer = false;
-            bool HasShadows = false;
             bool HasFrameGizmo = false;
             bool HasFrameOutline = false;
             bool HasFrameGrid = false;
-
+            bool HasFrameShadows = false;
     };
 
 }

@@ -280,7 +280,7 @@ void Gfx::Renderer::TransferLayoutsDebug()
     GetRT(Gfx::RT_ALBEDO)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     GetRT(Gfx::RT_POSITION)->MemoryBarrier(Cmd.GetCmd(),VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     GetRT(Gfx::RT_NORMAL)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    GetRT(Gfx::RT_SHADOWS)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  //  GetRT(Gfx::RT_SHADOWS)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
    // GetRT(Gfx::RT_MASK)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
@@ -756,6 +756,7 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
     CamData.ambient = glm::vec4(LightData.Ambient, 1.0);
     
     CamData.hascubemap = HasFrameCubemap;
+    CamData.hasshadows = Core::Scene::GetInstance()->GetShadows();
     CamData.cubemapbind = Core::Scene::GetInstance()->GetCubemapBind(GetFrameInd());
     Keeper::GameObjectsMap map = Core::Scene::GetInstance()->GetGameObjects()->GetObjects();
     int i = 0;
@@ -784,7 +785,7 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
     glm::vec3 light_pos = glm::vec3(50.0f, 0.0f, -15.0f);
     float near_plane = 1.0f;
     float far_plane = 1000.0f;
-    
+   
     glm::mat4 light_view = glm::lookAt(LightData.GlobalDirection, glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 light_proj = glm::perspective(glm::radians(45.0f), 1.0f, near_plane, far_plane);
     light_proj[1][1] *= -1;

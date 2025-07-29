@@ -90,7 +90,13 @@ namespace Gfx
         float time;
         int point_light_size;
         int cubemapbind;
-        bool hascubemap;
+        int pad0;
+
+        bool hasshadows;
+        int pad1;
+        bool hascubemap;   
+        int pad2;
+
     };
    
     struct LightsData {

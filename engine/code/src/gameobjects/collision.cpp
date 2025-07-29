@@ -25,7 +25,6 @@ bool Keeper::Collision::Cull(const glm::mat4& vp, const Objects* data)
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(data->GetPosition().x, data->GetPosition().y, data->GetPosition().z));
 
     const std::vector<Gfx::MeshInfo*>&  meshes = Gfx::Model::GetInstance()->GetModel(data->GetModelName())->Meshes;
-    
         bool culled = false;
     for (Gfx::MeshInfo* mesh : meshes) {
         const AABB& aabb = mesh->aabb;

@@ -51,6 +51,7 @@ void main()
 {
     //debugPrintfEXT("%f|%f", gl_FragCoord.x, gl_FragCoord.y);
     bool has_cube = GetResource(Camera, GetUniformInd()).hascubemap;
+    bool has_shadows = GetResource(Camera, GetUniformInd()).hasshadows;
     int cube_ind = GetResource(Camera, GetUniformInd()).cubemapbind;
     vec3 sky = vec3(0);
     if (has_cube) {
@@ -77,6 +78,7 @@ void main()
     
     float shadow = 0.0;
     // shadows
+    if (has_shadows)
     {
         const mat4 bias = mat4( 
              0.5, 0.0, 0.0, 0.0,
@@ -109,11 +111,11 @@ void main()
         cubemap = texture(cubemaps[cube_ind], R).xyz;
     }
     vec3 p = position.xyz;
-    LightInfo dirLight = { vec3(0), normalize(glob_light_dir), vec3(1), ambient, diffuse, specular };
+    LightInfo dirLight = { vec3(0), normalize(vec3(0) - glob_light_dir), vec3(1), ambient, diffuse, specular };
     
     vec3 dirlight = DirLight(dirLight, normal.xyz, view_dir, albedo);
     if (dirlight.x > 0 && dirlight.y > 0 && dirlight.z > 0) {
-        result = dirlight * (1.0 - shadow);
+        result = dirlight * (1.0 - shadow * 0.9);
     }
     int point_size = GetResource(Camera, GetUniformInd()).point_light_size;
     int j = 0;

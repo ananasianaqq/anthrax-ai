@@ -13,6 +13,8 @@ namespace Utils
 {
 #define LEVEL_ELEMENTS \
     X(LEVEL_ELEMENT_SCENE, "Scene") \
+    X(LEVEL_ELEMENT_CUBEMAPS, "Cubemaps") \
+    X(LEVEL_ELEMENT_SHADOWS, "Shadows") \
     X(LEVEL_ELEMENT_OBJECT, "Object") \
     X(LEVEL_ELEMENT_POSITION, "Position") \
     X(LEVEL_ELEMENT_COLOR, "Color") \
