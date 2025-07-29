@@ -36,7 +36,8 @@ I really appreciate your input but I can't promise that I will merge your PR sin
 
 ### mouse picking and gizmo
 
-<img align="left" width="150" src="readme/gizmo.gif">
+<img align="left" width="150"  height="150" src="readme/gizmo.gif">
+
 Custom implementation for object mouse picking using SSBO.
 Translation of objects using gizmo `x, y, z` axis
 
@@ -44,21 +45,24 @@ Translation of objects using gizmo `x, y, z` axis
 
 ### debug render target visualization
 
-<img align="left" width="150" src="readme/rt-vis.gif">
+<img align="left" width="150" height="150" src="readme/rt-vis.gif">
+
 Visualize your render targets in order to help debugging and analyzing in real time
 
 ---
 
 ### outlines
 
-<img align="left" width="150" src="readme/outlines.gif">
+<img align="left" width="150"  height="150" src="readme/outlines.gif">
+
 Outlines are rendered for selected object using object's mask
 
 ---
 
 ### real time shader compilation
 
-<img align="left" width="150" src="readme/shaders.gif">
+<img align="left" width="150"  height="150" src="readme/shaders.gif">
+
 You can recompile shaders in real time
 
 ---
