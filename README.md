@@ -1,27 +1,27 @@
 <div align="center">
-<img alt="Preview" src="readme/cover.png" width=80% />
+<img alt="Preview" src="readme/cover.png" width=100% />
 </div>
 
-![language](https://img.shields.io/badge/language-C%2FC%2B%2B)
-![OS](https://img.shields.io/badge/OS-linux%2C%20windows)
-[![youtube](https://img.shields.io/badge/youtube-channel)](https://www.youtube.com/@sudolovemebaby)
-[![getting started](https://img.shields.io/badge/available-features)](#features)
-[![Free](https://img.shields.io/badge/MIT-license-brightgreen)](#license)
+![language](https://img.shields.io/badge/language-C%2FC%2B%2B-green)
+![OS](https://img.shields.io/badge/OS-linux%2C%20windows-green)
+[![youtube](https://img.shields.io/badge/youtube-channel-green)](https://www.youtube.com/@sudolovemebaby)
+[![getting started](https://img.shields.io/badge/available-features-green)](#-features)
+[![Free](https://img.shields.io/badge/MIT-license-brightgreen)](#-license)
 
 ## ✨ table of contents
-- [about anthrax-ai project](#about-anthrax-ai-project)
-- [features](#features)
-- [usage](#usage)
-- [how to build](#how-to-build)
-- [known issues](#known-issues)
-- [license](#license)
+- [about anthrax-ai project](#-about-anthrax-ai-project)
+- [features](#-features)
+- [usage](#-usage)
+- [how to build](#-how-to-build)
+- [known issues](#-known-issues)
+- [license](#tab=MIT-1-ov-file)
 
 ## 💥 about anthrax-ai project
 
 Vulkan-Based Game Engine written in C++ 
 
 I present my work real time on youtube
-[![youtube](https://img.shields.io/badge/youtube-channel)](https://www.youtube.com/@sudolovemebaby)
+[![youtube](https://img.shields.io/badge/youtube-channel-red)](https://www.youtube.com/@sudolovemebaby)
 
 :dizzy:
 <em>This is an education project and I am improving/fixing my stuff as fast as I have capacity and time for this. I keep it open source since I like the idea of sharing the code. 
@@ -32,9 +32,11 @@ I really appreciate your input but I can't promise that I will merge your PR sin
 - [mouse picking and gizmo](#mouse-picking-and-gizmo)
 
 ### mouse picking and gizmo
+<div class="box">
 <img alt="gizmo" height="80" src="readme/gizmo.gif">
-Custom implementation for object mouse picking using SSBO.
-Translation of objects using gizmo `x, y, z` axis
+<span style="">Custom implementation for object mouse picking using SSBO.
+Translation of objects using gizmo `x, y, z` axis</span>
+</div>
 
 ## 🎮 usage
 
