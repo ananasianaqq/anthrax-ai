@@ -30,12 +30,29 @@ I really appreciate your input but I can't promise that I will merge your PR sin
 
 ## 💫 features
 - [mouse picking and gizmo](#mouse-picking-and-gizmo)
+- [debug render target visualization](#debug-render-target-visualization)
+- [outlines](#outlines)
+- [real time shader compilation](#real-time-shader-compilation)
 
 ### mouse picking and gizmo
-<div class="box">
-<img alt="gizmo" height="80" src="readme/gizmo.gif">
-<span style="">Custom implementation for object mouse picking using SSBO.
+<div>
+<img alt="gizmo" height="100" src="readme/gizmo.gif"><span style="align-items: center">Custom implementation for object mouse picking using SSBO.
 Translation of objects using gizmo `x, y, z` axis</span>
+</div>
+
+### debug render target visualization
+<div>
+<img alt="rt" height="100" src="readme/rt-vis.gif"><span style="align-items: center">Visualize your render targets in order to help debugging and analyzing in real time</span>
+</div>
+
+### outlines
+<div>
+<img alt="outlines" height="100" src="readme/outlines.gif"><span style="align-items: center">Outlines are rendered for selected object using object's mask</span>
+</div>
+
+### real time shader compilation
+<div>
+<img alt="shaders" height="100" src="readme/shaders.gif"><span style="align-items: center">You can recompile shaders in real time</span>
 </div>
 
 ## 🎮 usage
