@@ -116,8 +116,8 @@ You can recompile shaders in real time
 </p>
 
 You can change cubemaps in real time
-    - you can enable/disable cubemaps in `Rendering` tab in Editor window
-    - you can select cubemap from available cubemaps in `Rendering` tab in Editor window
+- you can enable/disable cubemaps in `Rendering` tab in Editor window
+- you can select cubemap from available cubemaps in `Rendering` tab in Editor window
 
 ---
 
@@ -128,7 +128,7 @@ You can change cubemaps in real time
 </p>
 
 Simple shadow mapping Implemented
-    - you can enable/disable shadows in `Rendering` tab in Editor window
+- you can enable/disable shadows in `Rendering` tab in Editor window
 
 ---
 
@@ -139,11 +139,11 @@ Simple shadow mapping Implemented
 </p>
 
 You can add different types of objects (3D models, sprites, lights) using Editor Widnow
-    - navigate to `Scene` tab
-    - press `Add Object` and select type 
-    - in new window add object ID, select texture, model (if available, depends on the type), position
-    - press `Save`
-    - delete any object by selecting it and pressing `Delete` key on the keyboard
+- navigate to `Scene` tab
+- press `Add Object` and select type 
+- in new window add object ID, select texture, model (if available, depends on the type), position
+- press `Save`
+- delete any object by selecting it and pressing `Delete` key on the keyboard
 
 ---
 
@@ -154,9 +154,9 @@ You can add different types of objects (3D models, sprites, lights) using Editor
 </p>
 
 You can save current scene state by pressing `Save Scene` button in Editor Window 
-    - objects presented on the scene will be saved (their position, texture)
-    - cubemap state will be saved
-    - shadows state will be saved
+- objects presented on the scene will be saved (their position, texture)
+- cubemap state will be saved
+- shadows state will be saved
 You can also create a new default scene by pressing `New Scene` button in Editor Window 
 
 ---
