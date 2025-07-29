@@ -1,35 +1,60 @@
-# anthraxAI
+<div align="center">
+<img alt="Preview" src="readme/cover.png" width=80% />
+</div>
 
-The Vulkan-Based Game Engine
+![language](https://img.shields.io/badge/language-C%2FC%2B%2B)
+![OS](https://img.shields.io/badge/OS-linux%2C%20windows)
+[![youtube](https://img.shields.io/badge/youtube-channel)](https://www.youtube.com/@sudolovemebaby)
+[![getting started](https://img.shields.io/badge/available-features)](#features)
+[![Free](https://img.shields.io/badge/MIT-license-brightgreen)](#license)
 
-my youtube channel where I present my engine:
-https://youtu.be/SPF7VJPwy3w?si=xls0e43Iry86vWob 
+## ✨ table of contents
+- [about anthrax-ai project](#about-anthrax-ai-project)
+- [features](#features)
+- [usage](#usage)
+- [how to build](#how-to-build)
+- [known issues](#known-issues)
+- [license](#license)
+
+## 💥 about anthrax-ai project
+
+Vulkan-Based Game Engine written in C++ 
+
+I present my work real time on youtube
+[![youtube](https://img.shields.io/badge/youtube-channel)](https://www.youtube.com/@sudolovemebaby)
 
 :dizzy:
 <em>This is an education project and I am improving/fixing my stuff as fast as I have capacity and time for this. I keep it open source since I like the idea of sharing the code. 
 But since it is first of all my education project I would like to fix and improve stuff by my own :')
 I really appreciate your input but I can't promise that I will merge your PR since it is breaking my whole idea why this project is alive </em>
 
-# Usage
+## 💫 features
+- [mouse picking and gizmo](#mouse-picking-and-gizmo)
 
-⚠️ WARNING! [Issues remain](#known-issues)
+### mouse picking and gizmo
+<img alt="gizmo" height="80" src="readme/gizmo.gif">
+Custom implementation for object mouse picking using SSBO.
+Translation of objects using gizmo `x, y, z` axis
 
-1. In Editor Window select provided scenes from "Scenes" dropdown
-2. Use 'Esc' to toggle between 'editor' and 'play' modes
-3. When in 'play' mode use WASD to mode camera, for rotation use LMB
-4. You can select a 3D object and move it using arrows 
-5. Use 'Debug' tab for debug information
-6. Use 'Audio' tab to play available audios
-7. Use 'Update Shader' to update shader code in real time
+## 🎮 usage
 
-<div align="center">
-<img alt="Preview" src="assets/textures/engine.png" width=80% />
-</div>
+⚠️ WARNING! [issues remain](#known-issues)
 
+1. Press `Esc` to visualize Editor window.
+2. In Editor Window select provided scenes from "Scenes" dropdown or create a default scene by pressing "New Scene" button.
+3. Use `Esc` to toggle between `editor` and `play` modes
+4. When in `play` mode use WASD to mode camera, for rotation use LMB
+5. You can select a 3D object and move it using arrows 
+6. Use `Debug` tab for debug information
+7. Use `Audio` tab to play available audios
+8. Use `Update Shader` to update shader code in real time
+9. Use `Rendering` tab to visualize render targets, change light position, shadows, cubemaps
+10. Use `Scene` to navigate trough scene objects, change their textues; use `Add Object` to create new object
+more info in [adding or removing objects](#adding-or-removing-objects)
 
-## How to build
+## ⚒️ how to build
 
-### Dependencies
+### dependencies
 
 To build this project, you need to have the following dependencies installed:
 
@@ -38,13 +63,13 @@ To build this project, you need to have the following dependencies installed:
 
 If you're on linux, you can install them using the scripts under the `tools/linux` directory:
 
-#### Install Vulkan SDK
+#### install Vulkan SDK
 
 ```bash
 ./tools/linux/install-vulkan-sdk.sh
 ```
 
-#### Install X11/XCB libraries
+#### install X11/XCB libraries
 
 ```bash
 ./tools/linux/install-x11-xcb.sh
@@ -52,7 +77,7 @@ If you're on linux, you can install them using the scripts under the `tools/linu
 
 If you're on windows, you can install the Vulkan SDK from the link above.
 
-### Configure
+### configure
 
 This project uses CMake to generate the build files. To configure the project, you can use
 the following commands:
@@ -65,7 +90,7 @@ During the configuration process, the shaders will be compiled using the `glslc`
 If you don't want to compile them, you could pass the `-DAAI_COMPILE_SHADERS=OFF` flag to the
 `cmake` command above.
 
-### Build
+### build
 
 After configuring the project, you can build it using the following command:
 
@@ -73,7 +98,7 @@ After configuring the project, you can build it using the following command:
 cmake --build build
 ```
 
-## Build using Visual Studio Code
+### build using Visual Studio Code
 
 As you could notice, this project has the Visual Studio Code workspace file. If you want to build
 and debug the project using Visual Studio Code, you can open the workspace file and install
@@ -90,17 +115,16 @@ project using the <kbd>F7</kbd> and <kbd>F5</kbd> keys, respectively.
 
 Don't forget that the <kbd>CTRL+SHIFT+P</kbd> key combination helps to `configure` and `build` as well.
 
-## Tracy Profiler
+### tracy profiler
 
-Install [Tracy Profiler](https://github.com/wolfpld/tracy) locally, run the profiler
-In order to connect the engine run this command
-```
-sudo sh run.sh tracy
-```
-- since you run as sudo Audio functionality will be disabled due to code errors
+    - uncomment `#define TRACY` from engine/code/include/anthraxAI/utils/tracy.h and recompile the project
+    - install [Tracy Profiler](https://github.com/wolfpld/tracy) locally, run the profiler
+    - connect anthraxAI engine in the profiler.
+- Audio functionality will be disabled due to code errors
 
-Connect anthraxAI engine in the profiler.
 
-## Known Issues
+## 📌 Known Issues
+- usually doesn't work under Windows
 - Pascal and older nvidia cards are unsupported due to unavailable vulkan features on that hardware.
 - Modified CatchyOS packages break compilation of required `assimp` library
+- Audio initialization sometimes fails with `failed to allocate buffers` error 
