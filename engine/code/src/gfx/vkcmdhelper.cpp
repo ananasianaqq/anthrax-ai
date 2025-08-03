@@ -122,6 +122,16 @@ void Gfx::CommandBuffer::EndCmd()
 	VK_ASSERT(vkEndCommandBuffer(cmd), "failed to end command buffer");
 }
 
+void Gfx::CommandBuffer::MemoryBarrier(VkAccessFlags srcaccess, VkAccessFlags dstaccess, VkPipelineStageFlags srcstage, VkPipelineStageFlags dststage)
+{
+    VkMemoryBarrier membarrier{};
+	membarrier.sType               = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+	membarrier.srcAccessMask       = srcaccess;
+	membarrier.dstAccessMask       = dstaccess;
+
+	vkCmdPipelineBarrier(cmd, srcstage, dststage, 0, 1, &membarrier, 0, nullptr, 0, nullptr);
+}
+
 void Gfx::CommandBuffer::MemoryBarrier(VkImage image, VkImageLayout oldlayout, VkImageLayout newlayout, VkImageSubresourceRange range)
 {
 	VkPipelineStageFlags srcstagemask  = GetPipelineStageFlags(oldlayout);

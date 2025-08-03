@@ -42,6 +42,9 @@ namespace Gfx
         private:
         	VkPipeline Pipeline;
 	        VkPipelineLayout PipelineLayout;
+            
+            VkPipeline ComputePipeline;
+	        VkPipelineLayout ComputeLayout; 
 
         	std::vector<VkPipelineShaderStageCreateInfo> ShaderStages;
 	        VertexInputDescription 					VertexDescription;
@@ -56,14 +59,15 @@ namespace Gfx
             VkPipelineMultisampleStateCreateInfo 	Multisampling;
             VkPipelineDepthStencilStateCreateInfo 	DepthStencil;
 
-            void BuildMaterial(const std::string& material, VkShaderModule* vertexshader, const std::string& vertname, VkShaderModule* fragshader, const std::string& fragname, Gfx::RenderTargetsList id);
+            void BuildMaterial(const std::string& material, VkShaderModule* vertexshader, const std::string& vertname, VkShaderModule* fragshader, const std::string& fragname, Gfx::RenderTargetsList id, bool iscompute = false);
             bool LoadShader(const std::string& buffer, VkShaderModule* outshadermodule);
 
             bool LoadShader(const char* filepath, VkShaderModule* outshadermodule);
             Material* CreateMaterial(VkPipeline pipeline, VkPipelineLayout layout, const std::string& name);
             void Setup(Gfx::RenderTargetsList id);
-            void GetVertexDescription();
-            VkPipelineVertexInputStateCreateInfo VertexInputStageCreateInfo();
+            void SetupCompute(VkShaderModule computeshader);
+            void GetVertexDescription(bool iscompute = false);
+            VkPipelineVertexInputStateCreateInfo VertexInputStageCreateInfo(bool iscompute = false);
             
             std::vector<std::string> MaterialNames;
             std::unordered_map<std::string,Material> Materials;

@@ -53,6 +53,7 @@ namespace Keeper {
         INFO_GBUFFER,
         INFO_SHADOWS,
         INFO_LIGHTING,
+        INFO_PARTICLES,
         INFO_SIZE
     };
 

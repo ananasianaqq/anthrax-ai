@@ -58,6 +58,10 @@ void Utils::Parser::Write(const std::string& filename)
     }
     write << std::endl;
     write.close();
+
+    RootNode = Tokens.begin();
+    ChildRange = Tokens.end();
+
     printf("File [%s] overwritten\n", filename.c_str() );
 }
 

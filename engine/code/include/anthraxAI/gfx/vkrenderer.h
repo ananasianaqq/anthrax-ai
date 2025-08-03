@@ -53,6 +53,7 @@ namespace Gfx
             void PrepareInstanceBuffer();
             void GetTransforms(InstanceData* datas, Gfx::RenderObject obj, int i);
             void PrepareStorageBuffer();
+            void PrepareCompute();        
 
             void Submit(std::function<void(VkCommandBuffer cmd)>&& function);
 
@@ -70,7 +71,8 @@ namespace Gfx
             void EndFrame();
             void EndRender();
             void StartRender(Gfx::InputAttachments inputs, AttachmentRules rules, bool multithreaded = false);
-
+            
+            void Compute(Gfx::RenderObject& object);
             void Draw(Gfx::RenderObject& object);
             void DrawThreaded(VkCommandBuffer cmd, Gfx::RenderObject& object, Material* mat,  Gfx::MeshInfo* mesh, Gfx::MeshPushConstants& constatns, bool ismodel, uint32_t inst_ind);
             void DrawMeshes(Gfx::RenderObject& object);
@@ -132,6 +134,7 @@ namespace Gfx
             StorageData StorageBuffer;
             InstanceData InstanceBuffer;
             CameraData 	CamData;
+            ComputeData CompData;
             LightsData LightData;
             UploadContext Upload;
 

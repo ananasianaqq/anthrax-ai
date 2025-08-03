@@ -5,6 +5,7 @@
 #define BindlessUniformBinding 0
 #define BindlessStorageBinding 1
 #define BindlessSamplerBinding 2
+#define BindlessComputeBinding 3
 
 #define GetLayoutVariableName(Name) u##Name##Register
 
@@ -18,7 +19,7 @@
     BufferAccess buffer Name Struct GetLayoutVariableName(Name)[]
 
 #define RegisterBufferReadWrite(Layout, Name, Struct) \
-    layout(Layout, set = BindlessDescriptorSet, binding = BindlessStorageBinding) \
+    layout(Layout, set = BindlessDescriptorSet, binding = BindlessComputeBinding) \
     buffer Name Struct GetLayoutVariableName(Name)[]
 
 
@@ -27,6 +28,7 @@
 
 RegisterUniform(DummyUniform, {uint ignore; });
 RegisterBuffer(std430, readonly, DummyBuffer, { uint ignore; });
+RegisterBufferReadWrite(std430, DummyCompute, { uint ignore; });
 
 layout(set = BindlessDescriptorSet, binding = BindlessSamplerBinding) \
     uniform sampler2D textures[];
@@ -94,6 +96,9 @@ RegisterUniform(Camera, {
 #define INSTANCE_SIZE 20
 const int MAX_BONES = 200;
 
+#define NUM_PARTICLES_PER_WORKGROUP 64
+#define NUM_PARTICLES (32 * 1024)
+
 #define GIZMO_X 0
 #define GIZMO_Y 1
 #define GIZMO_Z 2
@@ -114,4 +119,10 @@ RegisterBuffer(std140, readonly, Instance, {
 
 RegisterBuffer(std430, writeonly, Storage, {
     uint data[DEPTH_ARRAY_SCALE];
+});
+
+RegisterBufferReadWrite(std430, Compute, {
+    vec2 position[NUM_PARTICLES];
+    vec2 velocity[NUM_PARTICLES];
+    vec4 color[NUM_PARTICLES];
 });

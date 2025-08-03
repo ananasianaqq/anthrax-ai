@@ -71,6 +71,12 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
     rqobj.Position = Vector3<float>(0.0f);
     rqobj.MaterialName = info.Material;
     rqobj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(info.Material);
+    if (key == "particles") {
+        rqobj.IsCompute = true;
+        module.AddRQ(RQ_GENERAL, rqobj);
+        SceneModules[key] = module;
+        return;
+    }
     if (info.Texture == "mask") {
         rqobj.Texture = Gfx::Renderer::GetInstance()->GetRT(Gfx::GetKey(info.Texture));
     }
@@ -233,6 +239,12 @@ void Modules::Base::UpdateResource(Modules::Module& module, Gfx::RenderObject& o
             module.SetStorageBuffer(true);
             module.SetTexture(true);
 
+            break;
+        }
+        case Gfx::BINDLESS_DATA_COMPUTE: {
+            for (int i = 0; i < MAX_FRAMES; i++) {
+    	        obj.StorageBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateCompute(Gfx::DescriptorsBase::GetInstance()->GetComputeBuffer(i), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, Gfx::DescriptorsBase::GetInstance()->GetComputeUBO(i).tag,i);
+            }
             break;
         }
         case Gfx::BINDLESS_DATA_CAM_BUFFER: {

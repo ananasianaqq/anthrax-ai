@@ -4,6 +4,7 @@
 #include "anthraxAI/utils/mathdefines.h"
 #include "anthraxAI/gfx/vkdefines.h"
 #include "anthraxAI/gfx/renderhelpers.h"
+#include <vulkan/vulkan_core.h>
 
 namespace Gfx
 {
@@ -37,6 +38,7 @@ namespace Gfx
             const VkRenderingInfoKHR GetRenderingInfo(std::vector<RenderingAttachmentInfo>& attachmentinfo, std::vector<VkRenderingAttachmentInfoKHR>& colors, VkRenderingAttachmentInfoKHR& depthinfo, Vector2<int> extents, bool multithreaded = false);
 
             void MemoryBarrier(VkImage image, VkImageLayout oldlayout, VkImageLayout newlayout, VkImageSubresourceRange range);
+            void MemoryBarrier(VkAccessFlags srcaccess, VkAccessFlags dstaccess, VkPipelineStageFlags srcstage, VkPipelineStageFlags dststage);
             void CopyImage(VkImage src, Vector2<int> srcsize, VkImageLayout srcoldlayout, VkImageLayout srcnewlayout, VkImage dst, Vector2<int> dstsize, VkImageLayout dstoldlayout, VkImageLayout dstnewlayout);
 
             void SetRange(VkImageSubresourceRange r) { range = r;}

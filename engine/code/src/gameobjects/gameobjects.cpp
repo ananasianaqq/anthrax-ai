@@ -229,6 +229,8 @@ Keeper::Base::Base()
     modules.Material = "intro";
     modules.Mesh = "dummy";
     DefaultObjects[Infos::INFO_INTRO] = modules;
+    modules.Material = "particles-draw";
+    DefaultObjects[Infos::INFO_PARTICLES] = modules;
 
     modules.Material = "grid";
     modules.Texture = "dummy.png";

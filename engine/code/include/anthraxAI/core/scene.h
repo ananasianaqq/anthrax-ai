@@ -84,6 +84,7 @@ namespace Core
 
             void LoadScene(const std::string& filename);
             void Render(Modules::Module& module);
+            void Compute(Modules::Module& module);
             void RenderThreaded(Modules::Module& module);
 
             Keeper::Base* GameObjects = nullptr;
@@ -102,6 +103,7 @@ namespace Core
             std::vector<VkCommandBuffer> sec_cmds;
             bool HasEditor = true;
             bool HasGBuffer = false;
+            bool HasCompute = false;
             bool HasFrameGizmo = false;
             bool HasFrameOutline = false;
             bool HasFrameGrid = false;

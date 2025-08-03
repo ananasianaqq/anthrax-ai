@@ -6,7 +6,9 @@
 #include "anthraxAI/gfx/vkdescriptors.h"
 #include "anthraxAI/core/deletor.h"
 #include "anthraxAI/gfx/vkrendertarget.h"
+#include "anthraxAI/utils/defines.h"
 #include <cstdio>
+#include <shaderc/shaderc.h>
 #include <string>
 #include <vulkan/vulkan_core.h>
 
@@ -193,9 +195,9 @@ void Gfx::Pipeline::CompileShader(const std::string& name, shaderc_shader_kind k
 	data = std::string(std::string((const char*)module.cbegin(), (const char*)module.cend()));
 }
 
-void Gfx::Pipeline::BuildMaterial(const std::string& material, VkShaderModule* vertexshader, const std::string& vertname, VkShaderModule* fragshader,  const std::string& fragname, Gfx::RenderTargetsList id)
+void Gfx::Pipeline::BuildMaterial(const std::string& material, VkShaderModule* vertexshader, const std::string& vertname, VkShaderModule* fragshader,  const std::string& fragname, Gfx::RenderTargetsList id, bool iscompute)
 {
-    if (!ShaderStages.empty()) {
+    if (!ShaderStages.empty() && !iscompute) {
 		ShaderStages.clear();
 		vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), *vertexshader, nullptr);
 		vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), *fragshader, nullptr);
@@ -203,30 +205,33 @@ void Gfx::Pipeline::BuildMaterial(const std::string& material, VkShaderModule* v
 
     std::string shaderbuf;
     if (!fragname.empty()) {
-        CompileShader(fragname, shaderc_glsl_fragment_shader, shaderbuf);
+        CompileShader(fragname, iscompute ? shaderc_glsl_compute_shader : shaderc_glsl_fragment_shader, shaderbuf);
 	    LoadShader(shaderbuf, fragshader);
     }
 	shaderbuf.clear();
-	CompileShader(vertname, shaderc_glsl_vertex_shader, shaderbuf);
-	LoadShader(shaderbuf, vertexshader);
-	shaderbuf.clear();
+    if (!iscompute) {
+	    CompileShader(vertname, shaderc_glsl_vertex_shader, shaderbuf);
+	    LoadShader(shaderbuf, vertexshader);
+	    shaderbuf.clear();
+        ShaderStages.push_back(PipelineShaderCreateinfo(VK_SHADER_STAGE_VERTEX_BIT, *vertexshader));
+    }
 
-    ShaderStages.push_back(PipelineShaderCreateinfo(VK_SHADER_STAGE_VERTEX_BIT, *vertexshader));
     if (!fragname.empty()) {
         ShaderStages.push_back(PipelineShaderCreateinfo(VK_SHADER_STAGE_FRAGMENT_BIT, *fragshader));
     }
-    Setup(id);
-    CreateMaterial(Pipeline, PipelineLayout, material);
-
+    if (iscompute) {
+        SetupCompute(*fragshader);
+        CreateMaterial(ComputePipeline, ComputeLayout, material);
+    }
+    else {
+        Setup(id);
+        CreateMaterial(Pipeline, PipelineLayout, material);
+    }
 }
 
 void Gfx::Pipeline::Build()
 {
-    if (!VertexDescription.Bindings.empty()) {
-        VertexDescription.Bindings.clear();
-        VertexDescription.Attributes.clear();
-    }
-    Gfx::RenderTargetsList main_rt = Gfx::RT_MAIN_COLOR;
+        Gfx::RenderTargetsList main_rt = Gfx::RT_MAIN_COLOR;
     Gfx::RenderTargetsList shadow_rt = Gfx::RT_SHADOWS;
     Gfx::RenderTargetsList albedo_rt = Gfx::RT_ALBEDO;
     Gfx::RenderTargetsList mask_rt = Gfx::RT_MASK;
@@ -339,7 +344,39 @@ void Gfx::Pipeline::Build()
     vert = "./shaders/sprite.vert";
     BuildMaterial("sprites", &vertexshader, vert, &fragshader, frag, main_rt);
 
+// compute
+	InputAssembly = InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_POINT_LIST);
+    push_constant.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+	pipelinelayoutinfo.pPushConstantRanges = &push_constant;
+	pipelinelayoutinfo.pushConstantRangeCount = 1;
+	VK_ASSERT(vkCreatePipelineLayout(Gfx::Device::GetInstance()->GetDevice(), &pipelinelayoutinfo, nullptr, &ComputeLayout), "failed to create pipeline layout!");
+	frag = "./shaders/particles.comp";
+    vert = "";
+    ShaderStages.clear();
+	vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), vertexshader, nullptr);
+	vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), fragshader, nullptr);
+    BuildMaterial("particles", &vertexshader, vert, &fragshader, frag, main_rt, true);
+
+// particle-draw
+	push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+	pipelinelayoutinfo.pPushConstantRanges = &push_constant;
+	pipelinelayoutinfo.pushConstantRangeCount = 1;
+    ShaderStages.clear();
+	vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), fragshader, nullptr);
+	VertexInputInfo = VertexInputStageCreateInfo(true);
+	DepthStencil = DepthStencilCreateInfo(false, false, VK_COMPARE_OP_LESS_OR_EQUAL);
+    VK_ASSERT(vkCreatePipelineLayout(Gfx::Device::GetInstance()->GetDevice(), &pipelinelayoutinfo, nullptr, &PipelineLayout), "failed to create pipeline layout!");
+	frag = "./shaders/particles.frag";
+    vert = "./shaders/particles.vert";
+    BuildMaterial("particles-draw", &vertexshader, vert, &fragshader, frag, main_rt);
+
 // shadows
+    InputAssembly = InputAssemblyCreateInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+	push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+	pipelinelayoutinfo.pPushConstantRanges = &push_constant;
+	pipelinelayoutinfo.pushConstantRangeCount = 1;
+	DepthStencil = DepthStencilCreateInfo(true, true, VK_COMPARE_OP_LESS_OR_EQUAL);
+	VertexInputInfo = VertexInputStageCreateInfo();
     VK_ASSERT(vkCreatePipelineLayout(Gfx::Device::GetInstance()->GetDevice(), &pipelinelayoutinfo, nullptr, &PipelineLayout), "failed to create pipeline layout!");
     frag = "";
     vert = "./shaders/shadows.vert";
@@ -350,6 +387,17 @@ void Gfx::Pipeline::Build()
 //since shadow dont use frag shader
     //	vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), fragshader, nullptr);
     ShaderStages.clear();
+}
+
+void Gfx::Pipeline::SetupCompute(VkShaderModule computeshader) {
+
+    VkComputePipelineCreateInfo info = { VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO };
+    info.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    info.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    info.stage.module = computeshader;
+    info.stage.pName = "main";
+    info.layout = ComputeLayout;
+    VK_ASSERT(vkCreateComputePipelines(Gfx::Device::GetInstance()->GetDevice(), VK_NULL_HANDLE, 1, &info, nullptr, &ComputePipeline), "Failed to create Copute PIpeline!");
 }
 
 void Gfx::Pipeline::Setup(Gfx::RenderTargetsList id) {
@@ -442,63 +490,98 @@ void Gfx::Pipeline::Setup(Gfx::RenderTargetsList id) {
 	VK_ASSERT(vkCreateGraphicsPipelines(Gfx::Device::GetInstance()->GetDevice(), VK_NULL_HANDLE, 1, &pipelineinfo, nullptr, &Pipeline), "failed to create write pipeline\n");
 }
 
-void Gfx::Pipeline::GetVertexDescription()
+void Gfx::Pipeline::GetVertexDescription(bool iscompute)
 {
 	VkVertexInputBindingDescription mainBinding = {};
 	mainBinding.binding = 0;
-	mainBinding.stride = sizeof(Vertex);
-	mainBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    if (!iscompute) {
+	    mainBinding.stride = sizeof(Vertex);
+    }
+    else {
+	    mainBinding.stride = sizeof(ComputeVertex);
+    }
+    mainBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	VertexDescription.Bindings.push_back(mainBinding);
     
-	VkVertexInputAttributeDescription positionAttribute = {};
-	positionAttribute.binding = 0;
-	positionAttribute.location = 0;
-	positionAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	positionAttribute.offset = offsetof(Vertex, position);
+    if (!iscompute) {
+    	VkVertexInputAttributeDescription positionAttribute = {};
+    	positionAttribute.binding = 0;
+    	positionAttribute.location = 0;
+    	positionAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    	positionAttribute.offset = offsetof(Vertex, position);
+    
+    	VkVertexInputAttributeDescription normalAttribute = {};
+    	normalAttribute.binding = 0;
+    	normalAttribute.location = 1;
+    	normalAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
+    	normalAttribute.offset = offsetof(Vertex, normal);
+    
+    	VkVertexInputAttributeDescription colorAttribute = {};
+    	colorAttribute.binding = 0;
+    	colorAttribute.location = 2;
+    	colorAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
+    	colorAttribute.offset = offsetof(Vertex, color);
+    
+    	VkVertexInputAttributeDescription uvattr = {};
+    	uvattr.binding = 0;
+        uvattr.location = 3;
+        uvattr.format = VK_FORMAT_R32G32_SFLOAT;
+        uvattr.offset = offsetof(Vertex, uv);
+    
+    
+    	 VkVertexInputAttributeDescription weightattr = {};
+    	 weightattr.binding = 0;
+    	 weightattr.location = 4;
+    	 weightattr.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    	 weightattr.offset = offsetof(Vertex, weights);
+    
+    	 VkVertexInputAttributeDescription boneattr = {};
+    	 boneattr.binding = 0;
+    	 boneattr.location = 5;
+    	 boneattr.format =  VK_FORMAT_R32G32B32A32_SINT;
+    	 boneattr.offset = offsetof(Vertex, boneID);
+    
+    	VertexDescription.Attributes.push_back(positionAttribute);
+    	VertexDescription.Attributes.push_back(normalAttribute);
+    	VertexDescription.Attributes.push_back(colorAttribute);
+    	VertexDescription.Attributes.push_back(uvattr);
+    	VertexDescription.Attributes.push_back(weightattr);
+    	VertexDescription.Attributes.push_back(boneattr);
+    }
+    else {
+    	VkVertexInputAttributeDescription positionAttribute = {};
+    	positionAttribute.binding = 0;
+    	positionAttribute.location = 0;
+    	positionAttribute.format = VK_FORMAT_R32G32_SFLOAT;
+    	positionAttribute.offset = offsetof(ComputeVertex, position);
+        
+        VkVertexInputAttributeDescription velocityAttribute = {};
+    	velocityAttribute.binding = 0;
+    	velocityAttribute.location = 1;
+    	velocityAttribute.format = VK_FORMAT_R32G32_SFLOAT;
+    	velocityAttribute.offset = offsetof(ComputeVertex, velocity);
 
-	VkVertexInputAttributeDescription normalAttribute = {};
-	normalAttribute.binding = 0;
-	normalAttribute.location = 1;
-	normalAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
-	normalAttribute.offset = offsetof(Vertex, normal);
+    	VkVertexInputAttributeDescription colorAttribute = {};
+    	colorAttribute.binding = 0;
+    	colorAttribute.location = 2;
+    	colorAttribute.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    	colorAttribute.offset = offsetof(ComputeVertex, color);
 
-	VkVertexInputAttributeDescription colorAttribute = {};
-	colorAttribute.binding = 0;
-	colorAttribute.location = 2;
-	colorAttribute.format = VK_FORMAT_R32G32B32_SFLOAT;
-	colorAttribute.offset = offsetof(Vertex, color);
-
-	VkVertexInputAttributeDescription uvattr = {};
-	uvattr.binding = 0;
-    uvattr.location = 3;
-    uvattr.format = VK_FORMAT_R32G32_SFLOAT;
-    uvattr.offset = offsetof(Vertex, uv);
-
-
-	 VkVertexInputAttributeDescription weightattr = {};
-	 weightattr.binding = 0;
-	 weightattr.location = 4;
-	 weightattr.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	 weightattr.offset = offsetof(Vertex, weights);
-
-	 VkVertexInputAttributeDescription boneattr = {};
-	 boneattr.binding = 0;
-	 boneattr.location = 5;
-	 boneattr.format =  VK_FORMAT_R32G32B32A32_SINT;
-	 boneattr.offset = offsetof(Vertex, boneID);
-
-	VertexDescription.Attributes.push_back(positionAttribute);
-	VertexDescription.Attributes.push_back(normalAttribute);
-	VertexDescription.Attributes.push_back(colorAttribute);
-	VertexDescription.Attributes.push_back(uvattr);
-	VertexDescription.Attributes.push_back(weightattr);
-	VertexDescription.Attributes.push_back(boneattr);
+    	VertexDescription.Attributes.push_back(positionAttribute);
+    	VertexDescription.Attributes.push_back(velocityAttribute);
+    	VertexDescription.Attributes.push_back(colorAttribute);
+    }
 }
 
-VkPipelineVertexInputStateCreateInfo Gfx::Pipeline::VertexInputStageCreateInfo() {
+VkPipelineVertexInputStateCreateInfo Gfx::Pipeline::VertexInputStageCreateInfo(bool iscompute) {
+    
+    if (!VertexDescription.Bindings.empty()) {
+        VertexDescription.Bindings.clear();
+        VertexDescription.Attributes.clear();
+    }
 
-	GetVertexDescription();
+	GetVertexDescription(iscompute);
 	VkPipelineVertexInputStateCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	info.pNext = nullptr;

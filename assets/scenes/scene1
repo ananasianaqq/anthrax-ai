@@ -3,18 +3,6 @@ Scene: scene1
 	Cubemaps:
 		name: cubemaps/clear_sky
 Object:
-		ID: kkk
-	Position:
-		x: 0.000000
-		y: 0.000000
-		z: 0.000000
-	Material:
-		name: sprites
-	frag:
-	vert:
-	Texture:
-		name: zeroone.png
-Object:
 		ID: plane
 	Position:
 		x: 0.000000

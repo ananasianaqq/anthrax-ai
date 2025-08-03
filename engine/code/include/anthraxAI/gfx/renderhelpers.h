@@ -14,6 +14,7 @@ namespace Gfx
         BINDLESS_DATA_NONE = 0,
         BINDLESS_DATA_CAM_STORAGE_SAMPLER,
         BINDLESS_DATA_CAM_BUFFER,
+        BINDLESS_DATA_COMPUTE,
         BINDLESS_DATA_SIZE
     };
     struct Material {
@@ -32,7 +33,8 @@ namespace Gfx
         std::string TextureName;
 
 	    Vector3<float> Position;
-
+        
+        bool IsCompute = false;
         bool VertexBase = false;
         bool IsGrid = false;
         bool HasStorage = false;
@@ -54,6 +56,14 @@ namespace Gfx
     #define MAX_INSTANCES 10000
     #define INSTANCES_ARRAY_SIZE (sizeof(glm::mat4) * MAX_INSTANCES)
     #define BONE_ARRAY_SIZE (sizeof(glm::mat4) * MAX_BONES)
+    
+    #define NUM_PARTICLES_PER_WORKGROUP 64
+    #define NUM_PARTICLES (32 * 1024)
+    struct ComputeData {
+        glm::vec2 position[NUM_PARTICLES];
+        glm::vec2 velocity[NUM_PARTICLES];
+        glm::vec4 color[NUM_PARTICLES];
+    };
 
     struct StorageData {
         u_int data[DEPTH_ARRAY_SCALE] = {0};

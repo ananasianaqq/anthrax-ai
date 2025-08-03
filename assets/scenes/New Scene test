@@ -1,4 +1,4 @@
-Scene: New Scene
+Scene: New Scene test
 	Shadows:
 	Cubemaps:
 		name: cubemaps/skybox
@@ -41,7 +41,7 @@ Object:
 	frag:
 	vert:
 	Texture:
-		name: zeroone.png
+		name: kote-v-bote.jpg
 	Model:
 		name: monkeytextured.obj
 

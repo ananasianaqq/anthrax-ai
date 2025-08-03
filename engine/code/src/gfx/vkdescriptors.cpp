@@ -20,7 +20,7 @@ VkDescriptorSetLayoutBinding DescriptorLayoutBinding(VkDescriptorType type, VkSh
 {
 	VkDescriptorSetLayoutBinding setbind = {};
 	setbind.binding = binding;
-	setbind.descriptorCount = 5000;
+	setbind.descriptorCount = 1000;
 	setbind.descriptorType = type;
 	setbind.pImmutableSamplers = nullptr;
 	setbind.stageFlags = stageFlags;
@@ -118,6 +118,40 @@ uint32_t Gfx::DescriptorsBase::UpdateBuffer(VkBuffer buffer, VkBufferUsageFlagBi
     return BufferHandle - 1;
 }
 
+uint32_t Gfx::DescriptorsBase::UpdateCompute(VkBuffer buffer, VkBufferUsageFlagBits usage, const std::string& name, uint32_t frame)
+{
+    if (!name.empty()) {
+        auto it = std::find_if(ComputeBindings[frame].begin(), ComputeBindings[frame].end(), [&, name](const auto& n) { return n.first == name; });
+	    if (it != ComputeBindings[frame].end()) {
+            return it->second;
+        }
+    }
+	VkWriteDescriptorSet writes{};
+	VkDescriptorBufferInfo bufferinfo{};
+	bufferinfo.buffer = buffer;
+	bufferinfo.offset = 0;
+	bufferinfo.range = VK_WHOLE_SIZE;
+	writes.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	writes.dstSet = BindlessDescriptor[frame];
+	writes.descriptorCount = 1;
+	writes.dstArrayElement = ComputeHandle;
+	writes.pBufferInfo = &bufferinfo;
+
+	if ((usage & VK_BUFFER_USAGE_STORAGE_BUFFER_BIT) == VK_BUFFER_USAGE_STORAGE_BUFFER_BIT) {
+		writes.dstBinding = ComputeBinding;
+		writes.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	}
+
+	vkUpdateDescriptorSets(Gfx::Device::GetInstance()->GetDevice(), 1, &writes, 0, nullptr);
+	ComputeHandle++;
+
+    if (!name.empty()) {
+        ComputeBindings[frame][name] = ComputeHandle - 1;
+    }
+    return ComputeHandle - 1;
+}
+
+
 void Gfx::DescriptorsBase::AllocateDataBuffers()
 {
 	const size_t cambuffersize = (sizeof(CameraData));
@@ -140,6 +174,29 @@ void Gfx::DescriptorsBase::AllocateDataBuffers()
 	    });
     }
 }
+void Gfx::DescriptorsBase::AllocateComputeBuffers()
+{
+	size_t buffersize = (sizeof(ComputeData));
+    for (int i = 0; i < MAX_FRAMES; i++) {
+	    BufferHelper::CreateBuffer(ComputeBuffer[i], buffersize,static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT));
+        ComputeBuffer[i].tag = "compute";
+    }
+    VkDebugUtilsObjectNameInfoEXT info;
+	info.pNext = nullptr;
+	info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+	info.objectHandle = reinterpret_cast<uint64_t>(ComputeBuffer[0].DeviceMemory);
+	info.objectType = VK_OBJECT_TYPE_DEVICE_MEMORY;;
+	info.pObjectName = "compute buffer #1 frame";
+	Gfx::Vulkan::GetInstance()->SetDebugName(info);
+
+    for (int i = 0; i < MAX_FRAMES; i++) {
+    	Core::Deletor::GetInstance()->Push(Core::Deletor::Type::NONE, [=, this]() {
+    		vkDestroyBuffer(Gfx::Device::GetInstance()->GetDevice(), ComputeBuffer[i].Buffer, nullptr);
+        	vkFreeMemory(Gfx::Device::GetInstance()->GetDevice(), ComputeBuffer[i].DeviceMemory, nullptr);
+    	});
+    }
+}
+
 void Gfx::DescriptorsBase::AllocateStorageBuffers()
 {
 	size_t buffersize = (sizeof(StorageData));
@@ -209,19 +266,21 @@ void Gfx::DescriptorsBase::Init()
 	VkShaderStageFlags stageflags[MAX_BINDING] = {
 		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-		VK_SHADER_STAGE_FRAGMENT_BIT
+		VK_SHADER_STAGE_FRAGMENT_BIT,
+		VK_SHADER_STAGE_COMPUTE_BIT,
 	};
 	VkDescriptorBindingFlags flags[MAX_BINDING];
 	VkDescriptorType types[MAX_BINDING] = {
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
 	};
 
 // descriptor pool
 
 	VkDescriptorPoolSize sizes[MAX_BINDING] = {
-		{ types[0], 5000 }, { types[1], 5000 }, { types[2], 5000 }
+		{ types[0], 1000 }, { types[1], 1000 }, { types[2], 1000 }, { types[3], 1000 }
 	};
 
 	VkDescriptorPoolCreateInfo poolinfo{};
@@ -272,4 +331,5 @@ void Gfx::DescriptorsBase::AllocateBuffers()
 {
     AllocateDataBuffers();
     AllocateStorageBuffers();
+    AllocateComputeBuffers();
 }

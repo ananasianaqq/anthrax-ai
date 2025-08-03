@@ -14,6 +14,12 @@ namespace Gfx {
         float weights[4];
         int boneID[4];
     };
+    
+    struct ComputeVertex {
+        glm::vec2 position;
+        glm::vec2 velocity;
+        glm::vec4 color;
+    };
 
 }
 

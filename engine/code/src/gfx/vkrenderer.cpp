@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <vector>
 #include <vulkan/vulkan_core.h>
+#include <random>
 
 void Gfx::Renderer::DrawSimple(Gfx::RenderObject& object)
 {
@@ -52,7 +53,15 @@ void Gfx::Renderer::DrawSimple(Gfx::RenderObject& object)
         constants.boneID = Utils::Debug::GetInstance()->BoneID;
     }
 	vkCmdPushConstants(Cmd.GetCmd(), object.Material->PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
-	vkCmdDraw(Cmd.GetCmd(), 6, 1, 0, 0);
+    if (object.IsCompute) {
+        VkDeviceSize offset = {0};
+        VkBuffer buffer = Gfx::DescriptorsBase::GetInstance()->GetComputeBuffer(GetFrameInd());
+        vkCmdBindVertexBuffers(Cmd.GetCmd(), 0, 1, &buffer, &offset);
+	    vkCmdDraw(Cmd.GetCmd(), u_int32_t(NUM_PARTICLES / sizeof(glm::vec2) ), 1, 0, 0);
+    }
+    else {
+	    vkCmdDraw(Cmd.GetCmd(), 6, 1, 0, 0);
+    }
     Utils::Debug::GetInstance()->DebugDrawCall();
 }
 
@@ -142,6 +151,30 @@ void Gfx::Renderer::Draw(Gfx::RenderObject& object)
 	else {
 		DrawMesh(object, object.Mesh, false);
 	}
+}
+
+void Gfx::Renderer::Compute(Gfx::RenderObject& object)
+{
+    Cmd.MemoryBarrier(0, 0, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+
+	bool bindpipe, bindindex = false;
+    Gfx::Material* mat = Gfx::Pipeline::GetInstance()->GetMaterial("particles");
+    CheckTmpBindings(nullptr, mat, &bindpipe, &bindindex);
+
+	if (bindpipe) {
+	    vkCmdBindDescriptorSets(Cmd.GetCmd(), VK_PIPELINE_BIND_POINT_COMPUTE, mat->PipelineLayout, 0, 1, Gfx::DescriptorsBase::GetInstance()->GetBindlessSet(GetFrameInd()), 0, nullptr);
+		vkCmdBindPipeline(Cmd.GetCmd(), VK_PIPELINE_BIND_POINT_COMPUTE, mat->Pipeline);
+    }
+
+	Gfx::MeshPushConstants constants;
+    constants.selected = 0;
+    constants.boneID = -1;
+    constants.storagebind = object.StorageBind[GetFrameInd()];
+	vkCmdPushConstants(Cmd.GetCmd(), mat->PipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
+
+    vkCmdDispatch(Cmd.GetCmd(), u_int32_t(NUM_PARTICLES / sizeof(glm::vec2) ) / NUM_PARTICLES_PER_WORKGROUP, 1, 1);
+
+    Cmd.MemoryBarrier(VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);
 }
 
 void Gfx::Renderer::EndRenderName()
@@ -422,6 +455,27 @@ void Gfx::Renderer::DestroyTracy()
 
 }
 
+void Gfx::Renderer::PrepareCompute()
+{
+    std::uniform_real_distribution<float> uniform(-1.0f, 1.0f);
+    std::mt19937 engine;
+    for (unsigned i = 0; i < NUM_PARTICLES; i++) {
+            CompData.position[i] = glm::vec2(0.2f * uniform(engine), 0.2f * uniform(engine));
+            float velocity = 0.008f + 0.003f * uniform(engine);
+            float angle = 100.0f * uniform(engine);
+            CompData.velocity[i] = (velocity * glm::vec2(glm::cos(angle), glm::sin(angle)));
+            float y = 0.8f + 0.2f * uniform(engine);
+            float saturation = 0.8f + 0.2f * uniform(engine);
+            float hue = 100.0f * uniform(engine);
+            float u = saturation * glm::cos(hue);
+            float v = saturation * glm::sin(hue);
+            glm::vec3 rgb = glm::mat3(1.0f, 1.0f, 1.0f, 0.0f, -0.39465f, 2.03211f, 1.13983f, -0.58060f, 0.0f) * glm::vec3(y, u, v);
+            CompData.color[i] = glm::vec4(rgb, 0.4f);
+    }
+
+    const size_t buffersize = (sizeof(ComputeData));
+    BufferHelper::MapMemory(Gfx::DescriptorsBase::GetInstance()->GetComputeUBO(GetFrameInd()), buffersize, 0, &CompData);
+}
 
 void Gfx::Renderer::PrepareStorageBuffer()
 {
@@ -474,9 +528,10 @@ void Gfx::Renderer::PrepareStorageBuffer()
  //   Core::WindowManager::GetInstance()->ReleaseMouseSelected();
   
 	}
-    else {void* storage;
+    else {
+        void* storage;
 
-VkDeviceSize storagesize = sizeof(uint32_t) * DEPTH_ARRAY_SCALE;
+    VkDeviceSize storagesize = sizeof(uint32_t) * DEPTH_ARRAY_SCALE;
     vkMapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetStorageBufferMemory(GetFrameInd()), 0, storagesize, 0, (void**)&storage);
 
 uint32_t dst[DEPTH_ARRAY_SCALE] = {0};
@@ -843,12 +898,15 @@ VkSubmitInfo SubmitInfo(VkCommandBuffer* cmd)
 
 uint32_t Gfx::Renderer::SyncFrame()
 {
-  Time = Engine::GetInstance()->GetTime();
-
+    Time = Engine::GetInstance()->GetTime();
+    
+    if (SwapchainIndex >= MAX_FRAMES + 1 || SwapchainIndex < 0) {
+        return -1;
+    }
 	VK_ASSERT(vkWaitForFences(Gfx::Device::GetInstance()->GetDevice(), 1, &Frames[SwapchainIndex].RenderFence, true, 1000000000), "vkWaitForFences failed !");
 	uint32_t swapchainimageindex;
     PrevSwapchainIndex = SwapchainIndex;
-	VkResult e = vkAcquireNextImageKHR(Gfx::Device::GetInstance()->GetDevice(), Gfx::Device::GetInstance()->GetSwapchain(), 1000000000, Frames[SwapchainIndex].PresentSemaphore, VK_NULL_HANDLE, &swapchainimageindex);
+	VkResult e = vkAcquireNextImageKHR(Gfx::Device::GetInstance()->GetDevice(), Gfx::Device::GetInstance()->GetSwapchain(), 1000000000, Frames[PrevSwapchainIndex].PresentSemaphore, VK_NULL_HANDLE, &swapchainimageindex);
 	if (e == VK_ERROR_OUT_OF_DATE_KHR) {
     	OnResize = true;
 		return -1;

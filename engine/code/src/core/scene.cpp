@@ -138,6 +138,20 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
     }
 }
 
+void Core::Scene::Compute(Modules::Module& module)
+{
+    Gfx::Renderer::GetInstance()->DebugRenderName(module.GetTag());
+ 
+    uint32_t frameind = Gfx::Renderer::GetInstance()->GetFrameInd();
+    for (auto& it : module.GetRenderQueueMap()) {
+        for (Gfx::RenderObject& obj : it.second) {
+           Gfx::Renderer::GetInstance()->Compute(obj);
+        }
+    }
+    
+    Gfx::Renderer::GetInstance()->EndRenderName();
+}
+
 void Core::Scene::Render(Modules::Module& module)
 {
     Gfx::Renderer::GetInstance()->DebugRenderName(module.GetTag());
@@ -157,7 +171,7 @@ void Core::Scene::Render(Modules::Module& module)
                 Gfx::Renderer::GetInstance()->IncInstanceInd(obj.Model[frameind]->Meshes.size());
                 continue;
             }
-            if (obj.VertexBase) {
+            if (obj.VertexBase || obj.IsCompute) {
                 Gfx::Renderer::GetInstance()->DrawSimple(obj);
             }
             else {
@@ -192,6 +206,13 @@ void Core::Scene::RenderScene(bool playmode)
                 Gfx::Renderer::GetInstance()->EndRender();
             }
             else {
+                if (HasCompute) {
+                    Compute(GameModules->Get("particles"));
+                    
+                    Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("particles").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
+                    Render(GameModules->Get("particles"));
+                    Gfx::Renderer::GetInstance()->EndRender();
+                }
                 // objects from map
                 Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, GameModules->Get("gbuffer").GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM * 2 ? true : false);
                 Render(GameModules->Get("gbuffer"));
@@ -202,7 +223,8 @@ void Core::Scene::RenderScene(bool playmode)
                     Render(GameModules->Get("shadows"));
                     Gfx::Renderer::GetInstance()->EndRender();
                 }
-                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("lighting").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
+                Gfx::AttachmentRules rule = HasCompute ? Gfx::AttachmentRules::ATTACHMENT_RULE_LOAD : Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR;
+                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("lighting").GetIAttachments(), rule);
                 Render(GameModules->Get("lighting"));
                 Gfx::Renderer::GetInstance()->EndRender();
             }
@@ -421,6 +443,7 @@ void Core::Scene::PopulateModules()
     HasFrameGizmo = false;
     HasFrameGrid = false;
     HasGBuffer = false;
+    HasCompute = false;
     if (npc) {
         {
             Modules::Info info;
@@ -485,6 +508,16 @@ void Core::Scene::PopulateModules()
             GameModules->Populate("outline", info,
                 GameObjects->GetInfo(Keeper::Infos::INFO_OUTLINE)
             );
+        }
+        {
+            Modules::Info info;
+            info.BindlessType = Gfx::BINDLESS_DATA_COMPUTE;
+            info.IAttachments.Add(Gfx::RT_MAIN_COLOR);
+            GameModules->Populate("particles", info,
+                GameObjects->GetInfo(Keeper::Infos::INFO_PARTICLES)
+            );
+            HasCompute = true;
+            Gfx::Renderer::GetInstance()->PrepareCompute();
         }
 
         HasFrameGrid = true;
@@ -551,10 +584,10 @@ void Core::Scene::SetCurrentScene(const std::string& str)
 
 void Core::Scene::ExportScene()
 {
-    Parse.ClearFile(CurrentScene);
+    Parse.ClearFile(CurrentSceneForUpdate);
     Parse.Clear();
 
-    Parse.AddRoot(Utils::LEVEL_ELEMENT_SCENE, CurrentScene);
+    Parse.AddRoot(Utils::LEVEL_ELEMENT_SCENE, CurrentSceneForUpdate);
     if (HasFrameShadows) {
         Parse.AddRoot(Utils::LEVEL_ELEMENT_SHADOWS, "");
     }
@@ -562,7 +595,7 @@ void Core::Scene::ExportScene()
         Parse.AddRoot(Utils::LEVEL_ELEMENT_CUBEMAPS, "");
         Parse.AddRoot(Utils::LEVEL_ELEMENT_NAME, GameModules->GetCubemapTexture());
     }
-    Parse.Write(CurrentScene);
+    Parse.Write(CurrentSceneForUpdate);
     
     for (auto& it : GameObjects->GetObjects()) {
         if (it.first != Keeper::NPC && it.first != Keeper::SPRITE && it.first != Keeper::LIGHT) continue;
@@ -580,7 +613,7 @@ void Core::Scene::ExportObjectInfo(const Keeper::Objects* obj)
 
     if (!Parse.IsNodeValid(obj_node)) {
         Parse.UpdateTokens(obj); 
-        Parse.Write(CurrentScene);
+        Parse.Write(CurrentSceneForUpdate);
         return;
     }
 
@@ -611,7 +644,7 @@ void Core::Scene::ExportObjectInfo(const Keeper::Objects* obj)
         Parse.UpdateElement(z, std::to_string(obj->GetPosition().z));
     }
 
-    Parse.Write(CurrentScene);
+    Parse.Write(CurrentSceneForUpdate);
 }
 
 void Core::Scene::LoadScene(const std::string& filename)
