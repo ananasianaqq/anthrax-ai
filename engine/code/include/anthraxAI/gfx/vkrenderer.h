@@ -1,5 +1,6 @@
 #pragma once
 
+#include "anthraxAI/gamemodules/modules.h"
 #include "anthraxAI/gfx/vkbase.h"
 #include "anthraxAI/gfx/vkrendertarget.h"
 #include "anthraxAI/utils/defines.h"
@@ -122,10 +123,20 @@ namespace Gfx
             glm::vec3 GetSpecular() { return LightData.Specular; }
             void SetDiffuse(glm::vec3 a) { LightData.Diffuse = a; }
             glm::vec3 GetDiffuse() { return LightData.Diffuse; }
-            
+
+            void InitDrawIndirect();
+            void CompactDrawIndirect(const Modules::RenderQueueMap& map);
+            void CompactIndirect(Material* mat, MeshInfo* mesh, int i);
+            void ClearIndirectBatches() { indirect_batch.clear(); }
+            void RenderIndirect(const Modules::RenderQueueMap& map);
+            void RenderIndirectCall(IndirectBatch& batch, MeshInfo* mesh, RenderObject& testobj);
+
             bool GetCubemapRendering() { return HasFrameCubemap; }
             void SetCubemapRendering(bool cube) { HasFrameCubemap = cube; }
         private:
+            BufferHelper::Buffer DrawIndirect;
+            std::vector<Gfx::IndirectBatch> indirect_batch;
+            
             RenderTarget* RTs[RT_SIZE];
             TexturesMap Textures;
             CubemapsMap Cubemaps;

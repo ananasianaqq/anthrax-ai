@@ -1,24 +1,12 @@
-Scene: New Scene
+Scene: New Scene2
 	Shadows:
-Object:
-		ID: cube
-	Position:
-		x: -3.049608
-		y: 6.235694
-		z: -7.923649
-	Material:
-		name: models
-		frag: model.frag
-		vert: model.vert
-	Texture:
-		name: dummy.png
-	Model:
-		name: cube.obj
+	Cubemaps:
+		name: cubemaps/sky
 Object:
 		ID: plane
 	Position:
 		x: 0.000000
-		y: 1.510511
+		y: 1.783665
 		z: 0.000000
 	Material:
 		name: models
@@ -92,4 +80,22 @@ Object:
 		x: 1.000000
 		y: 1.000000
 		z: 1.000000
+Object:
+		ID: ccct
+	Position:
+		x: -6.206230
+		y: 3.904777
+		z: 0.000000
+	Material:
+		name: models
+	frag:
+	vert:
+	Texture:
+		name: dummy.png
+	Light:
+		name: sphere.obj
+	Color:
+		x: 0.000000
+		y: 1.000000
+		z: 0.000000
 

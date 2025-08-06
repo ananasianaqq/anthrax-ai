@@ -50,7 +50,13 @@ namespace Gfx
         uint32_t InstanceBind[MAX_FRAMES];
         uint32_t TextureBind[MAX_FRAMES];
     };
-
+    struct IndirectBatch{
+        MeshInfo* mesh;
+        Material* material;
+        uint32_t first;
+        uint32_t count = 1;
+    };
+    #define MAX_COMMANDS 1000 
     #define DEPTH_ARRAY_SCALE 1000 
     #define MAX_BONES 200
     #define MAX_INSTANCES 10000

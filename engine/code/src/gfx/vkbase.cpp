@@ -17,6 +17,7 @@ void Gfx::Vulkan::Init()
 	Gfx::Renderer::GetInstance()->CreateCommands();
 	Gfx::Renderer::GetInstance()->Sync();
 	Gfx::Renderer::GetInstance()->CreateTextures();
+    Gfx::Renderer::GetInstance()->InitDrawIndirect();
 
 	Gfx::DescriptorsBase::GetInstance()->Init();
 	Gfx::DescriptorsBase::GetInstance()->AllocateBuffers();

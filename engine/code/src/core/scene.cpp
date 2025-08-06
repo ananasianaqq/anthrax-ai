@@ -215,6 +215,28 @@ void Core::Scene::RenderScene(bool playmode)
                     Gfx::Renderer::GetInstance()->EndRender();
                 }
                 // objects from map
+#ifdef DRAW_INDIRECT
+                Gfx::Renderer::GetInstance()->ClearIndirectBatches();
+                Gfx::Renderer::GetInstance()->CompactDrawIndirect(GameModules->Get("gbuffer").GetRenderQueueMap());
+    Gfx::Renderer::GetInstance()->DebugRenderName(GameModules->Get("gbuffer").GetTag());
+                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, false);
+                Gfx::Renderer::GetInstance()->RenderIndirect(GameModules->Get("gbuffer").GetRenderQueueMap());
+                Gfx::Renderer::GetInstance()->EndRender();
+    Gfx::Renderer::GetInstance()->EndRenderName();
+
+                if (HasFrameShadows) { 
+                    Gfx::Renderer::GetInstance()->ClearIndirectBatches();
+                    Gfx::Renderer::GetInstance()->CompactDrawIndirect(GameModules->Get("shadows").GetRenderQueueMap());
+    Gfx::Renderer::GetInstance()->DebugRenderName(GameModules->Get("shadows").GetTag());
+                    Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("shadows").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
+                    Gfx::Renderer::GetInstance()->RenderIndirect(GameModules->Get("shadows").GetRenderQueueMap());
+                    Gfx::Renderer::GetInstance()->EndRender();
+    Gfx::Renderer::GetInstance()->EndRenderName();
+
+                }
+
+                
+#else
                 Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("gbuffer").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR, GameModules->Get("gbuffer").GetRenderQueue(Modules::RQ_GENERAL).size() > Thread::MAX_RENDER_THREAD_NUM * 2 ? true : false);
                 Render(GameModules->Get("gbuffer"));
                 Gfx::Renderer::GetInstance()->EndRender();
@@ -224,6 +246,7 @@ void Core::Scene::RenderScene(bool playmode)
                     Render(GameModules->Get("shadows"));
                     Gfx::Renderer::GetInstance()->EndRender();
                 }
+#endif
                 Gfx::AttachmentRules rule = HasCompute ? Gfx::AttachmentRules::ATTACHMENT_RULE_LOAD : Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR;
                 Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("lighting").GetIAttachments(), rule);
                 Render(GameModules->Get("lighting"));

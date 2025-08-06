@@ -15,5 +15,5 @@ float falloff(vec2 point_coord)
 void main()
 {
     vec2 coord = gl_PointCoord.xy;
-    outcolor = vec4(falloff(coord) * incolor.rgb, incolor.a);
+    outcolor = vec4(falloff(coord) * incolor.rgb, incolor.a );
 }

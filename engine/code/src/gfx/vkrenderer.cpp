@@ -29,6 +29,162 @@
 #include <vulkan/vulkan_core.h>
 #include <random>
 
+void Gfx::Renderer::RenderIndirectCall(IndirectBatch& batch, MeshInfo* mesh, RenderObject& testobj)
+{
+    bool bindpipe, bindindex = false;
+     CheckTmpBindings(mesh, batch.material, &bindpipe, &bindindex);
+
+	    if (bindpipe) {
+	        vkCmdBindDescriptorSets(Cmd.GetCmd(), VK_PIPELINE_BIND_POINT_GRAPHICS, batch.material->PipelineLayout, 0, 1, Gfx::DescriptorsBase::GetInstance()->GetBindlessSet(GetFrameInd()), 0, nullptr);
+	    	vkCmdBindPipeline(Cmd.GetCmd(), VK_PIPELINE_BIND_POINT_GRAPHICS, batch.material->Pipeline);
+        }
+
+	    Gfx::MeshPushConstants constants;
+	    constants.texturebind = testobj.TextureBind[GetFrameInd()];
+	    constants.bufferbind = testobj.BufferBind[GetFrameInd()];
+        constants.selected = 0;
+        constants.boneID = -1;
+        constants.storagebind = testobj.StorageBind[GetFrameInd()];
+        constants.instancebind = testobj.InstanceBind[GetFrameInd()];
+	    vkCmdPushConstants(Cmd.GetCmd(), batch.material->PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
+
+	    if (bindindex) {
+	    	VkDeviceSize offset = {0};
+	    	vkCmdBindVertexBuffers(Cmd.GetCmd(), 0, 1, &mesh->VertexBuffer.Buffer, &offset);
+	    	vkCmdBindIndexBuffer(Cmd.GetCmd(), mesh->IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT16);
+	    }
+	    
+        VkDeviceSize indirect_offset = batch.first * sizeof(VkDrawIndirectCommand);
+        uint32_t draw_stride = sizeof(VkDrawIndirectCommand);
+        vkCmdDrawIndirect(Cmd.GetCmd(), DrawIndirect.Buffer, indirect_offset, batch.count, draw_stride);
+        Utils::Debug::GetInstance()->DebugDrawCall();
+
+}
+
+void Gfx::Renderer::RenderIndirect(const Modules::RenderQueueMap& map)
+{
+    void* draw;
+    VkDeviceSize size = MAX_COMMANDS * sizeof(VkDrawIndirectCommand);
+    vkMapMemory(Gfx::Device::GetInstance()->GetDevice(), DrawIndirect.DeviceMemory, 0, size, 0, (void**)&draw);
+    
+    VkDrawIndirectCommand* draw_cmds = (VkDrawIndirectCommand*)draw;
+    
+    int i = 0;
+    RenderObject testobj;
+    for (const auto& it : map) {
+        for (const RenderObject& obj : it.second) {
+            if (i == 0) {
+                testobj = obj;
+            }
+            if (obj.Model[0]) {
+                const int meshsize = obj.Model[0]->Meshes.size();
+	            for (int k = 0; k < meshsize; k++) {
+                    draw_cmds[i].firstInstance = i;
+                    draw_cmds[i].firstVertex = 0;
+                    draw_cmds[i].instanceCount = 1;
+                    draw_cmds[i].vertexCount += obj.Model[0]->Meshes[k]->Vertices.size(); 
+                    i++;
+                }
+            }
+            else {
+                draw_cmds[i].firstInstance = i;
+                draw_cmds[i].firstVertex = 0;
+                draw_cmds[i].instanceCount = 1;
+                draw_cmds[i].vertexCount = obj.Mesh->Vertices.size();
+                    i++;
+            }
+        }
+    }
+    vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),DrawIndirect.DeviceMemory);
+    
+    MeshInfo* mesh;
+    for (IndirectBatch& batch : indirect_batch) {
+            RenderIndirectCall(batch, batch.mesh, testobj); 
+    }
+}
+
+void Gfx::Renderer::InitDrawIndirect()
+{
+    VkDeviceSize size = MAX_COMMANDS * sizeof(VkDrawIndirectCommand);
+    BufferHelper::CreateBuffer(DrawIndirect, size, static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |  VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT));
+    DrawIndirect.tag = "indirect buffer";
+    VkDebugUtilsObjectNameInfoEXT info;
+	info.pNext = nullptr;
+	info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+	info.objectHandle = reinterpret_cast<uint64_t>(DrawIndirect.DeviceMemory);
+	info.objectType = VK_OBJECT_TYPE_DEVICE_MEMORY;;
+	info.pObjectName = "indirect buffer #1 frame";
+	Gfx::Vulkan::GetInstance()->SetDebugName(info);
+
+	Core::Deletor::GetInstance()->Push(Core::Deletor::Type::NONE, [=, this]() {
+		vkDestroyBuffer(Gfx::Device::GetInstance()->GetDevice(), DrawIndirect.Buffer, nullptr);
+    	vkFreeMemory(Gfx::Device::GetInstance()->GetDevice(), DrawIndirect.DeviceMemory, nullptr);
+	});
+}
+
+void Gfx::Renderer::CompactIndirect(Material* mat, MeshInfo* mesh, int i)
+{
+
+            bool samemesh = indirect_batch.empty() ? false : mesh == indirect_batch.back().mesh;
+            bool samemat = indirect_batch.empty() ? false : mat == indirect_batch.back().material;
+            if (samemesh && samemat) {
+
+                indirect_batch.back().count++;
+            }
+            else {
+                IndirectBatch batch;
+                batch.mesh = mesh;
+                batch.count = 1;
+                batch.first = i;
+                batch.material = mat;
+                indirect_batch.push_back(batch);
+            }
+}
+
+void Gfx::Renderer::CompactDrawIndirect(const Modules::RenderQueueMap& map)
+{
+    int i = 0;
+    for (const auto& it : map) {
+        for (const RenderObject& obj : it.second) {
+            if (obj.Model[0]) {
+                for (MeshInfo* info : obj.Model[0]->Meshes) {
+                    CompactIndirect(obj.Material, info, i);
+                    i++;
+                }
+            }
+            else {
+                CompactIndirect(obj.Material, obj.Mesh, i);
+                i++;
+            }
+            // bool samemesh;
+            // if (obj.Model[0]) {
+            //     samemesh = indirect_batch.empty() ? false : obj.Model[0] == indirect_batch.back().model;
+            // }
+            // else {
+            //     samemesh = indirect_batch.empty() ? false : obj.Mesh == indirect_batch.back().mesh;
+            // }
+            // bool samemat = indirect_batch.empty() ? false : obj.Material == indirect_batch.back().material;
+            // if (samemesh && samemat) {
+            //     indirect_batch.back().count++;
+            // }
+            // else {
+            //     IndirectBatch batch;
+            //     if (obj.Model[0]) {
+            //         batch.model = obj.Model[0];
+            //     }
+            //     else {
+            //         batch.mesh = obj.Mesh;
+            //     }
+            //     batch.count = 1;
+            //     batch.first = i;
+            //     batch.material = obj.Material;
+            //     indirect_batch.push_back(batch);
+            // }
+        }
+    }
+}
+
+
 void Gfx::Renderer::DrawSimple(Gfx::RenderObject& object)
 {
     bool bindpipe, bindindex = false;
@@ -57,7 +213,7 @@ void Gfx::Renderer::DrawSimple(Gfx::RenderObject& object)
         VkDeviceSize offset = {0};
         VkBuffer buffer = Gfx::DescriptorsBase::GetInstance()->GetComputeBuffer(GetFrameInd());
         vkCmdBindVertexBuffers(Cmd.GetCmd(), 0, 1, &buffer, &offset);
-	    vkCmdDraw(Cmd.GetCmd(), u_int32_t(NUM_PARTICLES / sizeof(glm::vec2) ), 1, 0, 0);
+	    vkCmdDraw(Cmd.GetCmd(), u_int32_t(NUM_PARTICLES / (sizeof(glm::vec2) + sizeof(glm::vec2) + sizeof(glm::vec4))), 1, 0, 0);
     }
     else {
 	    vkCmdDraw(Cmd.GetCmd(), 6, 1, 0, 0);
@@ -155,7 +311,7 @@ void Gfx::Renderer::Draw(Gfx::RenderObject& object)
 
 void Gfx::Renderer::Compute(Gfx::RenderObject& object)
 {
-    Cmd.MemoryBarrier(0, 0, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    Cmd.MemoryBarrier(VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
 	bool bindpipe, bindindex = false;
     Gfx::Material* mat = Gfx::Pipeline::GetInstance()->GetMaterial("particles");
@@ -172,8 +328,8 @@ void Gfx::Renderer::Compute(Gfx::RenderObject& object)
     constants.storagebind = object.StorageBind[GetFrameInd()];
 	vkCmdPushConstants(Cmd.GetCmd(), mat->PipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
 
-    vkCmdDispatch(Cmd.GetCmd(), u_int32_t(NUM_PARTICLES / sizeof(glm::vec2) ) / NUM_PARTICLES_PER_WORKGROUP, 1, 1);
-
+    vkCmdDispatch(Cmd.GetCmd(), u_int32_t(NUM_PARTICLES ) / NUM_PARTICLES_PER_WORKGROUP, 1, 1);
+//printf("sizeof------%lu|%lu\n", sizeof(glm::vec4), sizeof(glm::vec2));
     Cmd.MemoryBarrier(VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT);
 }
 
@@ -307,7 +463,6 @@ void Gfx::Renderer::StartRender(Gfx::InputAttachments inputs, AttachmentRules ru
 	const VkRenderingInfo& renderinfo = Cmd.GetRenderingInfo(attachmentinfo, infos, depthinfo, extents , multithreaded);
     BeginRendering(Cmd.GetCmd(), &renderinfo);
 }
-
 void Gfx::Renderer::TransferLayoutsDebug()
 {
     GetRT(Gfx::RT_ALBEDO)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
