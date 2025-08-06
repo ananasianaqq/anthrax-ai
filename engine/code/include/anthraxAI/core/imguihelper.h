@@ -205,6 +205,7 @@ namespace Core
             void AddObject();
 
             ImGuiStyle 	EditorStyle;
+            ImGuiStyle 	UnhoveredStyle;
             std::string EditorName;
             std::string NewObjectNameNPC;
             std::string NewObjectNameSprite;

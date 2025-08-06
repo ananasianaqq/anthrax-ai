@@ -115,7 +115,7 @@ void main()
     
     vec3 dirlight = DirLight(dirLight, normal.xyz, view_dir, albedo);
     if (dirlight.x > 0 && dirlight.y > 0 && dirlight.z > 0) {
-        result = dirlight * (1.0 - shadow * 0.);
+        result = dirlight * (1.0 - shadow * 0.8);
     }
     int point_size = GetResource(Camera, GetUniformInd()).point_light_size;
     int j = 0;
@@ -132,7 +132,7 @@ void main()
    // debugPrintfEXT("%d|||%f|%f|---||%f|%f|%f-----%f|%f|%f\n",GetTextureInd() + 1, uv.x, uv.y, position.r, position.g, position.b, albedo.x, albedo.y, albedo.z);
     }
     result = clamp(result , vec3(0), vec3(1));
-    if (result.x <= 0 && result.y <= 0 && result.z <= 0) {
+    if (result.x <= 0 && result.y <= 0 && result.z <= 0 && shadow == 0) {
         discard;
     }
     outfragcolor = vec4(result  * cubemap, 1);//outfragcolor = vec4(position.xyz / 10.0, 1.0);

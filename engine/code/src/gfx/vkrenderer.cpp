@@ -268,7 +268,7 @@ void Gfx::Renderer::StartRender(Gfx::InputAttachments inputs, AttachmentRules ru
         Gfx::RenderingAttachmentInfo info;
 		info.IsDepth = false;
 		info.Image = GetRT(inputs.GetColor())->GetImage();
-        if ((rules & Gfx::ATTACHMENT_RULE_LOAD) == Gfx::ATTACHMENT_RULE_LOAD) {
+        if (((rules & Gfx::ATTACHMENT_RULE_LOAD) == Gfx::ATTACHMENT_RULE_LOAD) || inputs.GetColor()  == Gfx::RT_MASK) {
             info.Layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
         }
         info.ImageView = GetRT(inputs.GetColor())->GetImageView();
@@ -314,7 +314,7 @@ void Gfx::Renderer::TransferLayoutsDebug()
     GetRT(Gfx::RT_POSITION)->MemoryBarrier(Cmd.GetCmd(),VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     GetRT(Gfx::RT_NORMAL)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
   //  GetRT(Gfx::RT_SHADOWS)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-   // GetRT(Gfx::RT_MASK)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    GetRT(Gfx::RT_MASK)->MemoryBarrier(Cmd.GetCmd(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 void Gfx::Renderer::RenderUI()
@@ -810,7 +810,7 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
     CamData.diffuse = glm::vec4(LightData.Diffuse, 1.0);
     CamData.ambient = glm::vec4(LightData.Ambient, 1.0);
     
-    CamData.hascubemap = HasFrameCubemap;
+    CamData.hascubemap = HasFrameCubemap && !Core::Scene::GetInstance()->GetParticles();
     CamData.hasshadows = Core::Scene::GetInstance()->GetShadows();
     CamData.cubemapbind = Core::Scene::GetInstance()->GetCubemapBind(GetFrameInd());
     Keeper::GameObjectsMap map = Core::Scene::GetInstance()->GetGameObjects()->GetObjects();
@@ -824,7 +824,7 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
             float linear = 0.7;
             float quadratic = 1.8;
             float light_max = std::fmaxf(std::fmaxf(obj->GetColor().x, obj->GetColor().y), obj->GetColor().z);
-            float radius = (-linear + std::sqrtf(linear * linear - 4 * quadratic * (constant - (256.0 / 5.0) * light_max))) / (2 * quadratic);
+            float radius = (-linear + std::sqrt(linear * linear - 4 * quadratic * (constant - (256.0 / 5.0) * light_max))) / (2 * quadratic);
             if (j >= 4) {
                 j = 0;
             }

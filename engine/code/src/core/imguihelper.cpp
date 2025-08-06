@@ -78,7 +78,6 @@ void Core::ImGuiHelper::Init()
 
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
 	ImGui::StyleColorsDark();
     io.Fonts->AddFontDefault();
 	ImGui_ImplVulkan_InitInfo init_info = {};
@@ -110,6 +109,7 @@ void Core::ImGuiHelper::Init()
 	style.GrabRounding = 1;
 	style.GrabMinSize = 20;
 	style.FrameRounding = 3;
+    style.WindowBorderSize = 0;
 
 	style.Colors[ImGuiCol_Text] = ImVec4(0.00f, 1.00f, 1.00f, 1.00f);
 	style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.00f, 0.40f, 0.41f, 1.00f);
@@ -149,6 +149,10 @@ void Core::ImGuiHelper::Init()
 	style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.00f, 0.40f, 0.41f, 1.00f);
 
 	EditorStyle = style;
+    
+    ImGuiStyle style2 = style;
+	style2.Colors[ImGuiCol_WindowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.0f);
+    UnhoveredStyle = style2;
     InitUIElements();
 
     Initialized = true;
@@ -224,6 +228,8 @@ void Core::ImGuiHelper::InitUIElements()
         it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
         it->Add(rendertab, UI::Element(UI::CHECKBOX, "Cubemap", false, nullptr, [](bool show) -> void { Gfx::Renderer::GetInstance()->SetCubemapRendering(show); }, []() -> bool { return Gfx::Renderer::GetInstance()->GetCubemapRendering(); }));
         it->Add(rendertab, UI::Element(UI::CUBEMAP_IMAGE, "maps", false));
+        it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
+        it->Add(rendertab, UI::Element(UI::CHECKBOX, "Particles", false, nullptr, [](bool show) -> void { Core::Scene::GetInstance()->SetParticles(show); }, []() -> bool { return Core::Scene::GetInstance()->GetParticles(); }));
         it->Add(rendertab, UI::Element(UI::SEPARATOR, "sep"));
     }   
 
@@ -697,14 +703,21 @@ void Core::ImGuiHelper::ProcessUI(UI::Element& element)
 
 void Core::ImGuiHelper::Render()
 {
-    //ImGui::ShowDemoWindow();
-
-
+  //  ImGui::ShowDemoWindow();
+    
     std::vector<UI::Window>& windows = UIWindows[EditorName];
 
     for (UI::Window& window : windows) {
         bool active = true;
         if (!window.IsActive()) continue;
+        
+	    ImGuiStyle& style = ImGui::GetStyle();
+        if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow)) { 
+            style = EditorStyle;
+        }
+        else {
+            style = UnhoveredStyle;
+        }
 
         ImGui::SetNextWindowPos(ImVec2(window.GetPosX(), window.GetPosY()), 0);
         ImGui::SetNextWindowSize(ImVec2(window.GetSizeX(), window.GetSizeY()), ImGuiCond_FirstUseEver);

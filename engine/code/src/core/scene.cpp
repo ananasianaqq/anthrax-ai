@@ -11,6 +11,7 @@
 #include "anthraxAI/gfx/vkbase.h"
 #include "anthraxAI/gfx/vkrenderer.h"
 #include "anthraxAI/gfx/model.h"
+#include "anthraxAI/gfx/vkrendertarget.h"
 #include "anthraxAI/utils/debug.h"
 #include "anthraxAI/utils/mathdefines.h"
 #include "anthraxAI/utils/parser.h"
@@ -243,12 +244,13 @@ void Core::Scene::RenderScene(bool playmode)
             Gfx::Renderer::GetInstance()->CopyImage(Gfx::RT_MAIN_COLOR, Gfx::RT_MAIN_DEBUG);
             // gizmo, outline
             if (playmode && HasFrameGizmo) {
-                Gfx::Renderer::GetInstance()->ResetInstanceInd();
-                Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("mask").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
-                Render(GameModules->Get("mask"));
-                Gfx::Renderer::GetInstance()->EndRender();
-
+                
                 if (GameModules->HasFrameOutline()) {
+                    Gfx::Renderer::GetInstance()->ResetInstanceInd();
+                    Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("mask").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
+                    Render(GameModules->Get("mask"));
+                    Gfx::Renderer::GetInstance()->EndRender();
+
                     Gfx::Renderer::GetInstance()->StartRender(GameModules->Get(CurrentScene).GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_LOAD);
                     Render(GameModules->Get("outline"));
                     Gfx::Renderer::GetInstance()->EndRender();
@@ -516,7 +518,6 @@ void Core::Scene::PopulateModules()
             GameModules->Populate("particles", info,
                 GameObjects->GetInfo(Keeper::Infos::INFO_PARTICLES)
             );
-            HasCompute = true;
             Gfx::Renderer::GetInstance()->PrepareCompute();
         }
 

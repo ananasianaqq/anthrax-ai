@@ -79,6 +79,10 @@ namespace Core
 
             void SetShadows(bool shadows) { HasFrameShadows = shadows; }
             bool GetShadows() { return HasFrameShadows; }
+
+            void SetParticles(bool particle) { HasCompute = particle; }
+            bool GetParticles() { return HasCompute; }
+
         private:
             void PopulateModules();
 
