@@ -43,7 +43,7 @@ namespace Gfx
         uint32_t ID;
         bool IsSelected = false;
 
-        uint32_t GizmoType;
+        uint32_t GizmoType = 0;
 
         uint32_t BufferBind[MAX_FRAMES];
         uint32_t StorageBind[MAX_FRAMES];
@@ -79,9 +79,13 @@ namespace Gfx
         glm::mat4 rendermatrix;
 
         uint32_t hasanimation = 0;
-        uint32_t pad0 = 0;
-        uint32_t pad1 = 0;
-        uint32_t pad2 = 0;
+        uint32_t texturebind = 0;
+        uint32_t storagebind = 0;
+        uint32_t bufferbind = 0;
+        uint32_t objectID = 0;
+        uint32_t selected = 0;
+        uint32_t boneID = 0;
+        uint32_t gizmo = 0;
     };
     
     #define MAX_POINT_LIGHT 512 

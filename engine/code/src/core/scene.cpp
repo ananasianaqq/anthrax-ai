@@ -101,17 +101,9 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
             Gfx::MeshPushConstants constants;
             constants.texturebind = obj.TextureBind[frameind];
             constants.bufferbind = obj.BufferBind[frameind];
-            constants.selected = 0;
-            constants.boneID = -1;
             if (obj.HasStorage) {
                 constants.storagebind = obj.StorageBind[frameind];
                 constants.instancebind = obj.InstanceBind[frameind];
-                constants.objectID = obj.ID;
-                constants.selected = (obj.IsSelected || obj.ID == Core::Scene::GetInstance()->GetSelectedID()) ? 1 : 0;
-                if (Utils::Debug::GetInstance()->Bones) {
-                    constants.boneID = Utils::Debug::GetInstance()->BoneID;
-                }
-                constants.gizmo = obj.GizmoType;
             }
 
             const int meshsize = obj.Model[frameind]->Meshes.size();

@@ -4,7 +4,6 @@
 #include "defines/defines.h"
 
 
-
 vec3 gridplane[6] = vec3[](
     vec3(1, 1, 0), vec3(-1, -1, 0), vec3(-1, 1, 0),
     vec3(-1, -1, 0), vec3(1, 1, 0), vec3(1, -1, 0)

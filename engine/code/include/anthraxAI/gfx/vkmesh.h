@@ -19,10 +19,6 @@ namespace Gfx
         int storagebind = 0;
         int instancebind = 0;
         int bufferbind = 0;
-        int objectID = 0;
-        int selected = 0;
-        int boneID = 0;
-        int gizmo = 0;
     };
 
     struct MeshInfo {
@@ -52,6 +48,7 @@ namespace Gfx
 
             void CreateMeshes();
             void CreateMesh(aiMesh* aimesh, Gfx::MeshInfo* meshinfo);
+            void CreateMeshUnited(aiMesh* aimesh, Gfx::MeshInfo* meshinfo, uint32_t indexsize);
 
             void UpdateDummy();
             void Update(MeshInfo& mesh);

@@ -38,6 +38,15 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, std::f
             module.AddRQ(type, LoadResources(info));
         }
     }
+    // std::sort(module.GetRenderQueue(RQ_GENERAL).begin(), module.GetRenderQueue(RQ_GENERAL).end(), [](const Gfx::RenderObject& a, const Gfx::RenderObject& b) {
+    //         if (a.Model[0] && b.Model[0]) { return a.Model[0] == b.Model[0]; } 
+    //         else { return a.Mesh == b.Mesh; } 
+    //     });
+    // std::sort(module.GetRenderQueue(RQ_LIGHT).begin(), module.GetRenderQueue(RQ_LIGHT).end(), [](const Gfx::RenderObject& a, const Gfx::RenderObject& b) {
+    //         if (a.Model[0] && b.Model[0]) { return a.Model[0] == b.Model[0]; } 
+    //         else { return a.Mesh == b.Mesh; } 
+    //     });
+
     SceneModules[key] = module;
 }
 
@@ -113,6 +122,7 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
 
     if (key == "mask" || key == "gbuffer" || key == "shadows") {
         Modules::RenderQueueVec rq = SceneModules[CurrentScene].GetRenderQueue(RQ_GENERAL);
+        
         for (Gfx::RenderObject& obj : rq) {
             obj.MaterialName = key;
             obj.Material =  Gfx::Pipeline::GetInstance()->GetMaterial(obj.MaterialName);
@@ -123,6 +133,7 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
         if (rq.empty() || key == "shadows") {
             return;
         }
+
         for (Gfx::RenderObject& obj : rq) {
             obj.MaterialName = key;
             obj.Material =  Gfx::Pipeline::GetInstance()->GetMaterial(obj.MaterialName);

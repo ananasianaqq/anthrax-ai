@@ -13,6 +13,16 @@ layout (location = 3) out vec2 outcoord;
 layout (location = 4) out vec4 outweight;
 layout (location = 5) out ivec4 outboneid;
 
+layout(location = 6) out uint texturebind;
+layout(location = 7) out uint storagebind;
+layout(location = 8) out uint bufferbind;
+layout(location = 9) out uint objectID;
+layout(location = 10) out uint selected;
+layout(location = 11) out uint boneID;
+layout(location = 12) out uint gizmo;
+//
 out gl_PerVertex {
     vec4 gl_Position;
 };
+
+

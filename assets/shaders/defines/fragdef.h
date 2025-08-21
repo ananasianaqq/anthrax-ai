@@ -5,6 +5,18 @@ layout (location = 3) in vec2 incoord;
 layout (location = 4) in vec4 inweight;
 layout (location = 5) flat in ivec4 inboneid;
 
+layout(location = 6)flat in uint texturebind;
+layout(location = 7)flat in uint storagebind;
+layout(location = 8)flat in uint bufferbind;
+layout(location = 9)flat in uint objectID;
+layout(location = 10)flat in uint selected;
+layout(location = 11)flat in uint boneID;
+layout(location = 12)flat in uint gizmo;
+//
+
 layout (location = 0) out vec4 outfragcolor;
 
 //layout(set = 1, binding = 0) uniform sampler2D texturesampler;
+
+#define GetTextureIndi() texturebind
+

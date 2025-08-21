@@ -42,11 +42,6 @@ layout( push_constant ) uniform constants
     int bindinstance;
     int bindbuffer;
 
-    int objectID;
-    int selected;
-    int boneID;
-    int gizmo;
-
 } pushconstants;
 
 int GetStorageInd() {
@@ -108,9 +103,13 @@ struct InstanceData {
     mat4 rendermatrix;
 
     uint hasanimation;
-    uint pad0;
-    uint pad1;
-    uint pad2;
+    uint texturebind;
+    uint storagebind;
+    uint bufferbind;
+    uint objectID;
+    uint selected;
+    uint boneID;
+    uint gizmo;
 };
 
 RegisterBuffer(std140, readonly, Instance, {
@@ -126,3 +125,5 @@ RegisterBufferReadWrite(std430, Compute, {
     vec2 velocity[NUM_PARTICLES];
     vec4 color[NUM_PARTICLES];
 });
+
+

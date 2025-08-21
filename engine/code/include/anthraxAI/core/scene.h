@@ -16,7 +16,7 @@
 #include <vulkan/vulkan_core.h>
 #include "anthraxAI/utils/tracy.h"
 
-//#define DRAW_INDIRECT
+#define DRAW_INDIRECT
 
 namespace Core
 {

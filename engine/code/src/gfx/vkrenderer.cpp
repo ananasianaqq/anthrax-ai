@@ -42,8 +42,6 @@ void Gfx::Renderer::RenderIndirectCall(IndirectBatch& batch, MeshInfo* mesh, Ren
 	    Gfx::MeshPushConstants constants;
 	    constants.texturebind = testobj.TextureBind[GetFrameInd()];
 	    constants.bufferbind = testobj.BufferBind[GetFrameInd()];
-        constants.selected = 0;
-        constants.boneID = -1;
         constants.storagebind = testobj.StorageBind[GetFrameInd()];
         constants.instancebind = testobj.InstanceBind[GetFrameInd()];
 	    vkCmdPushConstants(Cmd.GetCmd(), batch.material->PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
@@ -54,20 +52,19 @@ void Gfx::Renderer::RenderIndirectCall(IndirectBatch& batch, MeshInfo* mesh, Ren
 	    	vkCmdBindIndexBuffer(Cmd.GetCmd(), mesh->IndexBuffer.Buffer, 0, VK_INDEX_TYPE_UINT16);
 	    }
 	    
-        VkDeviceSize indirect_offset = batch.first * sizeof(VkDrawIndirectCommand);
-        uint32_t draw_stride = sizeof(VkDrawIndirectCommand);
-        vkCmdDrawIndirect(Cmd.GetCmd(), DrawIndirect.Buffer, indirect_offset, batch.count, draw_stride);
+        VkDeviceSize indirect_offset = batch.first * sizeof(VkDrawIndexedIndirectCommand);
+        uint32_t draw_stride = sizeof(VkDrawIndexedIndirectCommand);
+        vkCmdDrawIndexedIndirect(Cmd.GetCmd(), DrawIndirect.Buffer, indirect_offset, batch.count, draw_stride);
         Utils::Debug::GetInstance()->DebugDrawCall();
-
 }
 
 void Gfx::Renderer::RenderIndirect(const Modules::RenderQueueMap& map)
 {
     void* draw;
-    VkDeviceSize size = MAX_COMMANDS * sizeof(VkDrawIndirectCommand);
+    VkDeviceSize size = MAX_COMMANDS * sizeof(VkDrawIndexedIndirectCommand);
     vkMapMemory(Gfx::Device::GetInstance()->GetDevice(), DrawIndirect.DeviceMemory, 0, size, 0, (void**)&draw);
     
-    VkDrawIndirectCommand* draw_cmds = (VkDrawIndirectCommand*)draw;
+    VkDrawIndexedIndirectCommand* draw_cmds = (VkDrawIndexedIndirectCommand*)draw;
     
     int i = 0;
     RenderObject testobj;
@@ -80,24 +77,23 @@ void Gfx::Renderer::RenderIndirect(const Modules::RenderQueueMap& map)
                 const int meshsize = obj.Model[0]->Meshes.size();
 	            for (int k = 0; k < meshsize; k++) {
                     draw_cmds[i].firstInstance = i;
-                    draw_cmds[i].firstVertex = 0;
+                    draw_cmds[i].firstIndex = 0;
                     draw_cmds[i].instanceCount = 1;
-                    draw_cmds[i].vertexCount += obj.Model[0]->Meshes[k]->Vertices.size(); 
+                    draw_cmds[i].indexCount = obj.Model[0]->Meshes[k]->AIindices.size(); 
                     i++;
                 }
             }
             else {
                 draw_cmds[i].firstInstance = i;
-                draw_cmds[i].firstVertex = 0;
+                draw_cmds[i].firstIndex = 0;
                 draw_cmds[i].instanceCount = 1;
-                draw_cmds[i].vertexCount = obj.Mesh->Vertices.size();
+                draw_cmds[i].indexCount = obj.Mesh->Indices.size();
                     i++;
             }
         }
     }
     vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),DrawIndirect.DeviceMemory);
     
-    MeshInfo* mesh;
     for (IndirectBatch& batch : indirect_batch) {
             RenderIndirectCall(batch, batch.mesh, testobj); 
     }
@@ -105,7 +101,7 @@ void Gfx::Renderer::RenderIndirect(const Modules::RenderQueueMap& map)
 
 void Gfx::Renderer::InitDrawIndirect()
 {
-    VkDeviceSize size = MAX_COMMANDS * sizeof(VkDrawIndirectCommand);
+    VkDeviceSize size = MAX_COMMANDS * sizeof(VkDrawIndexedIndirectCommand);
     BufferHelper::CreateBuffer(DrawIndirect, size, static_cast<VkBufferUsageFlagBits>(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |  VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT));
     DrawIndirect.tag = "indirect buffer";
     VkDebugUtilsObjectNameInfoEXT info;
@@ -156,30 +152,6 @@ void Gfx::Renderer::CompactDrawIndirect(const Modules::RenderQueueMap& map)
                 CompactIndirect(obj.Material, obj.Mesh, i);
                 i++;
             }
-            // bool samemesh;
-            // if (obj.Model[0]) {
-            //     samemesh = indirect_batch.empty() ? false : obj.Model[0] == indirect_batch.back().model;
-            // }
-            // else {
-            //     samemesh = indirect_batch.empty() ? false : obj.Mesh == indirect_batch.back().mesh;
-            // }
-            // bool samemat = indirect_batch.empty() ? false : obj.Material == indirect_batch.back().material;
-            // if (samemesh && samemat) {
-            //     indirect_batch.back().count++;
-            // }
-            // else {
-            //     IndirectBatch batch;
-            //     if (obj.Model[0]) {
-            //         batch.model = obj.Model[0];
-            //     }
-            //     else {
-            //         batch.mesh = obj.Mesh;
-            //     }
-            //     batch.count = 1;
-            //     batch.first = i;
-            //     batch.material = obj.Material;
-            //     indirect_batch.push_back(batch);
-            // }
         }
     }
 }
@@ -199,14 +171,9 @@ void Gfx::Renderer::DrawSimple(Gfx::RenderObject& object)
 	Gfx::MeshPushConstants constants;
 	constants.texturebind = object.TextureBind[GetFrameInd()];
 	constants.bufferbind = object.BufferBind[GetFrameInd()];
-    constants.selected = 0;
-    constants.boneID = -1;
     if (object.HasStorage) {
         constants.storagebind = object.StorageBind[GetFrameInd()];
         constants.instancebind = object.InstanceBind[GetFrameInd()];
-        constants.objectID = object.ID;
-        constants.selected = (object.IsSelected || object.ID == Core::Scene::GetInstance()->GetSelectedID()) ? 1 : 0;
-        constants.boneID = Utils::Debug::GetInstance()->BoneID;
     }
 	vkCmdPushConstants(Cmd.GetCmd(), object.Material->PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
     if (object.IsCompute) {
@@ -242,17 +209,9 @@ void Gfx::Renderer::DrawMesh(Gfx::RenderObject& object, Gfx::MeshInfo* mesh, boo
 	Gfx::MeshPushConstants constants;
 	constants.texturebind = object.TextureBind[GetFrameInd()];
 	constants.bufferbind = object.BufferBind[GetFrameInd()];
-    constants.selected = 0;
-    constants.boneID = -1;
-    if (object.HasStorage) {
+      if (object.HasStorage) {
         constants.storagebind = object.StorageBind[GetFrameInd()];
         constants.instancebind = object.InstanceBind[GetFrameInd()];
-        constants.objectID = object.ID;
-        constants.selected = (object.IsSelected || object.ID == Core::Scene::GetInstance()->GetSelectedID()) ? 1 : 0;
-        if (Utils::Debug::GetInstance()->Bones) {
-            constants.boneID = Utils::Debug::GetInstance()->BoneID;
-        }
-        constants.gizmo = object.GizmoType;
     }
 	vkCmdPushConstants(Cmd.GetCmd(), object.Material->PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
 
@@ -323,8 +282,6 @@ void Gfx::Renderer::Compute(Gfx::RenderObject& object)
     }
 
 	Gfx::MeshPushConstants constants;
-    constants.selected = 0;
-    constants.boneID = -1;
     constants.storagebind = object.StorageBind[GetFrameInd()];
 	vkCmdPushConstants(Cmd.GetCmd(), mat->PipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
 
@@ -814,7 +771,17 @@ void Gfx::Renderer::PrepareInstanceBuffer()
                             }
             datas[i].hasanimation = hasanim ? 1 : 0;
             datas[i].rendermatrix =glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));// * CamData.view *  ;
-            //glm::mat4(1.0f);
+	 datas[i].texturebind = obj.TextureBind[GetFrameInd()];
+	 datas[i].bufferbind = obj.BufferBind[GetFrameInd()];
+	//    datas[i].boneID = -1;
+	    if (obj.HasStorage) {
+	        datas[i].storagebind = obj.StorageBind[GetFrameInd()];
+	        datas[i].objectID = obj.ID;
+	        datas[i].selected = (obj.IsSelected || obj.ID == Core::Scene::GetInstance()->GetSelectedID()) ? 1 : 0;
+	        datas[i].boneID = Utils::Debug::GetInstance()->Bones ? Utils::Debug::GetInstance()->BoneID : 0;
+	        datas[i].gizmo = obj.GizmoType;
+	    }
+	//
             i++;
         }
     }
@@ -833,6 +800,17 @@ void Gfx::Renderer::PrepareInstanceBuffer()
 
             datas[i].rendermatrix = glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));
             datas[i].rendermatrix = glm::scale(datas[i].rendermatrix, distfin);
+            datas[i].texturebind = obj.TextureBind[GetFrameInd()];
+	 datas[i].bufferbind = obj.BufferBind[GetFrameInd()];
+	//    datas[i].boneID = -1;
+	    if (obj.HasStorage) {
+	        datas[i].storagebind = obj.StorageBind[GetFrameInd()];
+	        datas[i].objectID = obj.ID;
+	        datas[i].selected = (obj.IsSelected || obj.ID == Core::Scene::GetInstance()->GetSelectedID()) ? 1 : 0;
+	        datas[i].boneID = Utils::Debug::GetInstance()->Bones ? Utils::Debug::GetInstance()->BoneID : 0;
+	        datas[i].gizmo = obj.GizmoType;
+	    }
+
             i++;
         }
 

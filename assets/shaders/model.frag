@@ -6,24 +6,24 @@
 
 void main()
 {
-    vec4 mousepos = GetResource(Camera, GetUniformInd()).mousepos;
+    vec4 mousepos = GetResource(Camera, bufferbind).mousepos;
 
     uint depth_ind = uint(gl_FragCoord.z * DEPTH_ARRAY_SCALE);
     if( length(mousepos.xy - gl_FragCoord.xy) < 2)
     {
-        GetResource(Storage, GetStorageInd()).data[depth_ind] = pushconstants.objectID;
+        GetResource(Storage, storagebind).data[depth_ind] = objectID;
     }
 
 vec2 uv = incoord.xy;
 //uv.y *= -1;
-    vec4 color = texture(textures[GetTextureInd()], uv.xy).xyzw;
-    if (pushconstants.selected == 1) {
+    vec4 color = texture(textures[texturebind], uv.xy).xyzw;
+    if (selected == 1) {
         color.rgb += vec3(0.1);
         color.rgb = clamp(color.rgb, 0.0, 1.0);
     }
-    if (pushconstants.boneID != -1) {
+    if (boneID != -1) {
         for (int i = 0; i < 4; i++) {
-            if (pushconstants.boneID == inboneid[i]) {
+            if (boneID == inboneid[i]) {
                 if (inweight[i] >= 0.7) {
                     color.xyz = vec3(1, 0, 0) * inweight[i];
                 }

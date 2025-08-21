@@ -1,6 +1,7 @@
 #include "anthraxAI/gfx/model.h"
 #include "anthraxAI/core/scene.h"
 #include "anthraxAI/gfx/vkbase.h"
+#include <cstdint>
 #include <cstring>
 
 void Gfx::Model::SetVertexBoneData(Gfx::Vertex& vert, int id, float weight)
@@ -14,7 +15,7 @@ void Gfx::Model::SetVertexBoneData(Gfx::Vertex& vert, int id, float weight)
     }
 }
 
-void Gfx::Model::ProcessBones(std::vector<Vertex>& vert, const std::string& path, aiMesh* aimesh)
+void Gfx::Model::ProcessBones(std::vector<Vertex>& vert, const std::string& path, aiMesh* aimesh, uint32_t vertsize)
 {
    for(unsigned int j = 0; j < aimesh->mNumBones; j++) {
 
@@ -44,6 +45,32 @@ void Gfx::Model::ProcessBones(std::vector<Vertex>& vert, const std::string& path
             SetVertexBoneData(vert[vertexID], boneID, weight);
         }
     }
+}
+void Gfx::Model::ProcessNode2(const std::string& path, aiNode *node, const aiScene *scene)
+{
+    Models[path].MeshBase.resize(scene->mNumMeshes);
+    Models[path].texturename = path;
+    int meshsize = scene->mNumMeshes;
+    Models[path].Meshes.reserve(meshsize);
+    Gfx::MeshInfo* meshinfo = new Gfx::MeshInfo;
+uint32_t ind = 0;
+    for (int i = 0; i < meshsize; i++) {
+
+        aiMesh* aimesh = scene->mMeshes[i];
+    
+        ind  += meshinfo->Vertices.empty() ? 0 : meshinfo->Vertices.size();
+        Gfx::Mesh::GetInstance()->CreateMeshUnited(aimesh, meshinfo,ind);
+
+        Models[path].MeshBase[i] = TotalVertex;
+        TotalVertex += aimesh->mNumVertices;
+        Models[path].Bones.Vertext2Bone.resize(TotalVertex);
+
+        if (aimesh->HasBones()) {
+            ProcessBones(meshinfo->Vertices, path, aimesh, meshinfo->Vertices.size());
+        }
+        Gfx::Mesh::GetInstance()->UpdateMesh(meshinfo);
+    }
+    Models[path].Meshes.push_back(meshinfo);
 }
 
 void Gfx::Model::ProcessNode(const std::string& path, aiNode *node, const aiScene *scene)
@@ -122,7 +149,12 @@ void Gfx::Model::LoadModel(const std::string& path)
 
     TotalVertex = 0;
     BoneCounter = 0;
-    ProcessNode(path, scene->mRootNode, scene);
+    if (scene->HasAnimations()) {
+        ProcessNode(path, scene->mRootNode, scene);
+    }
+    else {
+        ProcessNode2(path, scene->mRootNode, scene);
+    }
 
     importer.FreeScene();
 }

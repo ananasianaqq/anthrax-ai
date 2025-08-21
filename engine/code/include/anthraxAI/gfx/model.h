@@ -14,7 +14,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-#define IMPORT_PROPS (aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices)
+#define IMPORT_PROPS (aiProcess_Triangulate | aiProcess_GenNormals | aiProcess_JoinIdenticalVertices | aiProcess_OptimizeGraph)
 #define ARRAY_SIZE_IN_ELEMENTS(a) (sizeof(a)/sizeof(a[0]))
 
 namespace Gfx
@@ -46,7 +46,6 @@ namespace Gfx
     struct BoneInfo {
         std::vector<VertexBoneData> Vertext2Bone;
         std::map<std::string, int> BoneMap;
-        std::vector<glm::mat4> Transformers;
         std::vector<Bone> Info;
         std::vector<glm::mat4> FinTransform;
     };
@@ -71,8 +70,9 @@ namespace Gfx
             void CleanAll();
 
         private:
-            void ProcessBones(std::vector<Vertex>& vert, const std::string& path, aiMesh* aimesh);
+            void ProcessBones(std::vector<Vertex>& vert, const std::string& path, aiMesh* aimesh, uint32_t vertsize = 0);
             void ProcessNode(const std::string& path, aiNode *node, const aiScene *scene);
+            void ProcessNode2(const std::string& path, aiNode *node, const aiScene *scene);
 
             void SetVertexBoneData(Gfx::Vertex& vert, int id, float weight);
             

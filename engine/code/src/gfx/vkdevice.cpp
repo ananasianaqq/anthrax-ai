@@ -71,6 +71,8 @@ void Gfx::Device::CreateDevice()
     VkPhysicalDeviceFeatures devicefeatures{};
 	devicefeatures.samplerAnisotropy = VK_TRUE;
     devicefeatures.fragmentStoresAndAtomics = VK_TRUE;
+    devicefeatures.multiDrawIndirect = VK_TRUE;
+    devicefeatures.drawIndirectFirstInstance = VK_TRUE;
     
     VkPhysicalDeviceVulkan12Features features12{};
     features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
