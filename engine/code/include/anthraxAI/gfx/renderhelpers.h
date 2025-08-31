@@ -8,13 +8,44 @@
 #include "anthraxAI/utils/tracy.h"
 #include "glm/fwd.hpp"
 
+
 namespace Gfx
 {
+    // struct NodeRootsCompute {
+    //     alignas(16)glm::mat4 Offset;
+    //     alignas(16)glm::mat4 Transform;
+    //
+    //    alignas(4) int settransform = 0;
+    //    alignas(4) int Index;
+    //    alignas(4) int AnimInd;
+    //    alignas(4) int BoneInd;
+    //
+    // };
+    // struct NodeAnimCompute {
+    //     alignas(16)glm::mat4 scale;
+    //     alignas(16)glm::mat4 rot;
+    //     alignas(16)glm::mat4 pos;
+    //     // alignas(16) glm::quat RotationKeys[500];
+    //     // alignas(16) glm::vec4 PositionKeys[500];
+    //     // alignas(16) glm::vec4 ScalingKeys[500];
+    //     // float PositionTime[500];
+    //     // float RotationTime[500];
+    //     // float ScalingTime[500];
+    //     alignas(4) int isempty = 1;
+    //     // uint32_t pad0 = 1;
+    //     // uint32_t pad1 = 1;
+    //     // uint32_t pad2 = 1;
+    //     // uint32_t NumPositionsKeys;
+    //     // uint32_t NumRotationKeys;
+    //     // uint32_t NumScalingKeys;
+    // };
+
     enum BindlessDataType {
         BINDLESS_DATA_NONE = 0,
         BINDLESS_DATA_CAM_STORAGE_SAMPLER,
         BINDLESS_DATA_CAM_BUFFER,
-        BINDLESS_DATA_COMPUTE,
+        BINDLESS_DATA_PARTICLES,
+        BINDLESS_DATA_STORAGE,
         BINDLESS_DATA_SIZE
     };
     struct Material {
@@ -34,6 +65,7 @@ namespace Gfx
 
 	    Vector3<float> Position;
         
+        bool HasAnimation = false;
         bool IsCompute = false;
         bool VertexBase = false;
         bool IsGrid = false;
@@ -56,11 +88,10 @@ namespace Gfx
         uint32_t first;
         uint32_t count = 1;
     };
-    #define MAX_COMMANDS 1000 
+    #define MAX_COMMANDS 5000 
     #define DEPTH_ARRAY_SCALE 1000 
     #define MAX_BONES 200
-    #define MAX_INSTANCES 10000
-    #define INSTANCES_ARRAY_SIZE (sizeof(glm::mat4) * MAX_INSTANCES)
+    #define MAX_INSTANCES 9600 
     #define BONE_ARRAY_SIZE (sizeof(glm::mat4) * MAX_BONES)
     
     #define NUM_PARTICLES_PER_WORKGROUP 64
@@ -76,8 +107,12 @@ namespace Gfx
     };
     struct InstanceData {
         glm::mat4 bonesmatrices[MAX_BONES];
+        glm::mat4 anim_transforms[MAX_BONES];
         glm::mat4 rendermatrix;
-
+    
+        glm::vec4 position;
+        glm::vec4 gizmo_dist;
+        
         uint32_t hasanimation = 0;
         uint32_t texturebind = 0;
         uint32_t storagebind = 0;
@@ -88,6 +123,50 @@ namespace Gfx
         uint32_t gizmo = 0;
     };
     
+    struct AnimationComputeData {
+         // alignas(alignof(NodeAnimCompute)) NodeAnimCompute animnodes[MAX_BONES];
+         // alignas(alignof(NodeRootsCompute)) NodeRootsCompute noderoots[MAX_BONES];
+        
+
+        glm::mat4 nodeOffset[100];
+        glm::mat4 nodeTransform[100];
+
+        // glm::mat4 animrot[200];
+        glm::mat4 rot_out[100];
+        glm::mat4 rot_start[100];
+        glm::mat4 rot_end[100];
+
+    //
+       glm::vec4 pos_out[100];
+       glm::vec4 pos_start[100];
+       glm::vec4 pos_end[100];
+
+       glm::vec4 scale_out[100];
+       glm::vec4 scale_start[100];
+       glm::vec4 scale_end[100];
+    //
+
+        glm::mat4 global_transform;
+       
+        float rot_factor[100];
+        float pos_factor[100];
+        float scale_factor[100];
+        
+        int rot_comp[100];
+        int pos_comp[100];
+        int scale_comp[100]; 
+       int animisempty[100];
+       int nodesettransform[100];
+       int nodeIndex[100];
+       int nodeAnimInd[100];
+       int nodeBoneInd[100];
+
+       int animsize = 0;
+       int rootssize = 0;
+       float timetick = 0;
+       float pad0 = 0;
+    };
+
     #define MAX_POINT_LIGHT 512 
     struct CameraData {
         glm::vec4 viewpos;

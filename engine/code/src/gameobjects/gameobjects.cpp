@@ -231,6 +231,8 @@ Keeper::Base::Base()
     DefaultObjects[Infos::INFO_INTRO] = modules;
     modules.Material = "particles-draw";
     DefaultObjects[Infos::INFO_PARTICLES] = modules;
+    modules.Material = "compute_mtx";
+    DefaultObjects[Infos::INFO_COMPUTE_MTX] = modules;
 
     modules.Material = "grid";
     modules.Texture = "dummy.png";
@@ -266,25 +268,28 @@ Keeper::Base::Base()
 
 void Keeper::Base::Update()
 {
+#ifdef TRACY
+    ZoneScopedN("Keeper::Base::Update");
+#endif
     std::vector<Objects*>::iterator camera_it = std::find_if(ObjectsList[Keeper::Type::CAMERA].begin(), ObjectsList[Keeper::Type::CAMERA].end(), [](const Keeper::Objects* obj) { return obj->CameraType() == static_cast<uint32_t>(Keeper::Camera::Type::EDITOR); });
     Keeper::Camera* camera = reinterpret_cast<Keeper::Camera*>(*camera_it);
 
     glm::mat4 view = glm::lookAt(camera->GetPos(), camera->GetPos() + camera->GetFront(), camera->GetUp());
 	glm::mat4 projection = glm::perspective(glm::radians(45.f), float(Gfx::Device::GetInstance()->GetSwapchainSize().x) / float(Gfx::Device::GetInstance()->GetSwapchainSize().y), 0.01f, 100.0f);
 
-    for (auto& it : ObjectsList) {
-        if (it.first == Keeper::Type::GIZMO || it.first == Keeper::Type::CAMERA || it.first == Keeper::Type::SPRITE) continue;
-        
-        for (Keeper::Objects* obj : it.second) {
-            if (obj->GetModelName().empty()) continue;
-            Thread::Pool::GetInstance()->Push({
-            Thread::Task::Name::UPDATE, Thread::Task::Type::EXECUTE, [this, projection, view](int i, Keeper::Objects* obj) {
-
-            bool visible = Keeper::Collision::Cull(projection * view, obj);
-        //printf("----%s|%d\n", obj->GetModelName().c_str(), visible);
-            obj->SetVisible(visible);}, {}, 0, obj, {} });
-        }
-    }
+    // for (auto& it : ObjectsList) {
+    //     if (it.first == Keeper::Type::GIZMO || it.first == Keeper::Type::CAMERA || it.first == Keeper::Type::SPRITE) continue;
+    //
+    //     for (Keeper::Objects* obj : it.second) {
+    //         if (obj->GetModelName().empty()) continue;
+    //         Thread::Pool::GetInstance()->Push({
+    //         Thread::Task::Name::UPDATE, Thread::Task::Type::EXECUTE, [this, projection, view](int i, Keeper::Objects* obj) {
+    //
+    //         bool visible = Keeper::Collision::Cull(projection * view, obj);
+    //     //printf("----%s|%d\n", obj->GetModelName().c_str(), visible);
+    //         obj->SetVisible(visible);}, {}, 0, obj, {} });
+    //     }
+    // }
 
     int id = SelectedID;
     std::vector<Objects*>::iterator light_it = ObjectsList[Keeper::Type::LIGHT].end();

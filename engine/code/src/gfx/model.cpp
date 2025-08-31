@@ -39,7 +39,7 @@ void Gfx::Model::ProcessBones(std::vector<Vertex>& vert, const std::string& path
         int numweights = aimesh->mBones[j]->mNumWeights;
         int vertexID = 0;
         for (int weightind = 0; weightind < numweights; ++weightind) {
-            vertexID = weights[weightind].mVertexId;
+            vertexID = weights[weightind].mVertexId + vertsize;
             float weight = weights[weightind].mWeight;
             ASSERT(!(vertexID <= vert.size()), "vertex weight loading error\n");
             SetVertexBoneData(vert[vertexID], boneID, weight);
@@ -53,12 +53,13 @@ void Gfx::Model::ProcessNode2(const std::string& path, aiNode *node, const aiSce
     int meshsize = scene->mNumMeshes;
     Models[path].Meshes.reserve(meshsize);
     Gfx::MeshInfo* meshinfo = new Gfx::MeshInfo;
-uint32_t ind = 0;
+    uint32_t ind = 0;
+    uint32_t boneind = 0;
     for (int i = 0; i < meshsize; i++) {
 
         aiMesh* aimesh = scene->mMeshes[i];
     
-        ind  += meshinfo->Vertices.empty() ? 0 : meshinfo->Vertices.size();
+        ind  = meshinfo->Vertices.empty() ? 0 : meshinfo->Vertices.size();
         Gfx::Mesh::GetInstance()->CreateMeshUnited(aimesh, meshinfo,ind);
 
         Models[path].MeshBase[i] = TotalVertex;
@@ -66,10 +67,11 @@ uint32_t ind = 0;
         Models[path].Bones.Vertext2Bone.resize(TotalVertex);
 
         if (aimesh->HasBones()) {
-            ProcessBones(meshinfo->Vertices, path, aimesh, meshinfo->Vertices.size());
+            ProcessBones(meshinfo->Vertices, path, aimesh, boneind);
+            boneind = meshinfo->Vertices.size();
         }
-        Gfx::Mesh::GetInstance()->UpdateMesh(meshinfo);
     }
+    Gfx::Mesh::GetInstance()->UpdateMesh(meshinfo);
     Models[path].Meshes.push_back(meshinfo);
 }
 
@@ -149,12 +151,12 @@ void Gfx::Model::LoadModel(const std::string& path)
 
     TotalVertex = 0;
     BoneCounter = 0;
-    if (scene->HasAnimations()) {
-        ProcessNode(path, scene->mRootNode, scene);
-    }
-    else {
+    // if (scene->HasAnimations()) {
+    //     ProcessNode(path, scene->mRootNode, scene);
+    // }
+    // else {
         ProcessNode2(path, scene->mRootNode, scene);
-    }
+    // }
 
     importer.FreeScene();
 }

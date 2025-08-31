@@ -1,6 +1,6 @@
 #pragma once
 
-//#define TRACY
+// #define TRACY
 
 #include "anthraxAI/gfx/vkdefines.h"
 #include "tracy/Tracy.hpp"

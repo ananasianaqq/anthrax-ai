@@ -237,6 +237,29 @@ void Gfx::DescriptorsBase::AllocateStorageBuffers()
         	vkFreeMemory(Gfx::Device::GetInstance()->GetDevice(), InstanceBuffer[i].DeviceMemory, nullptr);
 	    });
     }
+
+#ifdef COMPUTE_MTX
+
+    buffersize = sizeof(AnimationComputeData) * MAX_INSTANCES ;
+    for (int i = 0; i < MAX_FRAMES; i++) {
+	    BufferHelper::CreateBuffer(AnimationBuffer[i], buffersize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+        AnimationBuffer[i].tag = "animation";
+    }
+	info.pNext = nullptr;
+	info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+	info.objectHandle = reinterpret_cast<uint64_t>(AnimationBuffer[0].DeviceMemory);
+	info.objectType = VK_OBJECT_TYPE_DEVICE_MEMORY;;
+	info.pObjectName = "animation buffer #1 frame";
+	Gfx::Vulkan::GetInstance()->SetDebugName(info);
+
+    for (int i = 0; i < MAX_FRAMES; i++) {
+        Core::Deletor::GetInstance()->Push(Core::Deletor::Type::NONE, [=, this]() {
+	    	vkDestroyBuffer(Gfx::Device::GetInstance()->GetDevice(), AnimationBuffer[i].Buffer, nullptr);
+        	vkFreeMemory(Gfx::Device::GetInstance()->GetDevice(), AnimationBuffer[i].DeviceMemory, nullptr);
+	    });
+    }
+
+#endif // COMPUTE_MTX
 }
 
 void Gfx::DescriptorsBase::CleanAll()
@@ -267,7 +290,7 @@ void Gfx::DescriptorsBase::Init()
 		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 		VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 		VK_SHADER_STAGE_FRAGMENT_BIT,
-		VK_SHADER_STAGE_COMPUTE_BIT,
+		VK_SHADER_STAGE_COMPUTE_BIT | VK_SHADER_STAGE_VERTEX_BIT,
 	};
 	VkDescriptorBindingFlags flags[MAX_BINDING];
 	VkDescriptorType types[MAX_BINDING] = {

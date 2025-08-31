@@ -5,10 +5,16 @@
 
 void Thread::Pool::Process(const Task& task)
 {
+#ifdef TRACY
+    ZoneScopedN("Thread::Pool::Process");
+#endif
     switch (task.type) {
         case Thread::Task::Type::EXECUTE: {
             if (task.name == Thread::Task::Name::RENDER) {
                 task.func1();
+            }
+            else if (task.name == Thread::Task::Name::ANIM) {
+                task.func2(task.model, task.scene);
             }
             else {
                 if (task.info && task.func) {
@@ -32,6 +38,9 @@ void Thread::Pool::WaitRender()
 
 void Thread::Pool::WaitWork()
 {
+#ifdef TRACY
+    ZoneScopedN("Thread::Pool::WaitWork");
+#endif
     for (int i = 0; i < Threads.size(); i++) {
         std::unique_lock<std::mutex> lock(Mutex[i]);
         WorkCondition[i].wait(lock, [this, i]{ return Queue[i].empty(); });
@@ -40,6 +49,9 @@ void Thread::Pool::WaitWork()
 
 void Thread::Pool::WorkRender(int id)
 {
+#ifdef TRACY
+    ZoneScopedN("Thread::Pool::WorkRender");
+#endif
     while (!Done) {
         Task task;
         {
@@ -65,6 +77,9 @@ void Thread::Pool::WorkRender(int id)
 
 void Thread::Pool::Work(int id)
 {
+#ifdef TRACY
+    ZoneScopedN("Thread::Pool::Work");
+#endif
     while (!Done) {
         Task task;
         {

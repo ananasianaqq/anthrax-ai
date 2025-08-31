@@ -99,6 +99,7 @@ namespace Modules
             bool HasFrameOutline() const { return HasOutline; }
             void ReloadAnimation(uint32_t id, const std::string& s) { if (Animator) { Animator->Reload(id, s); } }
             bool HasAnimation(uint32_t id) { if (Animator) { return Animator->HasAnimation(id); } return false; }
+            const Core::aiSceneInfo& GetInfo(Gfx::ModelInfo* info, uint32_t id) {  return Animator->Update2(info, id);   }
             void SetRenderQueue(QueueType type, const std::string& key, RenderQueueVec& rq) { SceneModules[key].SetRenderQueue(type, rq); }
 
             void RestartAnimator();

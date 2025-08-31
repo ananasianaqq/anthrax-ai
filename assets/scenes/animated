@@ -1,9 +1,9 @@
 Scene: animated
 Object:
 Spawn:
-x: 20 
+x: 30 
 y: 1
-z: 20
+z: 30
 ID: 0
 Position:
 x: 0

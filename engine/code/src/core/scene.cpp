@@ -113,7 +113,7 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
             }
         }
         vkEndCommandBuffer(secondary_cmd);
-        }, 0,  nullptr, nullptr, nullptr});
+        }, nullptr, 0,  nullptr, nullptr, nullptr});
 
         first_obj_size = sec_obj_size;
     }
@@ -138,7 +138,12 @@ void Core::Scene::Compute(Modules::Module& module)
     uint32_t frameind = Gfx::Renderer::GetInstance()->GetFrameInd();
     for (auto& it : module.GetRenderQueueMap()) {
         for (Gfx::RenderObject& obj : it.second) {
-           Gfx::Renderer::GetInstance()->Compute(obj);
+            if (module.GetTag() == "particles") {
+                Gfx::Renderer::GetInstance()->ComputeParticles(obj);
+            }
+            else {
+                Gfx::Renderer::GetInstance()->Compute(obj);
+            }
         }
     }
     
@@ -179,7 +184,7 @@ void Core::Scene::Render(Modules::Module& module)
 void Core::Scene::RenderScene(bool playmode)
 {
 #ifdef TRACY
-    START_FRAME("frame") 
+    //START_FRAME("frame") 
     ZoneScopedN("Scene::RenderScene");
 #endif
     if (Gfx::Renderer::GetInstance()->BeginFrame()) {
@@ -199,6 +204,9 @@ void Core::Scene::RenderScene(bool playmode)
                 Gfx::Renderer::GetInstance()->EndRender();
             }
             else {
+#ifdef COMPUTE_MTX
+                    Compute(GameModules->Get("compute_mtx"));
+#endif
                 if (HasCompute) {
                     Compute(GameModules->Get("particles"));
                     
@@ -298,12 +306,15 @@ void Core::Scene::RenderScene(bool playmode)
         RenderPassed = false;
     }
 #ifdef TRACY
-    END_FRAME("frame"); 
+    //END_FRAME("frame"); 
 #endif
 }
 
 void Core::Scene::Loop()
 {
+#ifdef TRACY
+    ZoneScopedN("Scene::Loop");
+#endif
     Core::Audio::GetInstance()->Play();
     
     if (Utils::IsBitSet(Engine::GetInstance()->GetState(), ENGINE_STATE_RESOURCE_RELOAD)) {
@@ -528,14 +539,23 @@ void Core::Scene::PopulateModules()
         }
         {
             Modules::Info info;
-            info.BindlessType = Gfx::BINDLESS_DATA_COMPUTE;
+            info.BindlessType = Gfx::BINDLESS_DATA_PARTICLES;
             info.IAttachments.Add(Gfx::RT_MAIN_COLOR);
             GameModules->Populate("particles", info,
                 GameObjects->GetInfo(Keeper::Infos::INFO_PARTICLES)
             );
             Gfx::Renderer::GetInstance()->PrepareCompute();
         }
-
+#ifdef COMPUTE_MTX
+        {
+            Modules::Info info;
+            info.BindlessType = Gfx::BINDLESS_DATA_STORAGE;
+            info.IAttachments.Add(Gfx::RT_MAIN_COLOR);
+            GameModules->Populate("compute_mtx", info,
+                GameObjects->GetInfo(Keeper::Infos::INFO_COMPUTE_MTX)
+            );
+        }
+#endif
         HasFrameGrid = true;
         HasFrameGizmo = true;
     }

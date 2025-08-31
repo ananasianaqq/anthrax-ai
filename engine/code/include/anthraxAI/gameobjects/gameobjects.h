@@ -54,6 +54,7 @@ namespace Keeper {
         INFO_SHADOWS,
         INFO_LIGHTING,
         INFO_PARTICLES,
+        INFO_COMPUTE_MTX,
         INFO_SIZE
     };
 

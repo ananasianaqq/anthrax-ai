@@ -4,6 +4,7 @@
 #include "anthraxAI/gfx/vkdefines.h"
 #include "anthraxAI/gfx/vkmesh.h"
 #include "anthraxAI/core/deletor.h"
+#include "glm/fwd.hpp"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -35,8 +36,7 @@ namespace Gfx
     };
     struct Bone {
         glm::mat4 Offset;
-	    glm::mat4 FinTransform;
-
+	    glm::mat4 FinTransform = glm::mat4(1);
 	    Bone() {};
 	    Bone(const glm::mat4& offs) {
 		  Offset = offs;
@@ -45,7 +45,7 @@ namespace Gfx
     };
     struct BoneInfo {
         std::vector<VertexBoneData> Vertext2Bone;
-        std::map<std::string, int> BoneMap;
+        std::unordered_map<std::string, int> BoneMap;
         std::vector<Bone> Info;
         std::vector<glm::mat4> FinTransform;
     };
@@ -55,6 +55,7 @@ namespace Gfx
         std::vector<int> MeshBase;
 
         BoneInfo Bones;
+        
     };
     typedef std::unordered_map<std::string, ModelInfo> ModelsMap;
 

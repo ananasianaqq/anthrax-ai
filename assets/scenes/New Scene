@@ -1,11 +1,13 @@
 Scene: New Scene
 	Shadows:
+	Cubemaps:
+		name: cubemaps/skybox
 Object:
 		ID: cube
 	Position:
-		x: -3.049608
-		y: 6.235694
-		z: -7.923649
+		x: 3.935591
+		y: 4.015877
+		z: -4.141810
 	Material:
 		name: models
 		frag: model.frag
@@ -15,10 +17,10 @@ Object:
 	Model:
 		name: cube.obj
 Object:
-		ID: plane
+		ID: yyyy
 	Position:
 		x: 0.000000
-		y: 1.510511
+		y: 1.719604
 		z: 0.000000
 	Material:
 		name: models
@@ -29,57 +31,11 @@ Object:
 	Model:
 		name: plane.obj
 Object:
-		ID: monkey
-	Position:
-		x: 6.781179
-		y: 3.349432
-		z: 0.000000
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Model:
-		name: monkeytextured.obj
-Object:
-		ID: monkey_1
-	Position:
-		x: 3.920032
-		y: 2.470704
-		z: -4.582834
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Model:
-		name: monkeytextured.obj
-Object:
-		ID: light
+		ID: lllll
 	Position:
 		x: 0.000000
-		y: 5.072965
-		z: 0.000000
-	Material:
-		name: models
-	frag:
-	vert:
-	Texture:
-		name: dummy.png
-	Light:
-		name: sphere.obj
-	Color:
-		x: 0.900000
-		y: 0.000000
-		z: 0.983000
-Object:
-		ID: liii
-	Position:
-		x: 4.788721
-		y: 4.215597
-		z: -1.043156
+		y: 3.470238
+		z: 15.422059
 	Material:
 		name: models
 	frag:
@@ -90,6 +46,6 @@ Object:
 		name: sphere.obj
 	Color:
 		x: 1.000000
-		y: 1.000000
+		y: 0.000000
 		z: 1.000000
 

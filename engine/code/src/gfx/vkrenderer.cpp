@@ -1,4 +1,5 @@
 #include "anthraxAI/gfx/vkrenderer.h"
+#include "anthraxAI/core/animator.h"
 #include "anthraxAI/core/scene.h"
 #include "anthraxAI/gamemodules/modules.h"
 #include "anthraxAI/gameobjects/gameobjects.h"
@@ -25,12 +26,16 @@
 #include <cstdio>
 #include <cstring>
 #include <sys/types.h>
+#include <tracy/Tracy.hpp>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 #include <random>
 
 void Gfx::Renderer::RenderIndirectCall(IndirectBatch& batch, MeshInfo* mesh, RenderObject& testobj)
 {
+#ifdef TRACY
+    ZoneScopedN("Renderer::RenderIndirectCall");
+#endif
     bool bindpipe, bindindex = false;
      CheckTmpBindings(mesh, batch.material, &bindpipe, &bindindex);
 
@@ -60,6 +65,9 @@ void Gfx::Renderer::RenderIndirectCall(IndirectBatch& batch, MeshInfo* mesh, Ren
 
 void Gfx::Renderer::RenderIndirect(const Modules::RenderQueueMap& map)
 {
+#ifdef TRACY
+    ZoneScopedN("Renderer::RenderIndirect");
+#endif
     void* draw;
     VkDeviceSize size = MAX_COMMANDS * sizeof(VkDrawIndexedIndirectCommand);
     vkMapMemory(Gfx::Device::GetInstance()->GetDevice(), DrawIndirect.DeviceMemory, 0, size, 0, (void**)&draw);
@@ -139,6 +147,9 @@ void Gfx::Renderer::CompactIndirect(Material* mat, MeshInfo* mesh, int i)
 
 void Gfx::Renderer::CompactDrawIndirect(const Modules::RenderQueueMap& map)
 {
+#ifdef TRACY
+    ZoneScopedN("Renderer::CompactDrawIndirect");
+#endif
     int i = 0;
     for (const auto& it : map) {
         for (const RenderObject& obj : it.second) {
@@ -198,6 +209,9 @@ void Gfx::Renderer::DrawMeshes(Gfx::RenderObject& object)
 }
 void Gfx::Renderer::DrawMesh(Gfx::RenderObject& object, Gfx::MeshInfo* mesh, bool ismodel)
 {
+#ifdef TRACY
+    ZoneScopedN("Renderer::DrawMesh");
+#endif
 	bool bindpipe, bindindex = false;
 	CheckTmpBindings(mesh, object.Material, &bindpipe, &bindindex);
 
@@ -269,6 +283,30 @@ void Gfx::Renderer::Draw(Gfx::RenderObject& object)
 }
 
 void Gfx::Renderer::Compute(Gfx::RenderObject& object)
+{
+#ifdef TRACY
+     ZoneScopedN("Renderer::PrepareInstanceBuffer::compute");
+#endif
+	bool bindpipe, bindindex = false;
+    Gfx::Material* mat = object.Material;
+    CheckTmpBindings(nullptr, mat, &bindpipe, &bindindex);
+
+	if (bindpipe) {
+	    vkCmdBindDescriptorSets(Cmd.GetCmd(), VK_PIPELINE_BIND_POINT_COMPUTE, mat->PipelineLayout, 0, 1, Gfx::DescriptorsBase::GetInstance()->GetBindlessSet(GetFrameInd()), 0, nullptr);
+		vkCmdBindPipeline(Cmd.GetCmd(), VK_PIPELINE_BIND_POINT_COMPUTE, mat->Pipeline);
+    }
+
+	Gfx::MeshPushConstants constants;
+    constants.storagebind = object.StorageBind[GetFrameInd()];
+    constants.instancebind = object.InstanceBind[GetFrameInd()];
+	vkCmdPushConstants(Cmd.GetCmd(), mat->PipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(Gfx::MeshPushConstants), &constants);
+
+    vkCmdDispatch(Cmd.GetCmd(), u_int32_t(MAX_INSTANCES) / 256, 1, 1);
+//printf("sizeof------%lu|%lu\n", sizeof(glm::vec4), sizeof(glm::vec2));
+    Cmd.MemoryBarrier(VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT);
+}
+
+void Gfx::Renderer::ComputeParticles(Gfx::RenderObject& object)
 {
     Cmd.MemoryBarrier(VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
@@ -591,6 +629,9 @@ void Gfx::Renderer::PrepareCompute()
 
 void Gfx::Renderer::PrepareStorageBuffer()
 {
+#ifdef TRACY
+    ZoneScopedN("Renderer::PrepareStorageBuffer");
+#endif
     /*if (!Core::WindowManager::GetInstance()->IsMousePressed()) {*/
     /*    u_int dst[DEPTH_ARRAY_SCALE] = {0};*/
     /*    BufferHelper::MapMemory(Gfx::DescriptorsBase::GetInstance()->GetStorageUBO(), sizeof(u_int) * DEPTH_ARRAY_SCALE, 0, dst);*/
@@ -663,267 +704,267 @@ uint32_t dst[DEPTH_ARRAY_SCALE] = {0};
 
 }
 
-/*void Gfx::Renderer::GetTransforms(InstanceData* datas, Gfx::RenderObject obj, int i)*/
-/*{*/
-/*    std::vector<glm::mat4> bonevec = {}; */
-/*                bonevec = Core::Scene::GetInstance()->UpdateAnimation(obj);*/
-/**/
-/*                for(int k = 0; (k < obj.Model->Bones.FinTransform.size() ); k++) {*/
-/*                    datas[i].bonesmatrices[k] = obj.Model->Bones.FinTransform[k];//vec[i]*/
-/*                }*/
-/**/
-/*}*/
-
 void Gfx::Renderer::PrepareInstanceBuffer()
 {
-    const size_t buffersize = sizeof(InstanceData) * MAX_INSTANCES ;
-    void* instancedata;
-    vkMapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetInstanceBufferMemory(GetFrameInd()), 0, buffersize, 0, (void**)&instancedata);
-
-    Modules::ScenesMap map =  Core::Scene::GetInstance()->GetScenes();
+    Modules::ScenesMap& map =  Core::Scene::GetInstance()->GetScenes();
     Modules::Module& modulegizmo = map["gizmo"];
     Modules::Module& module = map[Core::Scene::GetInstance()->GetCurrentScene()];
-    u_int32_t obj_size = module.GetRenderQueue(Modules::RQ_GENERAL).size();
-    uint32_t inst_ind = 0;//Gfx::Renderer::GetInstance()->GetInstanceInd();
-    //
-    std::vector<uint32_t> num_obj_per_thread(Thread::MAX_RENDER_THREAD_NUM, (uint32_t)module.GetRenderQueue(Modules::RQ_GENERAL).size() / Thread::MAX_RENDER_THREAD_NUM );
-    //num_obj_per_thread = { (uint32_t)module.GetRenderQueue().size() / Thread::MAX_THREAD_NUM };
-
-    bool iseven = (module.GetRenderQueue(Modules::RQ_GENERAL).size() % Thread::MAX_RENDER_THREAD_NUM) == 0;
-    if (!iseven) {
-        num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue(Modules::RQ_GENERAL).size() % Thread::MAX_RENDER_THREAD_NUM);
+    void* instancedata;
+#ifdef TRACY
+    ZoneNamedN(Zone1, "Renderer::PrepareInstanceBuffer", true);
+#endif
+    {
+#ifdef TRACY
+    ZoneNamedN(Zone2, "Renderer::PrepareInstanceBuffer::MapMemory", true);
+#endif
+        const size_t buffersize = sizeof(InstanceData) * MAX_INSTANCES ;
+        vkMapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetInstanceBufferMemory(GetFrameInd()), 0, buffersize, 0, (void**)&instancedata);
     }
-    /*for (uint32_t o : num_obj_per_thread) {*/
-    /**/
-    /*    printf("NUM OBJ PER thread === %d\n", o);*/
-    /*}*/
-    /*    printf("\n------------== size %d\n ------------\n", obj_size);*/
-    u_int32_t first_obj_size = 0;
-    u_int32_t sec_obj_size = 0;// module.GetRenderQueue().size() / 2;
+    {
+#ifdef TRACY
+    ZoneNamedN(Zone3, "Renderer::PrepareInstanceBuffer::OldCode-DeadCode", true);
+#endif
+        u_int32_t obj_size = module.GetRenderQueue(Modules::RQ_GENERAL).size();
+        uint32_t inst_ind = 0;//Gfx::Renderer::GetInstance()->GetInstanceInd();
+        //
+        std::vector<uint32_t> num_obj_per_thread(Thread::MAX_RENDER_THREAD_NUM, (uint32_t)module.GetRenderQueue(Modules::RQ_GENERAL).size() / Thread::MAX_RENDER_THREAD_NUM );
+        //num_obj_per_thread = { (uint32_t)module.GetRenderQueue().size() / Thread::MAX_THREAD_NUM };
 
-    uint32_t fin_inst_ind = 0;
-    uint32_t fin_inst_ind2 = 0;
-
-    /*int i = 0;*/
-    /*for (Gfx::RenderObject& obj : module.GetRenderQueue()) {*/
-    /**/
-    /*    if (!obj.Model || !obj.IsVisible) continue;*/
-    /*    for (int j = 0; j < obj.Model->Meshes.size(); j++ ) {*/
-    /*     i++;*/
-    /*     }*/
-    /*} */
-    /*for (Gfx::RenderObject& obj : modulegizmo.GetRenderQueue()) {*/
-    /*     if (!obj.Model || !obj.IsVisible) continue;*/
-    /*        for (int j = 0; j < obj.Model->Meshes.size(); j++ ) {*/
-    /*     i++;*/
-    /*     }*/
-    /*}*/
-
-
-    /*for (uint32_t in : instance_inds) {*/
-    /**/
-    /*    printf("INSTANCE PER thread === %d\n", in);*/
-    /*}*/
-
-    /*for (uint32_t obj_num = first_obj_size; obj_num < obj_size; obj_num++) {*/
-    /*    Gfx::RenderObject& obj = module.GetRenderQueue()[obj_num];*/
-    /*    fin_inst_ind2 += obj.Model->Meshes.size();*/
-    /**/
-    /*}*/
-    first_obj_size = 0;
-    sec_obj_size = 0;
-    uint32_t inst = 0;
-    /*for (uint32_t thread_id = 0; thread_id < Thread::MAX_THREAD_NUM; thread_id++) {*/
-    /*    sec_obj_size += num_obj_per_thread[thread_id];*/
-    /**/
-    /*           //printf(" first obj %d === sec obj %d\n", first_obj_size, sec_obj_size);*/
-    /*    Thread::Pool::GetInstance()->PushByID(thread_id, { Thread::Task::Name::RENDER, Thread::Task::Type::EXECUTE,*/
-    /*    {}, [this,thread_id, &instancedata,&modulegizmo,  &module, inst, first_obj_size, sec_obj_size]() {*/
-
-    InstanceData* datas = (InstanceData*)instancedata;
-    /*for (int i = 0; i < InstanceCount; i++) {*/
-    /*    datas[i].rendermatrix = glm::mat4(1.0f); */
-    /*}*/
-    int i = 0;
-    //for (auto& it : Core::Scene::GetInstance()->GetScenes()) {
-
-    bool hasanim = false;
-    for (auto& it : module.GetRenderQueueMap()) {
-    for (Gfx::RenderObject& obj : it.second) {
-        /*printf(*/
-        /*    "VISIBLE: %d|%s\n", obj.IsVisible, obj.TextureName.c_str()*/
-        /*);*/
-        if (!obj.Model[GetFrameInd()]) {
-            i++;
-            continue;
+        bool iseven = (module.GetRenderQueue(Modules::RQ_GENERAL).size() % Thread::MAX_RENDER_THREAD_NUM) == 0;
+        if (!iseven) {
+            num_obj_per_thread[num_obj_per_thread.size() - 1] += (module.GetRenderQueue(Modules::RQ_GENERAL).size() % Thread::MAX_RENDER_THREAD_NUM);
         }
-        hasanim = Core::Scene::GetInstance()->HasAnimation(obj.ID);
-        for (int j = 0; j < obj.Model[GetFrameInd()]->Meshes.size(); j++ ) {
+        /*for (uint32_t o : num_obj_per_thread) {*/
+        /**/
+        /*    printf("NUM OBJ PER thread === %d\n", o);*/
+        /*}*/
+        /*    printf("\n------------== size %d\n ------------\n", obj_size);*/
+        u_int32_t first_obj_size = 0;
+        u_int32_t sec_obj_size = 0;// module.GetRenderQueue().size() / 2;
 
-            if (hasanim) {
-               // printf("IIIIII ======================================== %d\n", i);
-                for (int k = 0; k < obj.Model[GetFrameInd()]->Bones.Info.size(); k++) {
-                    datas[i].bonesmatrices[k] = obj.Model[GetFrameInd()]->Bones.Info[k].FinTransform;
+        uint32_t fin_inst_ind = 0;
+        uint32_t fin_inst_ind2 = 0;
+
+
+        first_obj_size = 0;
+        sec_obj_size = 0;
+        uint32_t inst = 0;
+
+    }
+        int i = 0;
+        InstanceData* datas = (InstanceData*)instancedata;
+    {
+#ifdef TRACY
+    ZoneNamedN(Zone3, "Renderer::PrepareInstanceBuffer::OldCode-DeadCode", true);
+#endif
+        bool hasanim = false;
+        for (auto& it : module.GetRenderQueueMap()) {
+        for (Gfx::RenderObject& obj : it.second) {
+            
+            if (!obj.Model[GetFrameInd()]) {
+                i++;
+                continue;
+            }
+            hasanim = obj.HasAnimation;//Core::Scene::GetInstance()->HasAnimation(obj.ID);
+            for (int j = 0; j < obj.Model[GetFrameInd()]->Meshes.size(); j++ ) {
+             //     if (Thread::Pool::GetInstance()->IsInit()) {
+             //     Thread::Pool::GetInstance()->Push({ Thread::Task::Name::RENDER, Thread::Task::Type::EXECUTE,
+             // {}, [this, hasanim, &obj, &datas, i]() {
+            //
+//                 {
+// #ifdef TRACY
+//                 ZoneNamedN(Zone4, "Renderer::PrepareInstanceBuffer::Loop-get-bones", true);
+// #endif
+#ifndef COMPUTE_MTX
+                    if (hasanim) {
+                        for (int k = 0; k < obj.Model[GetFrameInd()]->Bones.Info.size(); k++) {
+                            datas[i].bonesmatrices[k] = obj.Model[GetFrameInd()]->Bones.Info[k].FinTransform;
+                        }
+                    }
+#endif
+                    if (hasanim) {
+                        for (int k = 0; k < 200; k++) {
+                            datas[i].anim_transforms[k] = glm::mat4(1);//obj.Model[GetFrameInd()]->Bones.Info[k].FinTransform;
+                        }
+                    }
+
+//                 }
+                {
+#ifdef TRACY
+                ZoneNamedN(Zone5, "Renderer::PrepareInstanceBuffer::Loop-get-mtx-inst", true);
+#endif
+                    datas[i].hasanimation = hasanim ? 1 : 0;
+                    datas[i].position = glm::vec4(obj.Position.convert(), 1.0f);
+                    datas[i].gizmo_dist = glm::vec4(1.0);
+#ifndef COMPUTE_MTX
+                    datas[i].rendermatrix =glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));
+#endif
+	                datas[i].texturebind = obj.TextureBind[GetFrameInd()];
+	                datas[i].bufferbind = obj.BufferBind[GetFrameInd()];
+	    //    da    tas[i].boneID = -1;
+	                if (obj.HasStorage) {
+	                    datas[i].storagebind = obj.StorageBind[GetFrameInd()];
+	                    datas[i].objectID = obj.ID;
+	                    datas[i].selected = (obj.IsSelected || obj.ID == Core::Scene::GetInstance()->GetSelectedID()) ? 1 : 0;
+	                    datas[i].boneID = Utils::Debug::GetInstance()->Bones ? Utils::Debug::GetInstance()->BoneID : 0;
+	                    datas[i].gizmo = obj.GizmoType;
+	                }
+	            }
+                // }, {}, 0, nullptr, {} });
+                // }
+                i++;
+            }
+        }
+        // if (Thread::Pool::GetInstance()->IsInit()) {
+        //     Thread::Pool::GetInstance()->WaitWork();
+        // }
+
+        }
+        for (Gfx::RenderObject& obj : modulegizmo.GetRenderQueue(Modules::RQ_GENERAL)) {
+             if (!obj.Model[GetFrameInd()] || !obj.IsVisible) continue;
+            for (int j = 0; j < obj.Model[GetFrameInd()]->Meshes.size(); j++ ) {
+                
+                {
+#ifdef TRACY
+                ZoneNamedN(Zone6, "Renderer::PrepareInstanceBuffer::Gizmo-mtx-inst", true);
+#endif
+                    float dist = glm::distance(glm::vec3(CamData.viewpos.x, CamData.viewpos.y, CamData.viewpos.z), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z) )* 0.05;
+                    if (dist <= 0.5) {
+                        dist = 0.5;
+                    }
+
+                    glm::vec3 distfin = glm::vec3(dist);
+
+                    datas[i].gizmo_dist = glm::vec4(distfin, 1.0f);
+                    datas[i].position = glm::vec4(obj.Position.convert(), 1.0f);
+#ifndef COMPUTE_MTX
+                    datas[i].rendermatrix = glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));
+                    datas[i].rendermatrix = glm::scale(datas[i].rendermatrix, distfin);
+#endif
+                    datas[i].texturebind = obj.TextureBind[GetFrameInd()];
+	                datas[i].bufferbind = obj.BufferBind[GetFrameInd()];
+	                if (obj.HasStorage) {
+	                    datas[i].storagebind = obj.StorageBind[GetFrameInd()];
+	                    datas[i].objectID = obj.ID;
+	                    datas[i].selected = (obj.IsSelected || obj.ID == Core::Scene::GetInstance()->GetSelectedID()) ? 1 : 0;
+	                    datas[i].boneID = Utils::Debug::GetInstance()->Bones ? Utils::Debug::GetInstance()->BoneID : 0;
+	                    datas[i].gizmo = obj.GizmoType;
+	                }
                 }
-                    //vec[i]
-                /*std::thread upd(&Gfx::Renderer::GetTransforms, this, datas, obj, i);*/
-                /*upd.join();*/
-                            }
-            datas[i].hasanimation = hasanim ? 1 : 0;
-            datas[i].rendermatrix =glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));// * CamData.view *  ;
-	 datas[i].texturebind = obj.TextureBind[GetFrameInd()];
-	 datas[i].bufferbind = obj.BufferBind[GetFrameInd()];
-	//    datas[i].boneID = -1;
-	    if (obj.HasStorage) {
-	        datas[i].storagebind = obj.StorageBind[GetFrameInd()];
-	        datas[i].objectID = obj.ID;
-	        datas[i].selected = (obj.IsSelected || obj.ID == Core::Scene::GetInstance()->GetSelectedID()) ? 1 : 0;
-	        datas[i].boneID = Utils::Debug::GetInstance()->Bones ? Utils::Debug::GetInstance()->BoneID : 0;
-	        datas[i].gizmo = obj.GizmoType;
-	    }
-	//
-            i++;
-        }
-    }
-    }
-    for (Gfx::RenderObject& obj : modulegizmo.GetRenderQueue(Modules::RQ_GENERAL)) {
-         if (!obj.Model[GetFrameInd()] || !obj.IsVisible) continue;
-        for (int j = 0; j < obj.Model[GetFrameInd()]->Meshes.size(); j++ ) {
-            float dist = glm::distance(glm::vec3(CamData.viewpos.x, CamData.viewpos.y, CamData.viewpos.z), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z) )* 0.05;
-            if (dist <= 0.5) {
-                dist = 0.5;
+                i++;
             }
 
-
-            glm::vec3 distfin = glm::vec3(dist);
-
-
-            datas[i].rendermatrix = glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));
-            datas[i].rendermatrix = glm::scale(datas[i].rendermatrix, distfin);
-            datas[i].texturebind = obj.TextureBind[GetFrameInd()];
-	 datas[i].bufferbind = obj.BufferBind[GetFrameInd()];
-	//    datas[i].boneID = -1;
-	    if (obj.HasStorage) {
-	        datas[i].storagebind = obj.StorageBind[GetFrameInd()];
-	        datas[i].objectID = obj.ID;
-	        datas[i].selected = (obj.IsSelected || obj.ID == Core::Scene::GetInstance()->GetSelectedID()) ? 1 : 0;
-	        datas[i].boneID = Utils::Debug::GetInstance()->Bones ? Utils::Debug::GetInstance()->BoneID : 0;
-	        datas[i].gizmo = obj.GizmoType;
-	    }
-
-            i++;
-        }
-
-    }
-
-
-    /*    }, 0,  nullptr, nullptr, nullptr});*/
-    /**/
-    /*    first_obj_size = sec_obj_size;*/
-    /*}            */
-    /**/
-    /*    Thread::Pool::GetInstance()->Wait();*/
-
-/*
-    InstanceData* datas = (InstanceData*)instancedata;
-       int i = 0;
-    //for (auto& it : Core::Scene::GetInstance()->GetScenes()) {
-
-    for (Gfx::RenderObject& obj : map[Core::Scene::GetInstance()->GetCurrentScene()].GetRenderQueue()) {
-        if (!obj.Model || !obj.IsVisible) continue;
-        hasanim = Core::Scene::GetInstance()->HasAnimation(obj.ID);
-        for (int j = 0; j < obj.Model->Meshes.size(); j++ ) {
-
-            if (hasanim) {
-               // printf("IIIIII ======================================== %d\n", i);
-                for (int k = 0; k < obj.Model->Bones.Info.size(); k++) {
-                    datas[i].bonesmatrices[k] = obj.Model->Bones.Info[k].FinTransform;
-                }
-                    //vec[i]
-                                         }
-            datas[i].hasanimation = hasanim ? 1 : 0;
-            datas[i].rendermatrix =glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));// * CamData.view *  ;
-            //glm::mat4(1.0f);
-            i++;
         }
     }
-    for (Gfx::RenderObject& obj : modulegizmo.GetRenderQueue()) {
-         if (!obj.Model || !obj.IsVisible) continue;
-        for (int j = 0; j < obj.Model->Meshes.size(); j++ ) {
-            float dist = glm::distance(glm::vec3(CamData.viewpos.x, CamData.viewpos.y, CamData.viewpos.z), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z) )* 0.05;
-            if (dist <= 0.5) {
-                dist = 0.5;
-            }
-
-
-            glm::vec3 distfin = glm::vec3(dist);
-
-
-            datas[i].rendermatrix = glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));
-            datas[i].rendermatrix = glm::scale(datas[i].rendermatrix, distfin);
-            i++;
-        }
-
-    }
-
-
-    /*    }, 0,  nullptr, nullptr, nullptr});*/
-    /**/
-    /*    first_obj_size = sec_obj_size;*/
-    /*}            */
-    /**/
-    /*    Thread::Pool::GetInstance()->Wait();*/
-
-/*
-    InstanceData* datas = (InstanceData*)instancedata;
-       int i = 0;
-    //for (auto& it : Core::Scene::GetInstance()->GetScenes()) {
-
-    for (Gfx::RenderObject& obj : map[Core::Scene::GetInstance()->GetCurrentScene()].GetRenderQueue()) {
-        if (!obj.Model || !obj.IsVisible) continue;
-        hasanim = Core::Scene::GetInstance()->HasAnimation(obj.ID);
-        for (int j = 0; j < obj.Model->Meshes.size(); j++ ) {
-
-            if (hasanim) {
-               // printf("IIIIII ======================================== %d\n", i);
-                for (int k = 0; k < obj.Model->Bones.Info.size(); k++) {
-                    datas[i].bonesmatrices[k] = obj.Model->Bones.Info[k].FinTransform;
-                }
-                    //vec[i]
-                                         }
-            datas[i].hasanimation = hasanim ? 1 : 0;
-            datas[i].rendermatrix =glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));// * CamData.view *  ;
-            //glm::mat4(1.0f);
-            i++;
-        }
-    }
-    for (Gfx::RenderObject& obj : map["gizmo"].GetRenderQueue()) {
-         if (!obj.Model || !obj.IsVisible) continue;
-        for (int j = 0; j < obj.Model->Meshes.size(); j++ ) {
-            float dist = glm::distance(glm::vec3(CamData.viewpos.x, CamData.viewpos.y, CamData.viewpos.z), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z) )* 0.05;
-            if (dist <= 0.5) {
-                dist = 0.5;
-            }
-
-
-            glm::vec3 distfin = glm::vec3(dist);
-
-
-            datas[i].rendermatrix = glm::translate(glm::mat4(1.0f), glm::vec3(obj.Position.x, obj.Position.y, obj.Position.z));
-            datas[i].rendermatrix = glm::scale(datas[i].rendermatrix, distfin);
-            i++;
-        }
-
-    }*/
-
     InstanceCount = i;
     InstanceIndex = 0;
-    //}
-    vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetInstanceBufferMemory(GetFrameInd()));
+    {
+#ifdef TRACY
+     ZoneNamedN(Zone7, "Renderer::PrepareInstanceBuffer::UnmapMemory", true);
+#endif
+        vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetInstanceBufferMemory(GetFrameInd()));
+    }
 
+#ifdef COMPUTE_MTX
+
+    void* animdata;
+    {
+#ifdef TRACY
+        ZoneNamedN(Zone8, "Renderer::PrepareInstanceBuffer::Mapmem-anim", true);
+#endif
+        const size_t buffersize = sizeof(AnimationComputeData) * MAX_INSTANCES ;
+        vkMapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetAnimationBufferMemory(GetFrameInd()), 0, buffersize, 0, (void**)&animdata);
+    }
+    AnimationComputeData* animdatas = (AnimationComputeData*)animdata;
+    bool hasanim = false;
+    i = 0;
+    {
+#ifdef TRACY
+        ZoneNamedN(Zone9, "Renderer::PrepareInstanceBuffer::iterate-anim", true);
+#endif
+        for (auto& it : module.GetRenderQueueMap()) {
+            for (Gfx::RenderObject& obj : it.second) {
+                {
+#ifdef TRACY
+                    ZoneNamedN(Zone12, "Renderer::PrepareInstanceBuffer::check-for-anim", true);
+#endif
+
+                    hasanim = obj.HasAnimation;//Core::Scene::GetInstance()->HasAnimation(obj.ID);
+                    if (!hasanim || !obj.Model[GetFrameInd()]) {
+                        i++;
+                        continue;
+                    }
+
+                }
+
+                {
+#ifdef TRACY
+                    ZoneNamedN(Zone13, "Renderer::PrepareInstanceBuffer::for-mesh-loop", true);
+#endif
+
+
+                    const Core::aiSceneInfo& scene = Core::Scene::GetInstance()->GetInfo(obj.Model[GetFrameInd()], obj.ID); 
+                    for (int k = 0; k < obj.Model[GetFrameInd()]->Meshes.size(); k++ ) {
+                    if (hasanim) {
+                        {
+#ifdef TRACY
+                            ZoneNamedN(Zone11, "Renderer::PrepareInstanceBuffer::in-loop-processanim", true);
+#endif
+                            AnimationComputeData& animdat = animdatas[i];
+                            animdat.rootssize = scene.rootssize;
+                            animdat.timetick = scene.timeticks;
+                            animdat.global_transform = Core::Scene::GetInstance()->GetGlobalTransform();
+                            animdat.animsize = scene.animsize;
+                            memcpy(animdat.animisempty, scene.animisempty, sizeof(int) * 100);
+                            memcpy(animdat.pos_factor, scene.pos_factor, sizeof(float) * 100);
+                            memcpy(animdat.scale_factor, scene.scale_factor, sizeof(float) * 100);
+                            memcpy(animdat.rot_factor, scene.rot_factor, sizeof(float) * 100);
+                            memcpy(animdat.pos_comp, scene.pos_comp, sizeof(int) * 100);
+                            memcpy(animdat.scale_comp, scene.scale_comp, sizeof(int) * 100);
+                            memcpy(animdat.rot_comp, scene.rot_comp, sizeof(int) * 100);
+                            memcpy(animdat.pos_out, scene.pos_out, sizeof(glm::vec4) * 100);
+                            memcpy(animdat.pos_start, scene.pos_start, sizeof(glm::vec4) * 100);
+                            memcpy(animdat.pos_end, scene.pos_end, sizeof(glm::vec4) * 100);
+                            memcpy(animdat.scale_out, scene.scale_out, sizeof(glm::vec4) * 100);
+                            memcpy(animdat.scale_start, scene.scale_start, sizeof(glm::vec4) * 100);
+                            memcpy(animdat.scale_end, scene.scale_end, sizeof(glm::vec4) * 100);
+                            memcpy(animdat.rot_out, scene.rot_out, sizeof(glm::mat4) * 100);
+                            memcpy(animdat.rot_start, scene.rot_start, sizeof(glm::mat4) * 100);
+                            memcpy(animdat.rot_end, scene.rot_end, sizeof(glm::mat4) * 100);
+                            // memcpy(animdat.animrot, scene.animrot, sizeof(glm::mat4) * 200);
+
+                            memcpy(animdat.nodeAnimInd, scene.nodeAnimInd, sizeof(int) * 100);
+                            memcpy(animdat.nodeBoneInd, scene.nodeBoneInd, sizeof(int) * 100);
+                            memcpy(animdat.nodeIndex, scene.nodeIndex, sizeof(int) * 100);
+                            memcpy(animdat.nodesettransform, scene.nodesettransform, sizeof(int) * 100);
+                            memcpy(animdat.nodeOffset, scene.nodeOffset, sizeof(glm::mat4) * 100);
+                            memcpy(animdat.nodeTransform, scene.nodeTransform, sizeof(glm::mat4) * 100);
+                        }
+                        i++;
+                        }
+                    }
+                }     
+            }
+        }
+        if (Thread::Pool::GetInstance()->IsInit()) {
+            Thread::Pool::GetInstance()->WaitWork();
+        }
+
+    }
+    {
+#ifdef TRACY
+        ZoneNamedN(Zone10, "Renderer::PrepareInstanceBuffer::Unmap-anim", true);
+#endif
+
+        vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetAnimationBufferMemory(GetFrameInd()));
+    }
+#endif
 }
 void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
 {
+#ifdef TRACY
+    ZoneScopedN("Renderer::PrepareCameraBuffer");
+#endif
 	glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetFront(), camera.GetUp());
 	glm::mat4 projection = glm::perspective(glm::radians(45.f), float(Gfx::Device::GetInstance()->GetSwapchainSize().x) / float(Gfx::Device::GetInstance()->GetSwapchainSize().y), 1.0f, 1000.0f);
 	projection[1][1] *= -1;

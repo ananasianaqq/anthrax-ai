@@ -1,7 +1,9 @@
 #pragma once
 
+#include "anthraxAI/core/animator.h"
 #include "anthraxAI/gamemodules/modules.h"
 #include "anthraxAI/gameobjects/gameobjects.h"
+#include "anthraxAI/gfx/model.h"
 #include "anthraxAI/gfx/renderhelpers.h"
 #include "anthraxAI/utils/mathdefines.h"
 #include "anthraxAI/utils/parser.h"
@@ -16,6 +18,7 @@
 #include <vulkan/vulkan_core.h>
 #include "anthraxAI/utils/tracy.h"
 
+#define COMPUTE_MTX
 #define DRAW_INDIRECT
 
 namespace Core
@@ -32,7 +35,8 @@ namespace Core
             void ExportScene();
             void ExportObjectInfo(const Keeper::Objects* obj);
             void RenderScene(bool playmode);
-            bool HasAnimation(uint32_t id) { if (GameModules) { return GameModules->HasAnimation(id); } return false; }
+            // bool HasAnimation(uint32_t id) { if (GameModules) { return GameModules->HasAnimation(id); } return false; }
+            const Core::aiSceneInfo& GetInfo(Gfx::ModelInfo* info, uint32_t id) {  return GameModules->GetInfo(info, id);   }
             void ReloadAnimation(uint32_t id, const std::string& s) { if (GameModules) { return GameModules->ReloadAnimation(id, s); }}
             
             void SetCurrentSceneForUpdate(const std::string& name) { CurrentSceneForUpdate = name; }

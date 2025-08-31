@@ -73,6 +73,7 @@ namespace Gfx
             void EndRender();
             void StartRender(Gfx::InputAttachments inputs, AttachmentRules rules, bool multithreaded = false);
             
+            void ComputeParticles(Gfx::RenderObject& object);
             void Compute(Gfx::RenderObject& object);
             void Draw(Gfx::RenderObject& object);
             void DrawThreaded(VkCommandBuffer cmd, Gfx::RenderObject& object, Material* mat,  Gfx::MeshInfo* mesh, Gfx::MeshPushConstants& constatns, bool ismodel, uint32_t inst_ind);
@@ -144,6 +145,7 @@ namespace Gfx
             
             StorageData StorageBuffer;
             InstanceData InstanceBuffer;
+            AnimationComputeData AnimationBuffer;
             CameraData 	CamData;
             ComputeData CompData;
             LightsData LightData;

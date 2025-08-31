@@ -2,11 +2,19 @@
 #include "anthraxAI/gfx/model.h"
 #include "anthraxAI/utils/debug.h"
 #include "anthraxAI/engine.h"
+#include "anthraxAI/utils/defines.h"
 #include "assimp/anim.h"
 #include "assimp/scene.h"
+#include "glm/fwd.hpp"
+#include <cstdio>
+#include <cstring>
+#include <vector>
 
 void Core::AnimatorBase::Update(Gfx::RenderObject& object)
 {
+#ifdef TRACY
+    ZoneScopedN("Core::AnimatorBase::Update");
+#endif
     if (Animations.empty()) {
         return;
     }
@@ -15,10 +23,19 @@ void Core::AnimatorBase::Update(Gfx::RenderObject& object)
     uint32_t frame = Gfx::Renderer::GetInstance()->GetFrameInd();
     GetBonesTransform(object.Model[frame], object.ID, timesec);
 }
+Core::aiSceneInfo& Core::AnimatorBase::Update2(Gfx::ModelInfo* model, int id)
+{
+#ifdef TRACY
+    ZoneScopedN("Core::AnimatorBase::Update2");
+#endif
+    
+    float timesec = (float)((double)Engine::GetInstance()->GetTime() - (double)Utils::Debug::GetInstance()->AnimStartMs) / 1000.0f;
+    return GetBonesTransform2(model, id, timesec);
+}
 
 const Core::NodeAnim& Core::AnimatorBase::FindAnim(const aiSceneInfo& scene, const std::string nodename)
 {
-    for (int i = 0; i < scene.AnimNodes.size(); i++) {
+    for (int i = 0; i < scene.animsize; i++) {
         //const aiNodeAnim* node = anim->mChannels[i];
         const NodeAnim& node = scene.AnimNodes[i];
         if (node.NodeName == nodename) {
@@ -27,18 +44,58 @@ const Core::NodeAnim& Core::AnimatorBase::FindAnim(const aiSceneInfo& scene, con
     }
     return EMPTY_ANIM_NODE;
 }
+int Core::AnimatorBase::FindAnimInt(const aiSceneInfo& scene, const std::string& nodename)
+{
+#ifdef TRACY
+    ZoneScopedN("Core::AnimatorBase::FindAnimInt");
+#endif
+    
+    if (!nodename.empty()) {
+        int i = 0;
+    //for (int i = 0; i < scene.animsize; i++) {
+    for (const NodeAnim& node : scene.AnimNodes) {
+        //const aiNodeAnim* node = anim->mChannels[i];
+        // const NodeAnim& node = scene.AnimNodes[i];
+        if (node.NodeName.empty()) continue;
+        if (node.NodeName == nodename) {
+            return i;
+        }
+        i++;
+    //}
+    }
+    }
+    return -1;
+}
 
+// void Core::AnimatorBase::ClearNode(Core::NodeRoots* info)
+// {
+//     for (int i = 0; i < info->ChildrenNum; i++) {
+//         ClearNode(info->Children[i]);
+//     }
+//     delete info;
+// }
+// void Core::AnimatorBase::ClearNodeChildren()
+// {
+//     for (int i = 0; i < Scenes.size(); i++) {
+//         ClearNode(Scenes[i].RootNode);
+//     }
+// }
+//
 void Core::AnimatorBase::GetNodeChildren(const aiNode* node, Core::NodeRoots& info)
 {
     info.Name = node->mName.C_Str();
     info.Transform = Gfx::mat2glm(node->mTransformation);
     info.ChildrenNum = node->mNumChildren;
     info.Children.reserve(info.ChildrenNum);
+    // if (v.empty()) { 
+    // }
     for (int i = 0; i < node->mNumChildren; i++) {
-        NodeRoots nodetmp;
+        NodeRoots nodetmp ;
         GetNodeChildren(node->mChildren[i], nodetmp);
         info.Children.emplace_back(nodetmp);
+         // v.push_back(nodetmp);
     }
+    // v.push_back(info);
 }
 
 Core::aiSceneInfo Core::AnimatorBase::ConvertAi(const aiScene* scene)
@@ -52,17 +109,21 @@ Core::aiSceneInfo Core::AnimatorBase::ConvertAi(const aiScene* scene)
     Core::NodeRoots root;
     GetNodeChildren(scene->mRootNode, root);
     info.RootNode = root;
-
-    info.AnimNodes.resize(scene->mAnimations[0]->mNumChannels);
+    
+    ASSERT(scene->mAnimations[0]->mNumChannels > 100, "Anim Nodes size is > 100!");
+    info.animsize = scene->mAnimations[0]->mNumChannels;
+    // info.AnimNodes.resize(scene->mAnimations[0]->mNumChannels);
 
     for (int i = 0; i < scene->mAnimations[0]->mNumChannels; i++) {
         const aiNodeAnim* node = scene->mAnimations[0]->mChannels[i];
 
-        NodeAnim anim;
+        NodeAnim& anim = info.AnimNodes[i];
         anim.NodeName = node->mNodeName.data;// C_Str();
         anim.NumPositionsKeys = node->mNumPositionKeys;
         anim.NumRotationKeys = node->mNumRotationKeys;
         anim.NumScalingKeys = node->mNumScalingKeys;
+        
+        printf("anim key pos %d, scale %d, rot %d\n", anim.NumPositionsKeys, anim.NumScalingKeys, anim.NumRotationKeys);
 
         anim.PositionKeys.reserve(anim.NumPositionsKeys);
         anim.PositionTime.reserve(anim.NumPositionsKeys);
@@ -82,11 +143,12 @@ Core::aiSceneInfo Core::AnimatorBase::ConvertAi(const aiScene* scene)
             anim.ScalingKeys.emplace_back(Gfx::vec2glm(node->mScalingKeys[posi].mValue));
             anim.ScalingTime.emplace_back(node->mScalingKeys[posi].mTime);
         }
-        info.AnimNodes.emplace_back(anim);
+        //info.AnimNodes.emplace_back(anim);
     }
 
     return info;
 }
+
 
 void Core::AnimatorBase::Init()
 {
@@ -105,9 +167,10 @@ void Core::AnimatorBase::Init()
 
                 std::size_t index = std::distance(std::begin(AnimationMap), it);
                 if (it == AnimationMap.end()) {
-                    const aiScene* scene = Importer.ReadFile("./models/" + animpath, IMPORT_PROPS);
-                    aiSceneInfo info = ConvertAi(scene);
-                    Scenes.push_back(info);
+                    const aiScene* sceneai = Importer.ReadFile("./models/" + animpath, IMPORT_PROPS);
+                    const aiSceneInfo& scene = ConvertAi(sceneai);
+                   
+                    Scenes.push_back(scene);
                     AnimationMap.push_back(std::string("./models/" + animpath));
                     data.SceneInd = AnimationMap.size() - 1;
                     Importer.FreeScene();
@@ -122,27 +185,145 @@ void Core::AnimatorBase::Init()
     GlobalInverse *= rot;
 }
 
+void Core::AnimatorBase::Hierarchy(Gfx::ModelInfo* model, Core::aiSceneInfo& scene, int i, float timetick, glm::mat4 parenttransform, glm::mat4 parenttransforms[200])
+{
+    glm::mat4 nodetransf = scene.nodeTransform[i];
+    glm::mat4 globaltransf; 
+    if (scene.animisempty[scene.nodeAnimInd[i]] == 0) {
+                {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim5, "AnimatorBase::ReadNodeHierarchy::Mult-scale-rot-transl", true);
+#endif
+        // nodetransf = scene.animnodes[scene.noderoots[i].AnimInd].pos * scene.animnodes[scene.noderoots[i].AnimInd].rot *  scene.animnodes[scene.noderoots[i].AnimInd].scale;
+        }
+    }
+    {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim6, "AnimatorBase::ReadNodeHierarchy::Final-transform", true);
+#endif
+    globaltransf = ( scene.nodeIndex[i] == 0 ? parenttransform : parenttransforms[ scene.nodeIndex[i] - 1]) * nodetransf;
+//         if (node.ind == 0) {
+// parenttransforms[node.ind] = parenttransform; 
+//         }
+//         else {
+    parenttransforms[ scene.nodeIndex[i]] = globaltransf;
+        // }
+    if (scene.nodesettransform[i] == 1) {
+        int boneind = scene.nodeBoneInd[i];
+        model->Bones.Info[boneind].FinTransform = GlobalInverse * globaltransf * scene.nodeOffset[i];
+    }
+    }
+
+}
+void Core::AnimatorBase::ReadNodeHierarchy3(int i, Gfx::ModelInfo* model,  Core::aiSceneInfo& scene)
+{
+    std::string& nodename = scene.Names[i];
+    int animind = FindAnimInt(scene, nodename);
+    scene.nodeAnimInd[i] = animind;
+    scene.animisempty[animind] = 1;
+
+    if (animind != -1) {
+        scene.animisempty[animind] = 0;
+        {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim2, "AnimatorBase::ReadNodeHierarchy::Scaling", true);
+#endif
+        // glm::vec3 scaling;
+        // scene.animnodes[animind].scale = InterpolateScale(scaling, scene.timeticks, scene.AnimNodes[scene.noderoots[i].AnimInd]);
+        InterpolateScale(scene.timeticks, scene.AnimNodes[scene.nodeAnimInd[i]], scene, animind);
+        }
+        {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim3, "AnimatorBase::ReadNodeHierarchy::Rotating", true);
+#endif
+        InterpolateRot(scene.timeticks, scene.AnimNodes[scene.nodeAnimInd[i]], scene, animind);
+        }
+        {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim4, "AnimatorBase::ReadNodeHierarchy::Trtanslating", true);
+#endif
+        // glm::vec3 Translation;
+        // scene.animnodes[animind].pos = InterpolatePos(Translation, scene.timeticks, scene.AnimNodes[scene.noderoots[i].AnimInd]);
+        InterpolatePos(scene.timeticks, scene.AnimNodes[scene.nodeAnimInd[i]], scene, animind);
+        }
+
+    }
+    scene.nodesettransform[i] = 0;
+    const auto& it = model->Bones.BoneMap.find(nodename);
+    if (it != model->Bones.BoneMap.end()) {
+        scene.nodesettransform[i] = 1;
+        scene.nodeBoneInd[i] = it->second;
+        scene.nodeOffset[i] = model->Bones.Info[it->second].Offset;
+    }
+}
+
+int globalind = 0;
+void Core::AnimatorBase::ReadNodes(aiSceneInfo& scene, Core::NodeRoots& node,  int ind)
+{
+#ifdef TRACY
+    ZoneScopedN("Core::AnimatorBase::ReadNodes");
+#endif
+    node.ind = ind; 
+    // v.push_back(node);
+
+    scene.nodeIndex[globalind] = node.ind;
+    scene.nodeTransform[globalind] = node.Transform;
+    scene.Names[globalind] = node.Name;
+//push_back(node);;//[globalind] = node;
+    globalind++;
+    ind++;
+    for (int i = 0; i < node.ChildrenNum; i++) {
+
+        ReadNodes(scene, node.Children[i], ind);
+    }
+
+}
 void Core::AnimatorBase::ReadNodeHierarchy(Gfx::ModelInfo* model, int animid, const Core::aiSceneInfo& scene, const Core::NodeRoots& node, float timetick, const glm::mat4 parenttransform)
 {
+#ifdef TRACY
+    ZoneNamedN(ZoneAnim1, "AnimatorBase::ReadNodeHierarchy", true);
+#endif
     std::string nodename = node.Name;
 
     const NodeAnim& nodeanim = FindAnim(scene, nodename);
 
    glm::mat4 nodetransf = node.Transform;
-
+glm::mat4 globaltransf; 
     if (!nodeanim.NodeName.empty()) {
+        glm::mat4 scm, rotm, transl;
+        {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim2, "AnimatorBase::ReadNodeHierarchy::Scaling", true);
+#endif
         glm::vec3 scaling;
-        glm::mat4 scm = InterpolateScale(scaling, timetick, nodeanim);
-
+        scm = InterpolateScale(scaling, timetick, nodeanim);
+        }
+        {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim3, "AnimatorBase::ReadNodeHierarchy::Rotating", true);
+#endif
         glm::quat rot;
-        glm::mat4 rotm = InterpolateRot(rot, timetick, nodeanim);
-
+        rotm = InterpolateRot(rot, timetick, nodeanim);
+        }
+        {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim4, "AnimatorBase::ReadNodeHierarchy::Trtanslating", true);
+#endif
         glm::vec3 Translation;
-        glm::mat4 transl = InterpolatePos(Translation, timetick, nodeanim);
-
+        transl = InterpolatePos(Translation, timetick, nodeanim);
+        }
+        {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim5, "AnimatorBase::ReadNodeHierarchy::Mult-scale-rot-transl", true);
+#endif
         nodetransf = transl * rotm * scm;
+        }
     }
-    glm::mat4 globaltransf = parenttransform * nodetransf;
+    {
+#ifdef TRACY
+        ZoneNamedN(ZoneAnim6, "AnimatorBase::ReadNodeHierarchy::Final-transform", true);
+#endif
+    globaltransf = parenttransform * nodetransf;
 
     if (model->Bones.BoneMap.find(nodename) != model->Bones.BoneMap.end()) {
         int boneind = model->Bones.BoneMap[nodename];
@@ -150,36 +331,101 @@ void Core::AnimatorBase::ReadNodeHierarchy(Gfx::ModelInfo* model, int animid, co
         //model->Bones.FinTransform[boneind] = GlobalInverse * globaltransf * model->Bones.Info[boneind].Offset;
 
     }
+    }
 
     for (int i = 0; i < node.ChildrenNum; i++) {
         ReadNodeHierarchy(model, animid, scene, node.Children[i], timetick, globaltransf);
     }
 }
 
-void Core::AnimatorBase::GetBonesTransform(Gfx::ModelInfo* model, int animid, float time)
+Core::aiSceneInfo& Core::AnimatorBase::GetBonesTransform2(Gfx::ModelInfo* model, int animid, float time)
 {
+#ifdef TRACY
+    ZoneScopedN("Core::AnimatorBase::GetBonesTransform2");
+#endif
+
     Core::AnimationData& data = Animations[animid];
 
     Core::aiSceneInfo& scene = Scenes[data.SceneInd];
+
+// only aiSceneInfo ????
 
     float tickespersec = (float)(scene.TicksPerSecond != 0 ? scene.TicksPerSecond : 25.0f);
 
     float timeinticks = time * tickespersec;
     float timeticks =  fmod(timeinticks, (float)scene.Duration);
     
-    //model->Bones.FinTransform.reserve(model->Bones.Info.size());
-    ReadNodeHierarchy(model, animid, scene, scene.RootNode, timeticks, glm::mat4(1.0));
-    //std::vector<glm::mat4> vec;
-    //vec.resize(model->Bones.Info.size(), glm::mat4(1.0));
+    //-------2------
+    globalind = 0;
+   //scene.nodes.clear();
+    int iii = 0;
+    ReadNodes(scene, scene.RootNode, iii);
+    scene.rootssize = globalind;//scene.nodes.size();
+//globalind;//scene.nodes.size();
+    scene.timeticks = timeticks;
+    // for (int i = 0; i < scene.rootssize; i++) {
+    //     Gfx::NodeRootsCompute root;
+    //     root.Index = scene.nodes[i].ind;
+    //     root.Transform = scene.nodes[i].Transform;
+    //     scene.noderoots[i] = root;
+    // }
+    //
+    Thread::Pool::GetInstance()->Push({
+    Thread::Task::Name::ANIM, Thread::Task::Type::EXECUTE, {}, {}, [this](Gfx::ModelInfo* model, Core::aiSceneInfo* scene) {
 
-    /*for (int i = 0; i < model->Bones.Info.size(); i++) {*/
-    /*  //  vec[i] = (model->Bones.Info[i].FinTransform);*/
-    /*    model->Bones.FinTransform[i] = model->Bones.Info[i].FinTransform;*/
-    /**/
-    /*//    printf("\n\tmodel id: %d", animid);*/
-    /*//    printf("\n|%f||%f||%f|\n|%f||%f||%f|\n", vec[i][0][0], vec[i][0][1],vec[i][0][2],vec[i][1][0],vec[i][2][0],vec[i][3][0]);*/
-    /*}*/
-    // printf("-----------------------------\n");
+    for (int i = 0; i < scene->rootssize; i++) {
+            ReadNodeHierarchy3(i, model, *scene);
+
+    }
+    }, 0,  nullptr, nullptr, nullptr, model, &scene});
+
+
+    // for (int i = 0; i < scene.rootssize; i++) {
+    //     Hierarchy(model, scene, i, timeticks, glm::mat4(1), globaltransf);
+    // }
+
+    return scene;
+}
+void Core::AnimatorBase::GetBonesTransform(Gfx::ModelInfo* model, int animid, float time)
+{
+    Core::AnimationData& data = Animations[animid];
+
+    Core::aiSceneInfo& scene = Scenes[data.SceneInd];
+
+// only aiSceneInfo ????
+
+    float tickespersec = (float)(scene.TicksPerSecond != 0 ? scene.TicksPerSecond : 25.0f);
+
+    float timeinticks = time * tickespersec;
+    float timeticks =  fmod(timeinticks, (float)scene.Duration);
+    
+    //-------2------
+    // scene.nodes.clear();
+    // int iii = 0;
+    // ReadNodes(scene.RootNode, scene.nodes, iii);
+    // scene.rootssize = scene.nodes.size();
+    // scene.timeticks = timeticks;
+    // for (int i = 0; i < scene.rootssize; i++) {
+    //     Gfx::NodeRootsCompute root;
+    //     root.Index = scene.nodes[i].ind;
+    //     root.Transform = scene.nodes[i].Transform;
+    //     scene.noderoots[i] = root;
+    // }
+    // glm::mat4 globaltransf[200];
+    // for (int i = 0; i < scene.rootssize; i++) {
+    //     ReadNodeHierarchy3(i, model, scene, scene.nodes[i], scene.noderoots[i]);
+    // }
+    //
+    // for (int i = 0; i < scene.rootssize; i++) {
+    //     Hierarchy(model, scene, i, timeticks, glm::mat4(1), globaltransf);
+    // }
+    //-------1------
+    // std::vector<glm::mat4> globaltransf(scene.nodes.size());
+    // for (int j = 0; j < scene.nodes.size() ; j++) {
+    //     ReadNodeHierarchy2(model, animid, scene,(scene.nodes[j]), timeticks, globaltransf, glm::mat4(1), j);
+    // }
+    //------0-----
+    ReadNodeHierarchy(model, animid, scene, scene.RootNode, timeticks, glm::mat4(1.0));
 }
 
 glm::mat4 Core::AnimatorBase::InterpolatePos(glm::vec3 out, float timeticks, const NodeAnim& animnode)
@@ -200,19 +446,53 @@ glm::mat4 Core::AnimatorBase::InterpolatePos(glm::vec3 out, float timeticks, con
     const glm::vec3& End = animnode.PositionKeys[NextPositionIndex];
     glm::vec3 Delta = End - Start;
     out = glm::mix(Start, End, Factor);
-    return glm::translate(glm::mat4(1.0f), out);
+    return  glm::translate(glm::mat4(1.0f), out);
+// glm::mat4(1.0f);// glm::translate(glm::mat4(1.0f), out);
 }
 
+void Core::AnimatorBase::InterpolatePos(float timeticks, const NodeAnim& animnode, Core::aiSceneInfo& scene, int ind)
+{
+    glm::vec3 out;
+    if (animnode.NumPositionsKeys == 1) {
+        scene.pos_out[ind] = glm::vec4(animnode.PositionKeys[0], 1.0);
+        scene.pos_comp[ind] = 0; 
+        return;
+        // return glm::translate(glm::mat4(1.0f), out);
+    }
+
+    u_int PositionIndex = FindPos(timeticks, animnode);
+    u_int NextPositionIndex = PositionIndex + 1;
+    assert(NextPositionIndex < animnode.NumPositionsKeys);
+    float t1 = (float)animnode.PositionTime[PositionIndex];
+    float t2 = (float)animnode.PositionTime[NextPositionIndex];
+    float DeltaTime = t2 - t1;
+    scene.pos_factor[ind] = (timeticks - t1) / DeltaTime;
+    scene.pos_start[ind] = glm::vec4(animnode.PositionKeys[PositionIndex],1.0);
+    scene.pos_end[ind] = glm::vec4( animnode.PositionKeys[NextPositionIndex], 1.0);
+    scene.pos_comp[ind] = 1; 
+    // const glm::vec3& End = animnode.PositionKeys[NextPositionIndex];
+    // const glm::vec3& Start = animnode.PositionKeys[PositionIndex];
+    // const glm::vec3& End = animnode.PositionKeys[NextPositionIndex];
+    // glm::vec3 Delta = End - Start;
+   // out = glm::mix(Start, End, Factor);
+    // return  glm::translate(glm::mat4(1.0f), out);
+// glm::mat4(1.0f);// glm::translate(glm::mat4(1.0f), out);
+}
 u_int Core::AnimatorBase::FindPos(float timeticks, const NodeAnim& animnode)
 {
     assert(animnode.NumPositionsKeys > 0);
-
-    for (u_int i = 0 ; i < animnode.NumPositionsKeys - 1 ; i++) {
-        float t = (float)animnode.PositionTime[i + 1];
-        if (timeticks < t) {
-            return i;
-        }
+    
+    int i = 0;
+    for (float f : animnode.PositionTime) {
+        if (timeticks < f) return i - 1;
+        i++;
     }
+    // for (u_int i = 0 ; i < animnode.NumPositionsKeys - 1 ; i++) {
+    //     float t = (float)animnode.PositionTime[i + 1];
+    //     if (timeticks < t) {
+    //         return i;
+    //     }
+    // }
     return 0;
 }
 
@@ -235,22 +515,74 @@ glm::mat4 Core::AnimatorBase::InterpolateRot(glm::quat out, float timeticks, con
     finrot = glm::normalize(finrot);
     return glm::toMat4(finrot);
 }
+void Core::AnimatorBase::InterpolateRot(float timeticks, const NodeAnim& animnode, aiSceneInfo& scene, int ind)
+{
+    if (animnode.NumRotationKeys == 1) {
+        scene.rot_out[ind] = glm::toMat4(static_cast<glm::quat>((animnode.RotationKeys[0])));
+        scene.rot_comp[ind] = 0; 
+        return;
+    }
+
+    u_int RotationIndex = FindRot(timeticks, animnode);
+    u_int NextRotationIndex = RotationIndex + 1;
+    assert(NextRotationIndex < animnode.NumRotationKeys);
+    float t1 = (float)animnode.RotationTime[RotationIndex];
+    float t2 = (float)animnode.RotationTime[NextRotationIndex];
+    float DeltaTime = t2 - t1;
+    scene.rot_factor[ind] = (timeticks - t1) / DeltaTime;
+    scene.rot_start[ind] = glm::toMat4(animnode.RotationKeys[RotationIndex]);
+    scene.rot_end[ind] = glm::toMat4(animnode.RotationKeys[NextRotationIndex]);
+        scene.rot_comp[ind] = 1; 
+    // glm::quat finrot = glm::slerp(static_cast<glm::quat>(StartRotationQ), static_cast<glm::quat>(EndRotationQ), Factor);
+    // finrot = glm::normalize(finrot);
+    // return glm::toMat4(finrot);
+}
 
 u_int Core::AnimatorBase::FindRot(float timeticks, const NodeAnim& animnode)
 {
     assert(animnode.NumRotationKeys > 0);
 
-    for (u_int i = 0 ; i < animnode.NumRotationKeys - 1 ; i++) {
-        float t = (float)animnode.RotationTime[i + 1];
-        if (timeticks < t) {
-            return i;
-        }
+    // for (u_int i = 0 ; i < animnode.NumRotationKeys - 1 ; i++) {
+    //     float t = (float)animnode.RotationTime[i + 1];
+    //     if (timeticks < t) {
+    //         return i;
+    //     }
+    // }
+    int i = 0;
+    for (float f : animnode.RotationTime) {
+        if (timeticks < f) return i - 1;
+        i++;
     }
-
     return 0;
 }
 
-glm::mat4 Core::AnimatorBase::InterpolateScale(glm::vec3 out, float timeticks, const NodeAnim& animnode)
+void Core::AnimatorBase::InterpolateScale(float timeticks, const NodeAnim& animnode, Core::aiSceneInfo& scene, int ind)
+{
+    if (animnode.NumScalingKeys == 1) {
+        scene.scale_out[ind] = glm::vec4(animnode.ScalingKeys[0], 1.0);
+        scene.scale_comp[ind] = 0; 
+        return;
+
+        // out = animnode.ScalingKeys[0];
+        // return glm::scale(glm::mat4(1.0f), out);
+    }
+
+    u_int ScalingIndex = FindScale(timeticks, animnode);
+    u_int NextScalingIndex = ScalingIndex + 1;
+    assert(NextScalingIndex < animnode.NumScalingKeys);
+    float t1 = (float)animnode.ScalingTime[ScalingIndex];
+    float t2 = (float)animnode.ScalingTime[NextScalingIndex];
+    float DeltaTime = t2 - t1;
+    scene.scale_factor[ind] = (timeticks - (float)t1) / DeltaTime;
+    scene.scale_start[ind] = glm::vec4(animnode.ScalingKeys[ScalingIndex], 1.0);
+    scene.scale_end[ind] = glm::vec4(animnode.ScalingKeys[NextScalingIndex], 1.0);
+        scene.scale_comp[ind] = 1; 
+    // glm::vec3 Delta = End - Start;
+   // out = glm::mix(Start, End, Factor);//Start + Factor * Delta;
+    // return glm::scale(glm::mat4(1.0f), out);
+// glm::mat4(1.0f);// glm::scale(glm::mat4(1.0f), out);
+}
+glm::mat4  Core::AnimatorBase::InterpolateScale(glm::vec3 out, float timeticks, const NodeAnim& animnode)
 {
     if (animnode.NumScalingKeys == 1) {
         out = animnode.ScalingKeys[0];
@@ -275,12 +607,18 @@ u_int Core::AnimatorBase::FindScale(float timeticks, const NodeAnim& animnode)
 {
      assert(animnode.NumScalingKeys > 0);
 
-    for (u_int i = 0 ; i < animnode.NumScalingKeys - 1 ; i++) {
-        float t = (float)animnode.ScalingTime[i + 1];
-        if (timeticks < t) {
-            return i;
-        }
+    // for (u_int i = 0 ; i < animnode.NumScalingKeys - 1 ; i++) {
+    //     float t = (float)animnode.ScalingTime[i + 1];
+    //     if (timeticks < t) {
+    //         return i;
+    //     }
+    // }
+int i = 0;
+    for (float f : animnode.ScalingTime) {
+        if (timeticks < f) return i - 1;
+        i++;
     }
 
     return 0;
 }
+

@@ -51,6 +51,11 @@ namespace Gfx
             BufferHelper::Buffer& GetInstanceUBO(uint32_t frame) { return InstanceBuffer[frame]; }
             VkDeviceMemory GetInstanceBufferMemory(uint32_t frame) const { return InstanceBuffer[frame].DeviceMemory; }
 
+#ifdef COMPUTE_MTX
+            VkBuffer GetAnimationBuffer(uint32_t frame) const { return AnimationBuffer[frame].Buffer; }
+            BufferHelper::Buffer& GetAnimationUBO(uint32_t frame) { return AnimationBuffer[frame]; }
+            VkDeviceMemory GetAnimationBufferMemory(uint32_t frame) const { return AnimationBuffer[frame].DeviceMemory; }
+#endif
             size_t PadUniformBufferSize(size_t originalsize);
 
             uint32_t UpdateTexture(VkImageView imageview, VkSampler sampler, const std::string& name, uint32_t frame);
@@ -70,7 +75,8 @@ namespace Gfx
             BufferHelper::Buffer StorageBuffer[MAX_FRAMES];
             BufferHelper::Buffer ComputeBuffer[MAX_FRAMES];
             BufferHelper::Buffer InstanceBuffer[MAX_FRAMES];
-
+            BufferHelper::Buffer AnimationBuffer[MAX_FRAMES];
+           
             VkDescriptorPool Pool[MAX_FRAMES];
 	        VkDescriptorSetLayout BindlessLayout = VK_NULL_HANDLE;
             VkDescriptorSet BindlessDescriptor[MAX_FRAMES];

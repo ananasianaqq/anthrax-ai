@@ -80,7 +80,7 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
     rqobj.Position = Vector3<float>(0.0f);
     rqobj.MaterialName = info.Material;
     rqobj.Material = Gfx::Pipeline::GetInstance()->GetMaterial(info.Material);
-    if (key == "particles") {
+    if (key == "particles" || key == "compute_mtx") {
         rqobj.IsCompute = true;
         module.AddRQ(RQ_GENERAL, rqobj);
         SceneModules[key] = module;
@@ -243,7 +243,7 @@ void Modules::Base::UpdateResource(Modules::Module& module, Gfx::RenderObject& o
             }
     	    obj.BufferBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateBuffer(Gfx::DescriptorsBase::GetInstance()->GetCameraBuffer(i), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, Gfx::DescriptorsBase::GetInstance()->GetCameraUBO(i).tag, i);
             obj.StorageBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateBuffer(Gfx::DescriptorsBase::GetInstance()->GetStorageBuffer(i), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, Gfx::DescriptorsBase::GetInstance()->GetStorageUBO(i).tag, i);
-            obj.InstanceBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateBuffer(Gfx::DescriptorsBase::GetInstance()->GetInstanceBuffer(i), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, Gfx::DescriptorsBase::GetInstance()->GetInstanceUBO(i).tag, i);
+            obj.InstanceBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateCompute(Gfx::DescriptorsBase::GetInstance()->GetInstanceBuffer(i), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, Gfx::DescriptorsBase::GetInstance()->GetInstanceUBO(i).tag, i);
             }
             obj.HasStorage = obj.Model[0] ? true : false;
             module.SetCameraBuffer(true);
@@ -252,12 +252,22 @@ void Modules::Base::UpdateResource(Modules::Module& module, Gfx::RenderObject& o
 
             break;
         }
-        case Gfx::BINDLESS_DATA_COMPUTE: {
+        case Gfx::BINDLESS_DATA_PARTICLES: {
             for (int i = 0; i < MAX_FRAMES; i++) {
     	        obj.StorageBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateCompute(Gfx::DescriptorsBase::GetInstance()->GetComputeBuffer(i), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, Gfx::DescriptorsBase::GetInstance()->GetComputeUBO(i).tag,i);
             }
             break;
         }
+#ifdef COMPUTE_MTX
+        case Gfx::BINDLESS_DATA_STORAGE: {
+            for (int i = 0; i < MAX_FRAMES; i++) {
+    	        obj.StorageBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateCompute(Gfx::DescriptorsBase::GetInstance()->GetInstanceBuffer(i), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, Gfx::DescriptorsBase::GetInstance()->GetInstanceUBO(i).tag, i);
+                obj.InstanceBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateCompute(Gfx::DescriptorsBase::GetInstance()->GetAnimationBuffer(i), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, Gfx::DescriptorsBase::GetInstance()->GetAnimationUBO(i).tag, i);
+
+            }
+            break;
+        }
+#endif // COMPUTE_MTX
         case Gfx::BINDLESS_DATA_CAM_BUFFER: {
             for (int i = 0; i < MAX_FRAMES; i++) {
     	    obj.BufferBind[i] = Gfx::DescriptorsBase::GetInstance()->UpdateBuffer(Gfx::DescriptorsBase::GetInstance()->GetCameraBuffer(i), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, Gfx::DescriptorsBase::GetInstance()->GetCameraUBO(i).tag,i);
@@ -297,6 +307,9 @@ void Modules::Base::UpdateMaterials()
 
 void Modules::Base::ThreadedRQ(int i, Keeper::Objects* info)
 { 
+#ifdef TRACY
+    ZoneScopedN("Modules::Base::ThreadedRQ");
+#endif
     QueueType type = RQ_GENERAL;
     if (info->GetType() == Keeper::LIGHT) {
         type = RQ_LIGHT;
@@ -312,39 +325,50 @@ void Modules::Base::ThreadedRQ(int i, Keeper::Objects* info)
     SceneModules["gbuffer"].GetRenderQueue(type)[i].IsSelected =SceneModules[CurrentScene].GetRenderQueue(type)[i].IsSelected ; 
     SceneModules["gbuffer"].GetRenderQueue(type)[i].IsVisible = info->IsVisible();
     SceneModules["gbuffer"].GetRenderQueue(type)[i].Position = info->GetPosition();
+#ifndef COMPUTE_MTX
     if (SceneModules[CurrentScene].GetRenderQueue(type)[i].IsVisible && HasAnimation(SceneModules[CurrentScene].GetRenderQueue(type)[i].ID)) {
         Animator->Update(SceneModules[CurrentScene].GetRenderQueue(type)[i]);
     }
+#endif
 }
 
 void Modules::Base::UpdateRQ()
 {
+#ifdef TRACY
+    ZoneScopedN("Modules::Base::UpdateRQ");
+#endif
     if (GameObjects->IsValid(Keeper::Type::NPC)) {
         int i = 0;
 
-        auto npc = GameObjects->Get(Keeper::Type::NPC);
+        const std::vector<Keeper::Objects*>& npc = GameObjects->Get(Keeper::Type::NPC);
         for (Keeper::Objects* info : npc) {
+#ifndef COMPUTE_MTX
             if (Thread::Pool::GetInstance()->IsInit()) {
             Thread::Pool::GetInstance()->Push({
             Thread::Task::Name::UPDATE, Thread::Task::Type::EXECUTE, [this](int i, Keeper::Objects* info) {
-                ThreadedRQ(i, info); }, {}, i, info, {} });
+                ThreadedRQ(i, info); }, {}, {}, i, info, {} });
             }
             else {
                 ThreadedRQ(i, info);
             }
+#else 
+                ThreadedRQ(i, info);
+#endif
             i++;
         }
+#ifndef COMPUTE_MTX
         if (Thread::Pool::GetInstance()->IsInit()) {
             Thread::Pool::GetInstance()->WaitWork();
         }
+#endif
         i = 0;
-        auto light = GameObjects->Get(Keeper::Type::LIGHT);
+        const std::vector<Keeper::Objects*> light = GameObjects->Get(Keeper::Type::LIGHT);
         for (Keeper::Objects* info : light) {
             ThreadedRQ(i, info);
             i++;
         }
         i = 0;
-        auto gizmo = GameObjects->Get(Keeper::Type::GIZMO);
+        const std::vector<Keeper::Objects*> gizmo = GameObjects->Get(Keeper::Type::GIZMO);
         for (Keeper::Objects* info : gizmo) {
             SceneModules["gizmo"].GetRenderQueue(RQ_GENERAL)[i].IsVisible = info->IsVisible();
             SceneModules["gizmo"].GetRenderQueue(RQ_GENERAL)[i].Position = info->GetPosition();
@@ -517,6 +541,7 @@ Gfx::RenderObject Modules::Base::LoadResources(const Keeper::Objects* info)
         for (int i = 0; i < MAX_FRAMES; i++) {
         rqobj.Model[i] = Gfx::Model::GetInstance()->GetModel(info->GetModelName());
         }
+        rqobj.HasAnimation = info->HasAnimations();
     }
     else {
         rqobj.Mesh = Gfx::Mesh::GetInstance()->GetMesh(info->GetTextureName());

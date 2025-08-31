@@ -357,6 +357,14 @@ void Gfx::Pipeline::Build()
 	vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), fragshader, nullptr);
     BuildMaterial("particles", &vertexshader, vert, &fragshader, frag, main_rt, true);
 
+// compute_mtx
+    VK_ASSERT(vkCreatePipelineLayout(Gfx::Device::GetInstance()->GetDevice(), &pipelinelayoutinfo, nullptr, &ComputeLayout), "failed to create pipeline layout!");
+	frag = "./shaders/compute_mtx.comp";
+    vert = "";
+    ShaderStages.clear();
+	vkDestroyShaderModule(Gfx::Device::GetInstance()->GetDevice(), fragshader, nullptr);
+    BuildMaterial("compute_mtx", &vertexshader, vert, &fragshader, frag, main_rt, true);
+
 // particle-draw
 	push_constant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 	pipelinelayoutinfo.pPushConstantRanges = &push_constant;
