@@ -31,6 +31,8 @@ namespace Keeper {
         bool IsModel = false;
         bool IsLight = false;
         bool VertexBase = false;
+
+        float AnimOffset = 1.0;
         // used in UI object creation only
         std::string Type;
     };
@@ -53,6 +55,7 @@ namespace Keeper {
         INFO_GBUFFER,
         INFO_SHADOWS,
         INFO_LIGHTING,
+        INFO_SKYBOX,
         INFO_PARTICLES,
         INFO_COMPUTE_MTX,
         INFO_SIZE
@@ -93,6 +96,7 @@ namespace Keeper {
             virtual bool IsVisible() const { return true; }
             virtual bool HasAnimations() const { return false; }
 
+            virtual float GetAnimOffset() const { return 1.0; }
             virtual void Update() {}
 
             virtual void PrintInfo() {}

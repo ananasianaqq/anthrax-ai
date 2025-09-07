@@ -20,13 +20,14 @@
 namespace Thread
 {
     constexpr uint32_t MAX_RENDER_THREAD_NUM = 18;
-    constexpr uint32_t MAX_WORK_THREAD_NUM =12;
+    constexpr uint32_t MAX_WORK_THREAD_NUM = 12;
 
     struct Task {
         enum class Name {
             UPDATE,
             RENDER,
             ANIM,
+            ANIM_NODE,
             NONE
         };
         enum class Type {
@@ -38,6 +39,7 @@ namespace Thread
         std::function<void(int i, Keeper::Objects* info)> func;
         std::function<void()> func1;
         std::function<void(Gfx::ModelInfo* model,Core::aiSceneInfo* scene)> func2;
+        std::function<void(Core::NodeRoots* node,Core::aiSceneInfo* scene, int anmind)> anim_node;
 
         int i;
         Keeper::Objects* info;
@@ -45,6 +47,7 @@ namespace Thread
         Gfx::MeshPushConstants* constants;
         Gfx::ModelInfo* model;
         Core::aiSceneInfo* scene;
+        Core::NodeRoots* node;
     };
     
     struct Timing {
@@ -100,7 +103,7 @@ namespace Thread
             std::queue<Task> RenderQueue2;
             std::vector<std::thread> RenderThreads;
 
-            int ThreadCounter = 0;
+            std::atomic<int> ThreadCounter = 0;
     };
 
 }

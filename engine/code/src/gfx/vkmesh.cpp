@@ -2,6 +2,7 @@
 #include "anthraxAI/core/windowmanager.h"
 #include "anthraxAI/gfx/vkdevice.h"
 #include "anthraxAI/gfx/vkrenderer.h"
+#include "imgui.h"
 #include <cstdint>
 #include <cstdio>
 
@@ -138,8 +139,9 @@ void Gfx::Mesh::CreateMeshUnited(aiMesh* aimesh, Gfx::MeshInfo* meshinfo, uint32
     }
 
    // meshinfo->AIindices.reserve(aimesh->mNumFaces);
+        
 	for(unsigned int i = 0; i < aimesh->mNumFaces; i++) {
-		aiFace face = aimesh->mFaces[i];
+        aiFace face = aimesh->mFaces[i];
 		for(unsigned int j = 0; j < face.mNumIndices; j++) {
 			meshinfo->AIindices.push_back(indexsize + face.mIndices[j]);
 		}

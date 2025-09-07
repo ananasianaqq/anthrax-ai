@@ -51,6 +51,7 @@ void Gfx::Model::ProcessNode2(const std::string& path, aiNode *node, const aiSce
     Models[path].MeshBase.resize(scene->mNumMeshes);
     Models[path].texturename = path;
     int meshsize = scene->mNumMeshes;
+
     Models[path].Meshes.reserve(meshsize);
     Gfx::MeshInfo* meshinfo = new Gfx::MeshInfo;
     uint32_t ind = 0;

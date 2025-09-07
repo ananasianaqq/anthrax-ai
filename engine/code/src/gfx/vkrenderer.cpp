@@ -867,6 +867,7 @@ void Gfx::Renderer::PrepareInstanceBuffer()
 
 #ifdef COMPUTE_MTX
 
+    if (Utils::IsBitSet(Engine::GetInstance()->GetState(), ENGINE_STATE_PLAY)) {
     void* animdata;
     {
 #ifdef TRACY
@@ -903,7 +904,7 @@ void Gfx::Renderer::PrepareInstanceBuffer()
 #endif
 
 
-                    const Core::aiSceneInfo& scene = Core::Scene::GetInstance()->GetInfo(obj.Model[GetFrameInd()], obj.ID); 
+                    const Core::aiSceneInfo& scene = Core::Scene::GetInstance()->GetInfo(obj.Model[GetFrameInd()], obj.ID, obj.AnimOffset); 
                     for (int k = 0; k < obj.Model[GetFrameInd()]->Meshes.size(); k++ ) {
                     if (hasanim) {
                         {
@@ -915,30 +916,62 @@ void Gfx::Renderer::PrepareInstanceBuffer()
                             animdat.timetick = scene.timeticks;
                             animdat.global_transform = Core::Scene::GetInstance()->GetGlobalTransform();
                             animdat.animsize = scene.animsize;
-                            memcpy(animdat.animisempty, scene.animisempty, sizeof(int) * 100);
-                            memcpy(animdat.pos_factor, scene.pos_factor, sizeof(float) * 100);
-                            memcpy(animdat.scale_factor, scene.scale_factor, sizeof(float) * 100);
-                            memcpy(animdat.rot_factor, scene.rot_factor, sizeof(float) * 100);
-                            memcpy(animdat.pos_comp, scene.pos_comp, sizeof(int) * 100);
-                            memcpy(animdat.scale_comp, scene.scale_comp, sizeof(int) * 100);
-                            memcpy(animdat.rot_comp, scene.rot_comp, sizeof(int) * 100);
-                            memcpy(animdat.pos_out, scene.pos_out, sizeof(glm::vec4) * 100);
-                            memcpy(animdat.pos_start, scene.pos_start, sizeof(glm::vec4) * 100);
-                            memcpy(animdat.pos_end, scene.pos_end, sizeof(glm::vec4) * 100);
-                            memcpy(animdat.scale_out, scene.scale_out, sizeof(glm::vec4) * 100);
-                            memcpy(animdat.scale_start, scene.scale_start, sizeof(glm::vec4) * 100);
-                            memcpy(animdat.scale_end, scene.scale_end, sizeof(glm::vec4) * 100);
-                            memcpy(animdat.rot_out, scene.rot_out, sizeof(glm::mat4) * 100);
-                            memcpy(animdat.rot_start, scene.rot_start, sizeof(glm::mat4) * 100);
-                            memcpy(animdat.rot_end, scene.rot_end, sizeof(glm::mat4) * 100);
-                            // memcpy(animdat.animrot, scene.animrot, sizeof(glm::mat4) * 200);
 
-                            memcpy(animdat.nodeAnimInd, scene.nodeAnimInd, sizeof(int) * 100);
-                            memcpy(animdat.nodeBoneInd, scene.nodeBoneInd, sizeof(int) * 100);
-                            memcpy(animdat.nodeIndex, scene.nodeIndex, sizeof(int) * 100);
-                            memcpy(animdat.nodesettransform, scene.nodesettransform, sizeof(int) * 100);
-                            memcpy(animdat.nodeOffset, scene.nodeOffset, sizeof(glm::mat4) * 100);
-                            memcpy(animdat.nodeTransform, scene.nodeTransform, sizeof(glm::mat4) * 100);
+#ifndef MEMCPY_TEST
+                            memcpy(animdat.animisempty, scene.floats.animisempty, sizeof(int) * 108);
+                            memcpy(animdat.pos_factor, scene.floats.pos_factor, sizeof(float) * 108);
+                            memcpy(animdat.scale_factor, scene.floats.scale_factor, sizeof(float) * 108);
+                            memcpy(animdat.rot_factor, scene.floats.rot_factor, sizeof(float) * 108);
+                            memcpy(animdat.pos_comp, scene.floats.pos_comp, sizeof(int) * 108);
+                            memcpy(animdat.scale_comp, scene.floats.scale_comp, sizeof(int) * 108);
+                            memcpy(animdat.rot_comp, scene.floats.rot_comp, sizeof(int) * 108);
+                            memcpy(animdat.pos_out, scene.matricies.pos_out, sizeof(glm::vec4) * 108);
+                            memcpy(animdat.pos_start, scene.matricies.pos_start, sizeof(glm::vec4) * 108);
+                            memcpy(animdat.pos_end, scene.matricies.pos_end, sizeof(glm::vec4) * 108);
+                            memcpy(animdat.scale_out, scene.matricies.scale_out, sizeof(glm::vec4) * 108);
+                            memcpy(animdat.scale_start, scene.matricies.scale_start, sizeof(glm::vec4) * 108);
+                            memcpy(animdat.scale_end, scene.matricies.scale_end, sizeof(glm::vec4) * 108);
+                            memcpy(animdat.rot_out, scene.matricies.rot_out, sizeof(glm::mat4) * 108);
+                            memcpy(animdat.rot_start, scene.matricies.rot_start, sizeof(glm::mat4) * 108);
+                            memcpy(animdat.rot_end, scene.matricies.rot_end, sizeof(glm::mat4) * 108);
+                            // memcpy(animdat.animrot, scene.animrot, sizeof(glm::mat4) * 108);
+
+                            memcpy(animdat.nodeAnimInd, scene.floats.nodeAnimInd, sizeof(int) * 108);
+                            memcpy(animdat.nodeBoneInd, scene.floats.nodeBoneInd, sizeof(int) * 108);
+                            memcpy(animdat.nodeIndex, scene.floats.nodeIndex, sizeof(int) * 108);
+                            memcpy(animdat.nodesettransform, scene.floats.nodesettransform, sizeof(int) * 108);
+                            memcpy(animdat.nodeOffset, scene.matricies.nodeOffset, sizeof(glm::mat4) * 108);
+                            memcpy(animdat.nodeTransform, scene.matricies.nodeTransform, sizeof(glm::mat4) * 108);
+#else
+                            // memcpy(animdat.animisempty, scene.animisempty, sizeof(int) * 108);
+                            // memcpy(animdat.pos_factor, scene.pos_factor, sizeof(float) * 108);
+                            // memcpy(animdat.scale_factor, scene.scale_factor, sizeof(float) * 108);
+                            // memcpy(animdat.rot_factor, scene.rot_factor, sizeof(float) * 108);
+                            // memcpy(animdat.pos_comp, scene.pos_comp, sizeof(int) * 108);
+                            // memcpy(animdat.scale_comp, scene.scale_comp, sizeof(int) * 108);
+                            // memcpy(animdat.rot_comp, scene.rot_comp, sizeof(int) * 108);
+                            //
+                            memcpy(&animdat.matricies, &scene.matricies, sizeof(AnimMatricies));
+                            memcpy(&animdat.floats, &scene.floats, sizeof(AnimFloats));
+                            // memcpy(animdat.pos_out, scene.pos_out, sizeof(glm::vec4) * 108);
+                            // memcpy(animdat.pos_start, scene.pos_start, sizeof(glm::vec4) * 108);
+                            // memcpy(animdat.pos_end, scene.pos_end, sizeof(glm::vec4) * 108);
+                            // memcpy(animdat.scale_out, scene.scale_out, sizeof(glm::vec4) * 108);
+                            // memcpy(animdat.scale_start, scene.scale_start, sizeof(glm::vec4) * 108);
+                            // memcpy(animdat.scale_end, scene.scale_end, sizeof(glm::vec4) * 108);
+                            // memcpy(animdat.rot_out, scene.rot_out, sizeof(glm::mat4) * 108);
+                            // memcpy(animdat.rot_start, scene.rot_start, sizeof(glm::mat4) * 108);
+                            // memcpy(animdat.rot_end, scene.rot_end, sizeof(glm::mat4) * 108);
+                            // memcpy(animdat.animrot, scene.animrot, sizeof(glm::mat4) * 108);
+
+                            // memcpy(animdat.nodeAnimInd, scene.nodeAnimInd, sizeof(int) * 108);
+                            // memcpy(animdat.nodeBoneInd, scene.nodeBoneInd, sizeof(int) * 108);
+                            // memcpy(animdat.nodeIndex, scene.nodeIndex, sizeof(int) * 108);
+                            // memcpy(animdat.nodesettransform, scene.nodesettransform, sizeof(int) * 108);
+                            // memcpy(animdat.nodeOffset, scene.nodeOffset, sizeof(glm::mat4) * 108);
+                            // memcpy(animdat.nodeTransform, scene.nodeTransform, sizeof(glm::mat4) * 108);
+
+#endif
                         }
                         i++;
                         }
@@ -946,10 +979,6 @@ void Gfx::Renderer::PrepareInstanceBuffer()
                 }     
             }
         }
-        if (Thread::Pool::GetInstance()->IsInit()) {
-            Thread::Pool::GetInstance()->WaitWork();
-        }
-
     }
     {
 #ifdef TRACY
@@ -957,6 +986,7 @@ void Gfx::Renderer::PrepareInstanceBuffer()
 #endif
 
         vkUnmapMemory(Gfx::Device::GetInstance()->GetDevice(),Gfx::DescriptorsBase::GetInstance()->GetAnimationBufferMemory(GetFrameInd()));
+    }
     }
 #endif
 }
@@ -968,11 +998,14 @@ void Gfx::Renderer::PrepareCameraBuffer(Keeper::Camera& camera)
 	glm::mat4 view = glm::lookAt(camera.GetPos(), camera.GetPos() + camera.GetFront(), camera.GetUp());
 	glm::mat4 projection = glm::perspective(glm::radians(45.f), float(Gfx::Device::GetInstance()->GetSwapchainSize().x) / float(Gfx::Device::GetInstance()->GetSwapchainSize().y), 1.0f, 1000.0f);
 	projection[1][1] *= -1;
+    
+    glm::mat4 sky_projection = glm::perspective(glm::radians(45.f), float(Gfx::Device::GetInstance()->GetSwapchainSize().x) / float(Gfx::Device::GetInstance()->GetSwapchainSize().y), 0.10f, 1000.0f);
+	sky_projection[1][1] *= -1;
 
 	CamData.model = glm::mat4(1.0f);
 	CamData.proj = projection;
 	CamData.view = view;
-	CamData.viewproj = projection * view;
+	CamData.skybox_proj = sky_projection;
 	CamData.viewpos = glm::vec4(camera.GetPos(), 1.0);
     //printf("%f|%f|%f\n", camera.GetPos().x, camera.GetPos().y, camera.GetPos().z);
 	CamData.mousepos = { Core::WindowManager::GetInstance()->GetMouseBeginPress().x, Core::WindowManager::GetInstance()->GetMouseBeginPress().y, 0, 0};

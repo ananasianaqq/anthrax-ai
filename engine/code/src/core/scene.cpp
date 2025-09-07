@@ -113,7 +113,7 @@ void Core::Scene::RenderThreaded(Modules::Module& module)
             }
         }
         vkEndCommandBuffer(secondary_cmd);
-        }, nullptr, 0,  nullptr, nullptr, nullptr});
+        },{},  nullptr, 0,  nullptr, nullptr, nullptr});
 
         first_obj_size = sec_obj_size;
     }
@@ -205,7 +205,9 @@ void Core::Scene::RenderScene(bool playmode)
             }
             else {
 #ifdef COMPUTE_MTX
+                if (playmode) {
                     Compute(GameModules->Get("compute_mtx"));
+                }
 #endif
                 if (HasCompute) {
                     Compute(GameModules->Get("particles"));
@@ -213,6 +215,13 @@ void Core::Scene::RenderScene(bool playmode)
                     Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("particles").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
                     Render(GameModules->Get("particles"));
                     Gfx::Renderer::GetInstance()->EndRender();
+                }
+                else {
+                    if (Gfx::Renderer::GetInstance()->GetCubemapRendering()) {
+                        Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("lighting").GetIAttachments(), Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR);
+                        Render(GameModules->Get("skybox"));
+                        Gfx::Renderer::GetInstance()->EndRender();
+                    }
                 }
                 // objects from map
 #ifdef DRAW_INDIRECT
@@ -247,10 +256,11 @@ void Core::Scene::RenderScene(bool playmode)
                     Gfx::Renderer::GetInstance()->EndRender();
                 }
 #endif
-                Gfx::AttachmentRules rule = HasCompute ? Gfx::AttachmentRules::ATTACHMENT_RULE_LOAD : Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR;
+                Gfx::AttachmentRules rule = Gfx::Renderer::GetInstance()->GetCubemapRendering() || HasCompute ? Gfx::AttachmentRules::ATTACHMENT_RULE_LOAD : Gfx::AttachmentRules::ATTACHMENT_RULE_CLEAR;
                 Gfx::Renderer::GetInstance()->StartRender(GameModules->Get("lighting").GetIAttachments(), rule);
                 Render(GameModules->Get("lighting"));
                 Gfx::Renderer::GetInstance()->EndRender();
+
             }
 
             if (HasFrameGrid && Utils::Debug::GetInstance()->Grid) {
@@ -333,6 +343,9 @@ void Core::Scene::Loop()
         Core::ImGuiHelper::GetInstance()->Render();
 
         Thread::Pool::GetInstance()->Pause(true);
+        // if (Thread::Pool::GetInstance()->IsInit()) {
+        //     Thread::Pool::GetInstance()->WaitWork();
+        // }
         
         RenderScene(false);
     }
@@ -491,6 +504,14 @@ void Core::Scene::PopulateModules()
             info.IAttachments.Add(Gfx::RT_SHADOWS, true);
             GameModules->Populate("shadows", info,
                 GameObjects->GetInfo(Keeper::Infos::INFO_SHADOWS)
+            );
+        }
+        {
+            Modules::Info info;
+            info.BindlessType = Gfx::BINDLESS_DATA_CAM_STORAGE_SAMPLER ;
+            info.IAttachments.Add(Gfx::RT_MAIN_COLOR);
+            GameModules->Populate("skybox", info,
+                GameObjects->GetInfo(Keeper::Infos::INFO_SKYBOX)
             );
         }
         {

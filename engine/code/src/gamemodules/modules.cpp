@@ -1,6 +1,7 @@
 #include "anthraxAI/gamemodules/modules.h"
 #include "anthraxAI/core/scene.h"
 #include "anthraxAI/gameobjects/gameobjects.h"
+#include "anthraxAI/gfx/model.h"
 #include "anthraxAI/gfx/renderhelpers.h"
 #include "anthraxAI/gfx/vkdefines.h"
 #include "anthraxAI/gfx/vkdescriptors.h"
@@ -91,6 +92,13 @@ void Modules::Base::Populate(const std::string& key, Modules::Info scene, Keeper
     }
     if (info.Texture == "albedo") {
         rqobj.Texture = Gfx::Renderer::GetInstance()->GetRT(Gfx::GetKey(info.Texture));
+    }
+    if (key == "skybox") {
+        rqobj.TextureName =  info.Texture;
+        rqobj.Texture = Gfx::Renderer::GetInstance()->GetCubemap(info.Texture);
+        rqobj.Model[0] = Gfx::Model::GetInstance()->GetModel(info.Model);
+        rqobj.Model[1] = Gfx::Model::GetInstance()->GetModel(info.Model);
+        rqobj.Model[2] = Gfx::Model::GetInstance()->GetModel(info.Model);
     }
     if (!info.Textures.empty()) {
         if (!CubemapTexture.empty()) {
@@ -346,7 +354,7 @@ void Modules::Base::UpdateRQ()
             if (Thread::Pool::GetInstance()->IsInit()) {
             Thread::Pool::GetInstance()->Push({
             Thread::Task::Name::UPDATE, Thread::Task::Type::EXECUTE, [this](int i, Keeper::Objects* info) {
-                ThreadedRQ(i, info); }, {}, {}, i, info, {} });
+                ThreadedRQ(i, info); }, {},{}, {}, i, info, {} });
             }
             else {
                 ThreadedRQ(i, info);
@@ -531,6 +539,8 @@ Gfx::RenderObject Modules::Base::LoadResources(const Keeper::Objects* info)
        rqobj.GizmoType = info->GetAxis();
     }
     rqobj.ID = info->GetID();
+    rqobj.AnimOffset = info->GetAnimOffset();
+    printf("ofset----%f\n", rqobj.AnimOffset);
     rqobj.IsVisible = info->IsVisible();
     rqobj.Position = info->GetPosition();
     rqobj.MaterialName = info->GetMaterialName();

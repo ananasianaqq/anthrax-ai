@@ -43,7 +43,7 @@ VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo(VkPrimitiveTopolo
 	return info;
 }
 
-VkPipelineRasterizationStateCreateInfo RasterizationCreateInfo(VkPolygonMode polygonmode) {
+VkPipelineRasterizationStateCreateInfo RasterizationCreateInfo(VkPolygonMode polygonmode, VkCullModeFlagBits cull = VK_CULL_MODE_FRONT_BIT) {
 
 	VkPipelineRasterizationStateCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -54,7 +54,7 @@ VkPipelineRasterizationStateCreateInfo RasterizationCreateInfo(VkPolygonMode pol
 
 	info.polygonMode = polygonmode;
 	info.lineWidth = 1.0f;
-	info.cullMode = VK_CULL_MODE_FRONT_BIT;
+	info.cullMode = cull;
 	info.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	info.depthBiasEnable = VK_FALSE;
 	info.depthBiasConstantFactor = 0.0f;
@@ -332,13 +332,22 @@ void Gfx::Pipeline::Build()
     vert = "./shaders/model.vert";
     BuildMaterial("gbuffer", &vertexshader, vert, &fragshader, frag, albedo_rt);
 
-//gbuffer
+// lighting
     VK_ASSERT(vkCreatePipelineLayout(Gfx::Device::GetInstance()->GetDevice(), &pipelinelayoutinfo, nullptr, &PipelineLayout), "failed to create pipeline layout!");
     frag = "./shaders/lighting.frag";
     vert = "./shaders/sprite.vert";
     BuildMaterial("lighting", &vertexshader, vert, &fragshader, frag, main_rt);
 
+// lighting
+	Rasterizer = RasterizationCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT);
+    VK_ASSERT(vkCreatePipelineLayout(Gfx::Device::GetInstance()->GetDevice(), &pipelinelayoutinfo, nullptr, &PipelineLayout), "failed to create pipeline layout!");
+    frag = "./shaders/skybox.frag";
+    vert = "./shaders/skybox.vert";
+    BuildMaterial("skybox", &vertexshader, vert, &fragshader, frag, main_rt);
+
+
 // sprite
+	Rasterizer = RasterizationCreateInfo(VK_POLYGON_MODE_FILL, VK_CULL_MODE_FRONT_BIT);
 	VK_ASSERT(vkCreatePipelineLayout(Gfx::Device::GetInstance()->GetDevice(), &pipelinelayoutinfo, nullptr, &PipelineLayout), "failed to create pipeline layout!");
 	frag = "./shaders/sprite.frag";
     vert = "./shaders/sprite.vert";

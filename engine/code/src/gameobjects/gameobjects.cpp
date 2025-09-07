@@ -253,7 +253,12 @@ Keeper::Base::Base()
     modules.Texture = "";
     modules.Material = "shadows";
     DefaultObjects[Infos::INFO_SHADOWS] = modules;
+    modules.Texture = "cubemaps/skybox";
+    modules.Material = "skybox";
+    modules.Model = "cube.obj";
+    DefaultObjects[Infos::INFO_SKYBOX] = modules;
 
+    modules.Model = "";
     modules.Material = "lighting";
     modules.Texture = "cubemaps/skybox";
     modules.Textures.reserve(4);
@@ -356,6 +361,7 @@ void Keeper::Base::SpawnObjects(const Keeper::Info& info)
 
     Keeper::Info spawn = info;
     int i = 0;
+    float off = 0.1;
     for (float x = info.Position.x; x < offsets.x; x += 1.0f ) {
         for (float y = info.Position.y; y < offsets.y; y += 1.0f ) {
             for (float z = info.Position.z; z < offsets.z; z += 1.0f ) {
@@ -364,6 +370,9 @@ void Keeper::Base::SpawnObjects(const Keeper::Info& info)
                     spawn.ParsedID = info.ParsedID + "_" + std::to_string(i);
                     i++;
                 }
+                spawn.Spawn = true;
+                // spawn.AnimOffset = off;
+                off += 0.0001;
                 Create<Keeper::Npc>(new Keeper::Npc(spawn));
             }
         }

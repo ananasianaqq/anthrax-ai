@@ -54,11 +54,11 @@ void main()
     bool has_shadows = GetResource(Camera, GetUniformInd()).hasshadows;
     int cube_ind = GetResource(Camera, GetUniformInd()).cubemapbind;
     vec3 sky = vec3(0);
-    if (has_cube) {
-        vec2 sky_uv = inpos.xy ;
-        sky_uv.y *= -1.0;//sky_uv.y;
-        sky = texture(cubemaps[cube_ind], vec3(sky_uv, 1)).xyz;
-    }
+    // if (has_cube) {
+    //     vec2 sky_uv = inpos.xy ;
+    //     sky_uv.y *= -1.0;//sky_uv.y;
+    //     sky = texture(cubemaps[cube_ind], vec3(sky_uv, 1)).xyz;
+    // }
     vec3 result = sky;
     vec3 cam_pos = GetResource(Camera, GetUniformInd()).viewpos.xyz;
 

@@ -50,52 +50,24 @@ namespace Core
 
         NodeAnim() {}
     };
+
     struct aiSceneInfo {
         float TicksPerSecond;
         float Duration;
         NodeRoots RootNode;
         // std::vector<Core::NodeRoots> nodes;
-        // Core::NodeRoots nodes[200];
+        // Core::NodeRoots nodes[108];
         // std::vector<NodeAnim> AnimNodes;
-        NodeAnim AnimNodes[100];
-
+        NodeAnim AnimNodes[108];
     //     //-------------
-    // Gfx::NodeAnimCompute animnodes[200];
-    // Gfx::NodeRootsCompute noderoots[200];
-        glm::mat4 nodeOffset[100];
-        glm::mat4 nodeTransform[100];
-
-        glm::mat4 animrot[200];
-        glm::mat4 rot_out[100];
-        glm::mat4 rot_start[100];
-        glm::mat4 rot_end[100];
-    //
-       glm::vec4 pos_out[100];
-       glm::vec4 pos_start[100];
-       glm::vec4 pos_end[100];
-
-       glm::vec4 scale_out[100];
-       glm::vec4 scale_start[100];
-       glm::vec4 scale_end[100];
-       
-
-
-        float rot_factor[100];
-        float pos_factor[100];
-        float scale_factor[100];
+            //glm::mat4 animrot[108];
+        Gfx::AnimMatricies matricies;    
         
-        int rot_comp[100];
-        int pos_comp[100];
-        int scale_comp[100]; 
-       int animisempty[100];
-       int nodesettransform[100];
-       int nodeIndex[100];
-       int nodeAnimInd[100];
-       int nodeBoneInd[100];
-
-    std::string Names[200];
+        Gfx::AnimFloats floats;
+        
+    std::string Names[108];
         int animsize;
-        int rootssize;
+        int rootssize = 0;
         float timeticks;
         
         aiSceneInfo(){};
@@ -110,7 +82,7 @@ namespace Core
   	    void Init();
         void Update(Gfx::RenderObject& object);
 
-        Core::aiSceneInfo& Update2(Gfx::ModelInfo* model, int id);
+        Core::aiSceneInfo& Update2(Gfx::ModelInfo* model, int id, float offset);
 
         bool HasAnimation(int id) {
     		return Animations.find(id) != Animations.end();

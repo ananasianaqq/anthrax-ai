@@ -20,6 +20,7 @@ Keeper::Npc::Npc(const Info& info)
     IsAnimated = !Animations.empty();
     ParsedID = info.ParsedID;
 
+    AnimOffset = info.AnimOffset;
     PrintInfo();
 }
 

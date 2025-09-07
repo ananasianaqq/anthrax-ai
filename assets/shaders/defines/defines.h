@@ -74,7 +74,7 @@ RegisterUniform(Camera, {
     mat4 model;
     mat4 view;
     mat4 proj;
-    mat4 viewproj;
+    mat4 skybox_proj;
     mat4 shadow_matrix;
 
     float time;          
@@ -98,105 +98,6 @@ const int MAX_BONES = 200;
 #define GIZMO_X 0
 #define GIZMO_Y 1
 #define GIZMO_Z 2
-    
-    // struct NodeRootsComputeMat {
-    //   mat4 Offset;
-    //   mat4 Transform;
-    //   //
-    //   // int settransform = 0;
-    //   // int Index;
-    //   // int AnimInd;
-    //   // int BoneInd;
-    //   //
-    //    // alignas(8)std::string Name;
-    // };
-    // struct NodeRootsComputeInt {
-    //   // glm::mat4 Offset;
-    //   // glm::mat4 Transform;
-    //
-    //   int settransform;
-    //   int Index;
-    //   int AnimInd;
-    //   int BoneInd;
-    //
-    //    // alignas(8)std::string Name;
-    // };
-    //
-    // struct NodeAnimComputeMat {
-    //    mat4 rot;
-    //
-    //    vec4 pos_out;
-    //    vec4 pos_start;
-    //    vec4 pos_end;
-    //
-    //    vec4 scale_out;
-    //    vec4 scale_start;
-    //    vec4 scale_end;
-    //
-    //    // float pos_factor;
-    //    // float scale_factor;
-    //    //  // alignas(16)glm::mat4 scale;
-    //    //  // alignas(16)glm::mat4 rot;
-    //    //  // alignas(16)glm::mat4 pos;
-    //    //  // alignas(16) glm::quat RotationKeys[500];
-    //    //  // alignas(16) glm::vec4 PositionKeys[500];
-    //    //  // alignas(16) glm::vec4 ScalingKeys[500];
-    //    //  // float PositionTime[500];
-    //    //  // float RotationTime[500];
-    //    //  // float ScalingTime[500];
-    //    // int isempty = 1;
-    //    // int pos_comp = 1;
-    //    // int scale_comp = 1;
-    //    //
-    //     // uint32_t pad0 = 1;
-    //     // uint32_t pad1 = 1;
-    //     // uint32_t pad2 = 1;
-    //     // uint32_t NumPositionsKeys;
-    //     // uint32_t NumRotationKeys;
-    //     // uint32_t NumScalingKeys;
-    // };
-    // struct NodeAnimComputeInt {
-    //
-    //
-    //    float pos_factor;
-    //    float scale_factor;
-    //    int isempty;
-    //    int pos_comp ;
-    //    int scale_comp ;
-    // int pad0;
-    // int pad1;
-    // int pad2;
-    // };
-
-    // struct  NodeRootsCompute {
-    //     mat4 Offset;
-    //     mat4 Transform;
-    //
-    //     int settransform;
-    //     int Index;
-    //     int AnimInd;
-    //     int BoneInd;
-    //
-    // };
-    // struct NodeAnimCompute {
-    //     mat4 rot;
-    //
-    //     vec4 pos_out;
-    //     vec4 pos_start;
-    //     vec4 pos_end;
-    //
-    //     vec4 scale_out;
-    //     vec4 scale_start;
-    //     vec4 scale_end;
-    //
-    //     float pos_factor;
-    //     float scale_factor;
-    //
-    //     int isempty;
-    //     int pos_comp;
-    //     int scale_comp;
-    //
-    // };
 
 struct InstanceData {
 
@@ -216,39 +117,76 @@ struct InstanceData {
     uint boneID;
     uint gizmo;
 };
+#define MEMCPY_TEST
+struct AnimMatricies {
+    mat4 nodeOffset[108];
+    mat4 nodeTransform[108];
 
+    mat4 rot_out[108];
+    mat4 rot_start[108];
+    mat4 rot_end[108];
+
+    vec4 pos_out[108];
+    vec4 pos_start[108];
+    vec4 pos_end[108];
+
+    vec4 scale_out[108];
+    vec4 scale_start[108];
+    vec4 scale_end[108];
+};
+
+struct AnimFloats {
+    float rot_factor[108];
+    float pos_factor[108];
+    float scale_factor[108];
+
+    int rot_comp[108];
+    int pos_comp[108];
+    int scale_comp[108]; 
+    int animisempty[108];
+    int nodesettransform[108];
+    int nodeIndex[108];
+    int nodeAnimInd[108];
+    int nodeBoneInd[108];
+};
 struct AnimationComputeData {
-    mat4 nodeOffset[100];
-    mat4 nodeTransform[100];
+#ifndef MEMCPY_TEST
+    mat4 nodeOffset[108];
+    mat4 nodeTransform[108];
 
-    // mat4 animrot[200];
-    mat4 rot_out[100];
-    mat4 rot_start[100];
-    mat4 rot_end[100];
+    mat4 rot_out[108];
+    mat4 rot_start[108];
+    mat4 rot_end[108];
 
-    vec4 pos_out[100];
-    vec4 pos_start[100];
-    vec4 pos_end[100];
+    vec4 pos_out[108];
+    vec4 pos_start[108];
+    vec4 pos_end[108];
 
-    vec4 scale_out[100];
-    vec4 scale_start[100];
-    vec4 scale_end[100];
-    
+    vec4 scale_out[108];
+    vec4 scale_start[108];
+    vec4 scale_end[108];
 
     mat4 global_transform;
+    
+    float rot_factor[108];
+    float pos_factor[108];
+    float scale_factor[108];
 
-    float rot_factor[100];
-    float pos_factor[100];
-    float scale_factor[100];
+    int rot_comp[108];
+    int pos_comp[108];
+    int scale_comp[108]; 
+    int animisempty[108];
+    int nodesettransform[108];
+    int nodeIndex[108];
+    int nodeAnimInd[108];
+    int nodeBoneInd[108];
 
-    int rot_comp[100];
-    int pos_comp[100];
-    int scale_comp[100]; 
-    int animisempty[100];
-    int nodesettransform[100];
-    int nodeIndex[100];
-    int nodeAnimInd[100];
-    int nodeBoneInd[100];
+#else
+    AnimMatricies matricies;
+    mat4 global_transform;
+    
+    AnimFloats floats;
+#endif
 
     int animsize;
     int rootssize;

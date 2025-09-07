@@ -20,7 +20,6 @@
 
 #define COMPUTE_MTX
 #define DRAW_INDIRECT
-
 namespace Core
 {
     class Scene : public Utils::Singleton<Scene>
@@ -36,7 +35,7 @@ namespace Core
             void ExportObjectInfo(const Keeper::Objects* obj);
             void RenderScene(bool playmode);
             // bool HasAnimation(uint32_t id) { if (GameModules) { return GameModules->HasAnimation(id); } return false; }
-            const Core::aiSceneInfo& GetInfo(Gfx::ModelInfo* info, uint32_t id) {  return GameModules->GetInfo(info, id);   }
+            const Core::aiSceneInfo& GetInfo(Gfx::ModelInfo* info, uint32_t id, float offset) {  return GameModules->GetInfo(info, id, offset);   }
             void ReloadAnimation(uint32_t id, const std::string& s) { if (GameModules) { return GameModules->ReloadAnimation(id, s); }}
             
             void SetCurrentSceneForUpdate(const std::string& name) { CurrentSceneForUpdate = name; }

@@ -35,11 +35,14 @@ namespace Keeper
 
             const std::string& GetParsedID() const override { return ParsedID; }
             const std::vector<std::string>& GetAnimations() const override { return Animations; }
+        
+            float GetAnimOffset() const override { return AnimOffset; }
         private:
             Keeper::Type ObjectType = Type::NPC;
 
             Vector3<float> Position;
-
+            
+            float AnimOffset = 1.0;
     bool ResetMouse = false;
 
             std::string ParsedID = "";

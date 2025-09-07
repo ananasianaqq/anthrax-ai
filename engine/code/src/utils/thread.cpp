@@ -16,6 +16,9 @@ void Thread::Pool::Process(const Task& task)
             else if (task.name == Thread::Task::Name::ANIM) {
                 task.func2(task.model, task.scene);
             }
+            else if (task.name == Thread::Task::Name::ANIM_NODE) {
+                task.anim_node(task.node, task.scene, task.i);
+            }
             else {
                 if (task.info && task.func) {
                     task.func(task.i, task.info);
@@ -179,7 +182,7 @@ bool Thread::Pool::Push(const Task& task)
     if (Threads.empty()) {
         return false;
     }
-    if (ThreadCounter == Threads.size()) {
+    if (ThreadCounter == MAX_WORK_THREAD_NUM) {
         ThreadCounter = 0;
     }
     std::lock_guard<std::mutex> lock(Mutex[ThreadCounter]);
